@@ -1,6 +1,6 @@
 #lang brag
 
-magic : query+
+magic : EOL* query+
 query : line (level* line)*
 level : ">"
 line : offset HWS+ type HWS+ test HWS+ message EOL+

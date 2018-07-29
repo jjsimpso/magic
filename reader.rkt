@@ -14,6 +14,7 @@
 
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcedfABCDEF")))
+(define-lex-abbrev op (:= 1 (char-set "<>=&^!")))
 
 (define hws-count 0)
 
@@ -33,12 +34,14 @@
     (begin 
       (set! hws-count (add1 hws-count))
       (token 'HWS #:skip? #f))]
-   [">" (token 'LEVEL)]
-   [(:or "beshort" "byte") (token lexeme lexeme)]
+   ;[">" (token 'LEVEL)]
+   [op (token lexeme lexeme)]
+   [(:or "beshort" "byte" "short") (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    ;[any-string (token 'STRING lexeme)]
-   [any-char (token 'CHAR lexeme)]))
+   ;[any-char (token 'CHAR lexeme)]))
+))
 
 (define magic-lexer2
   (lexer-srcloc
@@ -47,7 +50,10 @@
       (displayln "newline found2") 
       (set! hws-count 0)
       (token 'EOL))]
-   [(from/stop-before any-char "\n") (token 'STRING lexeme)]))
+   [(from/stop-before any-char "\n") 
+    (begin
+      (set! hws-count 0)
+      (token 'STRING lexeme))]))
    ;[any-string (token 'STRING lexeme)]))
 
 (define (make-tokenizer port [path #f])
