@@ -90,13 +90,12 @@ strtest : [ compare ] STRING
 compare : "=" | "!" | "<" | ">" | "&" | "^"
 truetest : "x"	    ; This always returns true. To test for the string "x" use "=x".
 
-;message : [ nospflag ] ( STRING | FMT_STRING )  ; Message to print if test result is true.
-message : [ nospflag ] CHAR+  ; Message to print if test result is true.
+message : [ nospflag ] ( STRING | FMT_STRING )  ; Message to print if test result is true.
 nospflag : "%x08" | "\b"	  ; Do not insert a space before the message. By default, messages are separated by a " ".
 
 ;HWS : " " | "\t"
 ;EOL : "\n"
-FMTSTR : STRING
+;FMTSTR : STRING
 ;INTEGER : ("0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9")+
 ;STRING : ("A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z")+
 ;FMTSTR : <printf format string with exactly one % construct>
