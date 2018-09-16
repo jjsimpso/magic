@@ -1,9 +1,9 @@
 #lang brag
 
 magic : EOL* query+
-query : line (level* line)*
+query : line (level+ line)* /EOL*
 level : ">"
-line : offset /HWS+ type /HWS+ test /HWS+ message /EOL+
+line : offset /HWS+ type /HWS+ test /HWS+ message /EOL
 
 offset : absoffset | reloffset | indoffset
 absoffset : INTEGER     ; An absolute offset from the start of the file.
