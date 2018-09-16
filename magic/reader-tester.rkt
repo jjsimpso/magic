@@ -2,3 +2,6 @@
 
 0	beshort	0x0206	ALAN game data
 >2	byte	<10	version 2.6%d
+
+0	ubyte		>0	test
+

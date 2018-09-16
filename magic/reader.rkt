@@ -14,7 +14,7 @@
 
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcedfABCDEF")))
-(define-lex-abbrev op (:= 1 (char-set "<>=&^!")))
+(define-lex-abbrev op (:= 1 (char-set "<>=&^!u")))
 
 (define hws-count 0)
 
@@ -30,7 +30,7 @@
       (displayln "newline found1") 
       (set! hws-count 0)
       (token 'EOL))]
-   [whitespace 
+   [(:+ " " "\t") 
     (begin 
       (set! hws-count (add1 hws-count))
       (token 'HWS #:skip? #f))]
