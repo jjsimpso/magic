@@ -1,6 +1,7 @@
-#lang racket
+#lang racket/base
 
 (require brag/support)
+(require syntax/strip-context)
 (require "parser.rkt")
 
 (provide read-syntax)
@@ -8,9 +9,8 @@
 
 (define (read-syntax path port)
   (define parse-tree (parse path (make-tokenizer port)))
-  (define module-datum `(module magic-mod "expander.rkt"
-                          ,parse-tree))
-  (datum->syntax #f module-datum))
+  (strip-context #`(module magic-mod "expander.rkt"
+                          #,parse-tree)))
 
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcedfABCDEF")))
