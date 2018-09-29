@@ -13,8 +13,10 @@
                           #,parse-tree)))
 
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
-(define-lex-abbrev hex-digits (:+ (char-set "0123456789abcedfABCDEF")))
-(define-lex-abbrev op (:= 1 (char-set "<>=&^!u")))
+(define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
+(define-lex-abbrev op (:= 1 (char-set "<>=&^!")))
+(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+(define-lex-abbrev key-word (:or "beshort" "leshort" "byte" "short" "string"))
 
 (define hws-count 0)
 
@@ -36,10 +38,15 @@
       (token 'HWS #:skip? #f))]
    ;[">" (token 'LEVEL)]
    [op (token lexeme lexeme)]
-   [(:or "beshort" "byte" "short") (token lexeme lexeme)]
+   [key-word (token lexeme lexeme)]
+   [(:seq "u" key-word) (let ([pos (file-position input-port)])
+                          (file-position input-port (- pos 
+                                                       (- (string-length lexeme) 
+                                                          1)))
+                          (token "u" "u"))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   ;[any-string (token 'STRING lexeme)]
+   [string-chars (token 'STRING lexeme)]
    ;[any-char (token 'CHAR lexeme)]))
 ))
 
@@ -56,15 +63,20 @@
       (token 'STRING lexeme))]))
    ;[any-string (token 'STRING lexeme)]))
 
+(define magic-lexer-string
+  (lexer-srcloc
+   [string-chars (token 'STRING lexeme)]))
+
 (define (make-tokenizer port [path #f])
   (port-count-lines! port)
   (lexer-file-path path)
   (define (next-token)
-    (if (= hws-count 3)
-        (begin
-          (displayln "calling lexer2")
-          (magic-lexer2 port))
-        (magic-lexer port)))
+    (cond [(= hws-count 3)
+           (begin
+             (displayln "calling lexer2")
+             (magic-lexer2 port))]
+          [else 
+           (magic-lexer port)]))
   next-token)
 
 ;; test function
