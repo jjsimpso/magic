@@ -15,8 +15,10 @@
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!")))
-(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+(define-lex-abbrev paren (:= 1 (char-set "()")))
+(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") "\0"))
 (define-lex-abbrev key-word (:or "beshort" "leshort" "byte" "short" "string"))
+(define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
 (define hws-count 0)
 
@@ -38,6 +40,8 @@
       (token 'HWS #:skip? #f))]
    ;[">" (token 'LEVEL)]
    [op (token lexeme lexeme)]
+   [paren (token lexeme lexeme)]
+   [(:seq "." size-specifier) (token lexeme lexeme)]
    [key-word (token lexeme lexeme)]
    [(:seq "u" key-word) (let ([pos (file-position input-port)])
                           (file-position input-port (- pos 

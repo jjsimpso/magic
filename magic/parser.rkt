@@ -9,19 +9,19 @@ offset : absoffset | reloffset | indoffset
 absoffset : INTEGER     ; An absolute offset from the start of the file.
 reloffset : "&" INTEGER ; The offset relative to the last match offset one level up. Not allowed at level == 0
 indoffset : indoff | relindoff 
-indoff : "(" offset1 [ "." size ] [ op disp ] ")" ;; Read the file at <offset1> of width <size>.
+indoff : /"(" offset1 [ size ] [ op disp ] /")" ;; Read the file at <offset1> of width <size>.
 ;; If size is not specified, assume a long.
 ;; If <op> is given, then preform that
 ;; operation on the result and the <disp>.
 offset1 : absoffset | reloffset
 size : byte | leshort | beshort | lelong | belong | melong
 
-byte : "B" | "b" | "C" | "c"	; A one-byte value.
-leshort : "s" | "h"		; A two-byte little-endian value.
-beshort : "S" | "H"		; A two-byte big-endian value.
-lelong : "l"			; A four-byte little-endian value.
-belong : "L"			; A four-byte big-endian value.
-melong : "m"			; A four-byte middle-endian value.
+byte : ".B" | ".b" | ".C" | ".c"	; A one-byte value.
+leshort : ".s" | ".h"		; A two-byte little-endian value.
+beshort : ".S" | ".H"		; A two-byte big-endian value.
+lelong : ".l"			; A four-byte little-endian value.
+belong : ".L"			; A four-byte big-endian value.
+melong : ".m"			; A four-byte middle-endian value.
 
 op : [ invert ] ( "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" )
 
