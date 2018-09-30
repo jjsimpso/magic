@@ -16,7 +16,7 @@
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!")))
 (define-lex-abbrev paren (:= 1 (char-set "()")))
-(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") "\0"))
+(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") "\\0"))
 (define-lex-abbrev key-word (:or "beshort" "leshort" "byte" "short" "string"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
