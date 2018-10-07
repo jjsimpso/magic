@@ -2,86 +2,39 @@
 
 (provide #%top #%top-interaction #%datum #%app)
 
-;(define-macro (bf-module-begin PARSE-TREE)
-;  #'(#%module-begin
-;     'PARSE-TREE))
+(define-syntax (query ...)
+  42)
 
-(define-syntax-rule (bf-module-begin e ...)
-  (#%module-begin e ...))
+(define-syntax-rule (magic-module-begin (magic QUERY ...))
+  (#%module-begin QUERY ...))
 
-(provide (rename-out [bf-module-begin #%module-begin]))
+(provide (rename-out [magic-module-begin #%module-begin])
+         query)
 
-(define (fold-funcs apl bf-funcs)
-  (for/fold ([current-apl apl])
-            ([bf-func (in-list bf-funcs)])
-    (apply bf-func current-apl)))
 
-;(define-macro (bf-program OP-OR-LOOP-ARG ...)
-;  #'(begin
-;      (define first-apl (list (make-vector 30000 0) 0))
-;      (void (fold-funcs first-apl (list OP-OR-LOOP-ARG ...)))))
-(define-syntax-rule (bf-program OP-OR-LOOP-ARG ...)
-  (begin
-    (define first-apl (list (make-vector 30000 0) 0))
-    (void (fold-funcs first-apl (list OP-OR-LOOP-ARG ...)))))
-(provide bf-program)
 
-;(define-macro (bf-loop "[" OP-OR-LOOP-ARG ... "]")
-;  #'(lambda (arr ptr)
-;      (for/fold ([current-apl (list arr ptr)])
-;                ([i (in-naturals)]
-;                 #:break (zero? (apply current-byte
-;                                       current-apl)))
-;        (fold-funcs current-apl (list OP-OR-LOOP-ARG ...)))))
-(define-syntax-rule (bf-loop "[" OP-OR-LOOP-ARG ... "]")
-  (lambda (arr ptr)
-    (for/fold ([current-apl (list arr ptr)])
-              ([i (in-naturals)]
-               #:break (zero? (apply current-byte
-                                     current-apl)))
-      (fold-funcs current-apl (list OP-OR-LOOP-ARG ...)))))
-(provide bf-loop)
 
-;(define-macro-cases bf-op
-;  [(bf-op ">") #'gt]
-;  [(bf-op "<") #'lt]
-;  [(bf-op "+") #'plus]
-;  [(bf-op "-") #'minus]
-;  [(bf-op ".") #'period]
-;  [(bf-op ",") #'comma])
-(define-syntax (bf-op caller-stx)
-  (syntax-case caller-stx ()
-    [(bf-op ">") #'gt]
-    [(bf-op "<") #'lt]
-    [(bf-op "+") #'plus]
-    [(bf-op "-") #'minus]
-    [(bf-op ".") #'period]
-    [(bf-op ",") #'comma]))
-(provide bf-op)
+;; sample walk of a tree of tests
+(define (line1) #t)
+(define (line2) #f)
+(define (line3) #t)
+(define (line4) #f)
+(define (line5) #f)
 
-(define (current-byte arr ptr) (vector-ref arr ptr))
+(define test-exp `((,line1 ((,line2) (,line3 ((,line4) (,line5)))))))
+(define test-exp2 `((,line1) (,line2) (,line3)))
 
-(define (set-current-byte arr ptr val)
-  (define new-arr (vector-copy arr))
-  (vector-set! new-arr ptr val)
-  new-arr)
-
-(define (gt arr ptr) (list arr (add1 ptr)))
-(define (lt arr ptr) (list arr (sub1 ptr)))
-
-(define (plus arr ptr)
-  (list
-   (set-current-byte arr ptr (add1 (current-byte arr ptr)))
-   ptr))
-
-(define (minus arr ptr)
-  (list
-   (set-current-byte arr ptr (sub1 (current-byte arr ptr)))
-   ptr))
-
-(define (period arr ptr)
-  (write-byte (current-byte arr ptr))
-  (list arr ptr))
-
-(define (comma arr ptr)
-  (list (set-current-byte arr ptr (read-byte)) ptr))
+(define (test-walk exp)
+  (cond [(null? exp) #f]
+        [(not (pair? exp)) #f]
+        [(list? (car exp)) 
+         (let ([result (test-walk (car exp))])
+           (if (eq? result 'match)
+               'match
+               (test-walk (cdr exp))))]
+        [((car exp))
+         (printf "matched ~a~n" (car exp))
+         (if (null? (cdr exp))
+             'match
+             (test-walk (cdr exp)))]
+        [else #f]))

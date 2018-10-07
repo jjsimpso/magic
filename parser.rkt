@@ -6,14 +6,14 @@ level : ">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
 offset : absoffset | reloffset | indoffset
-absoffset : INTEGER     ; An absolute offset from the start of the file.
+@absoffset : INTEGER     ; An absolute offset from the start of the file.
 reloffset : "&" INTEGER ; The offset relative to the last match offset one level up. Not allowed at level == 0
-indoffset : indoff | relindoff 
+@indoffset : indoff | relindoff 
 indoff : /"(" offset1 [ size ] [ op disp ] /")" ;; Read the file at <offset1> of width <size>.
 ;; If size is not specified, assume a long.
 ;; If <op> is given, then preform that
 ;; operation on the result and the <disp>.
-offset1 : absoffset | reloffset
+@offset1 : absoffset | reloffset
 size : byte | leshort | beshort | lelong | belong | melong
 
 byte : ".B" | ".b" | ".C" | ".c"	; A one-byte value.
@@ -46,7 +46,7 @@ unsigned : "u"
 ;; all types.
 numeric : ( numtype | datetype ) [ nummask ]
 
-numtype : byt | short | long | quad
+@numtype : byt | short | long | quad
 byt : "byte"
 short : "short" | "beshort" | "leshort"
 long : "long" | "lelong" | "belong" | "melong"
