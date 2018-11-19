@@ -2,7 +2,7 @@
 
 magic : EOL* query+
 query : line (level+ line)* /EOL*
-level : ">"
+level : /">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
 offset : absoffset | reloffset | indoffset
