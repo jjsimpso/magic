@@ -2,8 +2,64 @@
 
 (provide #%top #%top-interaction #%datum #%app)
 
-(define-syntax (query ...)
-  42)
+(define-syntax (query1 stx)
+  (syntax-case stx ()
+    [(query ...) 
+     (let ([q (car (syntax->datum #'(query ...)))])
+       (printf "q is ~a~n" q)
+       (datum->syntax stx q))]))
+
+
+(define (make-expr test)
+  (list test))
+
+(define (make-test func expr)
+  (cons func expr))
+
+(define (get-func test)
+  (car test))
+
+(define (get-expr test)
+  (cdr test))
+
+;; not final. doesn't work if level drops. need a new algorithm.
+(define (build-exp lines last-line cur-level new-level)
+  (cond 
+    [(empty? lines) (make-expr (make-test (car last-line) empty))]
+    [(and (pair? (car lines)) 
+          (equal? (caar lines) 'level))
+     (printf "increment level~n") 
+     (build-exp (cdr lines) last-line cur-level (add1 new-level))]
+    [(= new-level (add1 cur-level))
+     (printf "add new line with higher level~n") 
+     (if (empty? last-line)
+         (build-exp (cdr lines) 
+                    (car lines) 
+                    (add1 cur-level) 
+                    0)
+         (make-expr (make-test (car last-line) 
+                               (make-expr 
+                                (build-exp (cdr lines) 
+                                           (car lines) 
+                                           (add1 cur-level) 
+                                           0)))))]
+    [(= new-level cur-level)
+     (printf "new line at same level~n") 
+     (if (empty? last-line)
+         (build-exp (cdr lines) 
+                    (car lines)
+                    cur-level 
+                    0)
+         (cons (make-test (car last-line) empty) 
+               (build-exp (cdr lines) (car lines) cur-level 0)))]
+    ;[(< new-level cur-level)
+     
+    ))
+
+(define-syntax (query stx)
+  (let ([lines (cdr (syntax->datum stx))])
+    (display lines)
+    (datum->syntax stx lines)))
 
 (define-syntax-rule (magic-module-begin (magic QUERY ...))
   (#%module-begin QUERY ...))
