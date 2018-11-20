@@ -56,6 +56,49 @@
      
     ))
 
+(define (eat-lines-with-greater-level lines level)
+  (define next-line-level
+    (for/fold ([level 0])
+              ([line lines])
+      #:break (not (and (pair? line)
+                        (equal? (car line) 'level)))         
+          (add1 level)))
+
+  ;; drop any level lines from the lines list
+  (define next-lines (list-tail lines next-line-level))
+
+  ;(printf "nll = ~a, next lines = ~a~n" next-line-level next-lines)
+
+  (cond 
+    [(> next-line-level level)
+     (eat-lines-with-greater-level (cdr next-lines) level)]
+    [else
+     lines]))
+  
+(define (parse-levels lines level)
+  ;; count level of next line
+  (define next-line-level
+    (for/fold ([level 0])
+              ([line lines])
+      #:break (not (and (pair? line)
+                        (equal? (car line) 'level)))         
+          (add1 level)))
+  
+  ;; drop any level lines from the lines list
+  (define next-lines (list-tail lines next-line-level))
+  
+  (cond
+    [(empty? lines) empty]
+    [(= next-line-level level)
+     (cons (car next-lines)
+           (parse-levels (cdr next-lines) level))]
+    [(= next-line-level (add1 level))
+     (cons (cons 'level 
+                 (cons (car next-lines) 
+                       (parse-levels (cdr next-lines) (add1 level))))
+           (parse-levels (eat-lines-with-greater-level lines level) level))]
+    [(< next-line-level level) empty]))
+
 (define-syntax (query stx)
   (let ([lines (cdr (syntax->datum stx))])
     (display lines)
