@@ -47,10 +47,10 @@ unsigned : "u"
 numeric : ( numtype | datetype ) [ nummask ]
 
 @numtype : byt | short | long | quad
-byt : "byte"
-short : "short" | "beshort" | "leshort"
-long : "long" | "lelong" | "belong" | "melong"
-quad : "quad" | "lequad" | "bequad"
+@byt : "byte"
+@short : "short" | "beshort" | "leshort"
+@long : "long" | "lelong" | "belong" | "melong"
+@quad : "quad" | "lequad" | "bequad"
 
 datetype : udate32 | ldate32 | udate64 | ldate64
 udate32 : "date" | "bedate" | "ledate" | "medate"	;; UTC dates
@@ -60,7 +60,7 @@ ldate64 : "qldate" | "leqldate" | "beqldate"		;; local dates
 
 nummask : op INTEGER
 
-strtype : regex | search | string8 | string16
+@strtype : regex | search | string8 | string16
 
 regex : "regex" [ "/" regflag* ]
 regflag : "c" | "s" | linecnt
@@ -87,7 +87,7 @@ strtest : [ compare ] STRING
 ;; Note: If the STRING begins with a <compare>
 ;; character, the <compare> field cannot be
 ;; omitted.
-compare : "=" | "!" | "<" | ">" | "&" | "^"
+@compare : "=" | "!" | "<" | ">" | "&" | "^"
 truetest : "x"	    ; This always returns true. To test for the string "x" use "=x".
 
 message : [ nospflag ] ( STRING | FMT_STRING )  ; Message to print if test result is true.
