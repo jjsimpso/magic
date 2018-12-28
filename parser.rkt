@@ -66,9 +66,10 @@ regex : "regex" [ "/" regflag* ]
 regflag : "c" | "s" | linecnt
 linecnt : INTEGER     ; The number of lines to search.  If this missing or zero, the rest of the file is searched.
 
-search : "string" [ "/" srchflag+ ]
+search : "search" [ "/" srchflag+ ]
 srchflag : strflag | srchcnt
 srchcnt : INTEGER     ; The number of search tries.  If this is missing or zero, the rest of the file is searched.
+
 string8 : ( "string" | "pstring" ) [ "/" strflag+ ]
 strflag : "b" | "B" | "c" | "C"
 string16 : "bestring16" | "lestring16"
