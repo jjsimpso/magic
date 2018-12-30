@@ -1,5 +1,7 @@
 #lang racket
 
+(provide magic-test)
+
 (define-struct test-type
   ([type]
    [flags])
