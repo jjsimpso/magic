@@ -3,6 +3,7 @@
 (require brag/support)
 (require syntax/strip-context)
 (require "parser.rkt")
+;(require "magic-functions.rkt")
 
 (provide read-syntax)
 (provide make-tokenizer)
