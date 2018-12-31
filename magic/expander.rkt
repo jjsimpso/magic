@@ -2,6 +2,8 @@
 
 (provide #%top #%top-interaction #%datum #%app)
 
+(require "magic-functions.rkt")
+
 (define-syntax (query1 stx)
   (syntax-case stx ()
     [(query ...) 
@@ -108,6 +110,24 @@
 ;;            ...)]
 ;;     [_ expr]))
 
+(define-syntax line
+  (syntax-rules (offset type test message)
+    [(line (offset off) (type type-expr) (test test-expr)) 
+     (magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)))]
+    [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
+     (magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg)]
+    [(_) "no clause found in line"]))
+
+(provide line)
+
+;(define-syntax-rule (offset off)
+;  off)
+(provide offset)
+(provide type)
+(provide compare)
+
+;(define-syntax-rule (type expr)
+  
 (define-syntax (query stx)
   (let ([lines (cdr (syntax->datum stx))])
     ;(display lines)

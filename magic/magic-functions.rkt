@@ -1,6 +1,9 @@
 #lang racket
 
 (provide magic-test)
+(provide offset)
+(provide type)
+(provide compare)
 
 (define-struct test-type
   ([type]
@@ -98,7 +101,7 @@
 
 ;; ex: (with-input-from-file "adventure.rkt" (lambda () (magic-test 0 (type '(string8 "string") '(strtest "MZ")) (compare '(strtest "MZ")) "dos executable")))
 ;; ex: (with-input-from-file "/tmp/iexplore.exe" (lambda () (magic-test (indoff 60 (size '(lelong ".l"))) (type '(string8 "string") '(strtest "PE\u0000\u0000")) (compare '(strtest "PE\u0000\u0000")) "PE executable (MS-Windows)")))
-(define (magic-test off read-func compare-func message)
+(define (magic-test off read-func compare-func [message ""])
   (with-handlers ([exn:fail? (lambda (exn) #f)])
     (file-position (current-input-port) off)
     (let* ([data (read-func)]
