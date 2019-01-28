@@ -1,0 +1,11 @@
+0	string	a	File A
+>1	string	b	File B
+>>2	string	c	File C
+>>>3	string	d	File D
+>4	string	e	File E
+
+5	string	f	File F
+
+0	string	g	File G1
+1	string	g	File G2
+2	string	g	File G3
