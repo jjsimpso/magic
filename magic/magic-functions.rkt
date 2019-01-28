@@ -4,6 +4,7 @@
 (provide offset)
 (provide type)
 (provide compare)
+(provide indoff size)
 
 (define-struct test-type
   ([type]
