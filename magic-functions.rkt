@@ -4,7 +4,8 @@
 (provide offset)
 (provide type)
 (provide compare)
-(provide indoff size)
+(provide indoff)
+(provide read-leshort read-lelong)
 
 (define-struct test-type
   ([type]
