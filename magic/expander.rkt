@@ -1,9 +1,10 @@
-#lang racket
+#lang racket/base
 
 (provide #%top #%top-interaction #%datum #%app)
 
 (require "magic-functions.rkt")
-(require (for-syntax "expander-utils.rkt"))
+(require (for-syntax racket/base syntax/stx syntax/parse))
+(require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
 
 #;(define-syntax (query1 stx)
   (syntax-case stx ()
@@ -23,7 +24,8 @@
   (when line ...))
 
 ;; todo: switch to `syntax-parse` and use its `#:datum-literals` option or its `~datum` pattern form 
-;; to match raw datums without bindings
+;; to match raw datums without bindings. when i do this i should consider replacing type and compare
+;; with macros.
 (define-syntax line
   (syntax-rules (offset type test message)
     [(line (offset off) (type type-expr) (test test-expr)) 
@@ -34,6 +36,12 @@
 
 ;(define-syntax-rule (offset off)
 ;  off)
+
+(define-syntax (size stx)
+  (syntax-parse stx
+    #:datum-literals (leshort lelong)
+    [(_ (leshort ".s")) #'read-leshort]
+    [(_ (lelong ".l")) #'read-lelong]))
 
 ;(define-syntax-rule (type expr)
 
@@ -49,7 +57,9 @@
 (define-syntax-rule (magic-module-begin (magic QUERY ...))
   (#%module-begin QUERY ...))
 
-(provide (rename-out [magic-module-begin #%module-begin])
-         (all-from-out "magic-functions.rkt")
-         query line level when)
+(provide
+ (except-out (all-from-out racket/base) #%module-begin) 
+ (rename-out [magic-module-begin #%module-begin])
+ (all-from-out "magic-functions.rkt")
+ query line level size)
 
