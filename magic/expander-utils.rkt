@@ -1,6 +1,7 @@
 #lang racket
 
 (provide parse-levels)
+(provide transform-levels)
 
 (define (eat-lines-with-greater-level lines level)
   (define next-line-level
@@ -49,7 +50,25 @@
 (define (level-tree-to-code tree)
   #f)
 
-
+;; test: (transform-levels '((line1) (level (line2) (line3) (level (line4) (line5)))))
+;; test: (transform-levels '((line1) (level (line2))))
+(define (transform-levels tree)
+  (define (transform-levels-helper tree)
+    (cond 
+      [(null? tree) '()]
+      [(and (list? (cdr tree))
+            (not (empty? (cdr tree)))
+            (eq? (caadr tree) 'level))
+       (cons (append `(when ,(car tree))
+                     (list (cons 'begin (transform-levels-helper (cdadr tree)))))
+                     ;`((begin ,(transform-levels-helper (cdadr tree)))))
+             (transform-levels-helper (cddr tree)))]
+      [else 
+       (cons (car tree)
+             (transform-levels-helper (cdr tree)))]))
+  
+  ;; remove one level of list
+  (car (transform-levels-helper tree)))
 
 
 ;; probably don't need these
