@@ -20,9 +20,16 @@
            ...)]
     [_ expr]))
 
+;; this is not correct!!
 (define-syntax-rule (level line ...)
   (when line ...))
-
+#|
+(define-syntax (level stx)
+  (syntax-parse stx
+    #:datum-literals (level)
+    [(_ (line:expr (level ...))) #'(when line (level ...))]
+    [(_ (line:expr ...)) #']))
+|#
 ;; todo: switch to `syntax-parse` and use its `#:datum-literals` option or its `~datum` pattern form 
 ;; to match raw datums without bindings. when i do this i should consider replacing type and compare
 ;; with macros.
@@ -50,12 +57,17 @@
   (let ([lines (cdr (syntax->datum stx))])
     ;(display lines)
     ;(define lines-syntax-tree (parse-levels lines 0))
-    (define lines-syntax-tree (cons 'when (parse-levels lines 0)))
+    (define lines-syntax-tree (transform-levels 
+                               (parse-levels lines 0)))
     (display lines-syntax-tree)
+    (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
 (define-syntax-rule (magic-module-begin (magic QUERY ...))
-  (#%module-begin QUERY ...))
+  (#%module-begin 
+   (define (magic-query) 
+     QUERY ...)
+   (provide magic-query)))
 
 (provide
  (except-out (all-from-out racket/base) #%module-begin) 
