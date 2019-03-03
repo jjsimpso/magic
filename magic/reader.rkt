@@ -2,6 +2,7 @@
 
 (require brag/support)
 (require syntax/strip-context)
+(require racket/string)
 (require "parser.rkt")
 ;(require "magic-functions.rkt")
 
@@ -17,9 +18,14 @@
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!+-*/%|")))
 (define-lex-abbrev paren (:= 1 (char-set "()")))
-(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") "\\0"))
+(define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") "\\"))
 (define-lex-abbrev key-word (:or "beshort" "leshort" "byte" "short" "string"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
+
+(define (magic-string-to-racket s)
+  ;(string-replace s "\\0" "\u0000"))
+  ; convert raw string bytes to racket unicode representation
+  (regexp-replace* #px"\\\\(\\d{1,2})" s "\u00\\2"))
 
 (define hws-count 0)
 
@@ -51,7 +57,7 @@
                           (token "u" "u"))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   [string-chars (token 'STRING lexeme)]
+   [string-chars (token 'STRING (magic-string-to-racket lexeme))]
    ;[any-char (token 'CHAR lexeme)]))
 ))
 

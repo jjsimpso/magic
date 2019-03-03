@@ -6,19 +6,12 @@
 (require (for-syntax racket/base syntax/stx syntax/parse))
 (require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
 
-#;(define-syntax (query1 stx)
-  (syntax-case stx ()
-    [(query ...) 
-     (let ([q (car (syntax->datum #'(query ...)))])
-       (printf "q is ~a~n" q)
-       (datum->syntax stx q))]))
-
-#;(define-syntax level
-  (syntax-rules ()
-    [(level line ...)
-     (cond [line #t]
-           ...)]
-    [_ expr]))
+(define-syntax (any-true? stx)
+  (syntax-parse stx
+    [(_ body ...)
+     #'((let ([result #f])
+          (when body (set! result #t))
+          ...))]))
 
 ;; this is not correct!!
 (define-syntax-rule (level line ...)
