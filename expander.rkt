@@ -6,16 +6,13 @@
 (require (for-syntax racket/base syntax/stx syntax/parse))
 (require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
 
-(define-syntax (any-true? stx)
-  (syntax-parse stx
-    [(_ body ...)
-     #'((let ([result #f])
-          (when body (set! result #t))
-          ...))]))
+;; any-true? is like an or that doesn't short circuit
+(define-syntax-rule (any-true? body ...)
+  (let ([result #f])
+     (when body (set! result #t))
+     ...
+     result))
 
-;; this is not correct!!
-(define-syntax-rule (level line ...)
-  (when line ...))
 #|
 (define-syntax (level stx)
   (syntax-parse stx
@@ -66,5 +63,5 @@
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line level size)
+ query line size any-true?)
 
