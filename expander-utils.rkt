@@ -50,6 +50,23 @@
 (define (level-tree-to-code tree)
   #f)
 
+
+;; transforms code from something like this:
+;; ((line1)
+;;  (level) (line2)
+;;          (line3)
+;;          (level (line4)
+;;                 (line5))))
+;;
+;; to this:
+;; (when (line1)
+;;   (begin
+;;     (line2)
+;;     (when (line3)
+;;       (begin
+;;         (line4)
+;;         (line5)))))
+;;
 ;; test: (transform-levels '((line1) (level (line2) (line3) (level (line4) (line5)))))
 ;; test: (transform-levels '((line1) (level (line2))))
 (define (transform-levels tree)
