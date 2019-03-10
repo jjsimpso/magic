@@ -13,6 +13,28 @@
      ...
      result))
 
+;; like when but it returns #f instead of #<void> if test expression is false
+;; code modified from official when macro 
+(define-syntax when*
+  (lambda (x)
+    (let ([l (syntax->list x)])
+      (if (and l
+               (> (length l) 2))
+          (datum->syntax
+           (quote-syntax here)
+           (list (quote-syntax if)
+                 (stx-car (stx-cdr x))
+                 (list*
+                  (quote-syntax let-values)
+                  (quote-syntax ())
+                  (stx-cdr (stx-cdr x)))
+                 (quote-syntax #f))
+           x)
+          (raise-syntax-error
+           #f
+           "bad syntax"
+           x)))))
+  
 #|
 (define-syntax (level stx)
   (syntax-parse stx
@@ -56,12 +78,12 @@
 (define-syntax-rule (magic-module-begin (magic QUERY ...))
   (#%module-begin 
    (define (magic-query) 
-     QUERY ...)
+     (or QUERY ...))
    (provide magic-query)))
 
 (provide
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line size any-true?)
+ query line size any-true? when*)
 

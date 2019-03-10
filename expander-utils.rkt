@@ -76,7 +76,7 @@
       [(and (list? (cdr tree))
             (not (empty? (cdr tree)))
             (eq? (caadr tree) 'level))
-       (cons (append `(when ,(car tree))
+       (cons (append `(when* ,(car tree))
                      (list (cons 'any-true? (transform-levels-helper (cdadr tree)))))
                      ;`((begin ,(transform-levels-helper (cdadr tree)))))
              (transform-levels-helper (cddr tree)))]
