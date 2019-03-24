@@ -7,7 +7,7 @@ line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
 offset : absoffset | reloffset | indoffset
 @absoffset : INTEGER     ; An absolute offset from the start of the file.
-reloffset : "&" INTEGER ; The offset relative to the last match offset one level up. Not allowed at level == 0
+reloffset : /"&" INTEGER ; The offset relative to the last match offset one level up. Not allowed at level == 0
 @indoffset : indoff | relindoff 
 indoff : /"(" offset1 [ size ] [ op disp ] /")" ;; Read the file at <offset1> of width <size>.
 ;; If size is not specified, assume a long.
@@ -34,7 +34,7 @@ memvalue : "(" INTEGER ")"
 ;; relative offset matching that of <offset1>.
 ;; Read the file at the resulting offset with
 ;; the same size as <offset1>
-relindoff : "&" indoff	; add <indoff> to the last match offset at one level up
+relindoff : /"&" indoff	; add <indoff> to the last match offset at one level up
 
 type : [ unsigned ] ( numeric | strtype | default )
 

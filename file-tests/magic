@@ -9,3 +9,12 @@
 0	string	g	File G1
 1	string	g	File G2
 2	string	g	File G3
+
+0	string	m
+>1	string	n	N
+>1	string	s	S
+>>2	string	w	W
+>>>3	string	x	X
+>>>3	string	y	Y
+>>>3	string	z	Z
+>>2	string	q	Q

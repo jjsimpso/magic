@@ -3,15 +3,25 @@
 (provide #%top #%top-interaction #%datum #%app)
 
 (require "magic-functions.rkt")
+(require racket/stxparam)
 (require (for-syntax racket/base syntax/stx syntax/parse))
 (require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
 
+(define-syntax-parameter last-level-offset
+  (lambda (stx)
+    (raise-syntax-error (syntax-e stx) "can only be used inside any-true?")))
+
 ;; any-true? is like an or that doesn't short circuit
+;; since any-true? indicates the start of a new level we save the current
+;; file position to use for relative offsets at this level.
 (define-syntax-rule (any-true? body ...)
-  (let ([result #f])
-     (when body (set! result #t))
-     ...
-     result))
+  (let ([result #f]
+        [tmp-offset (file-position (current-input-port))])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
+      (printf "last level offset is ~a~n" last-level-offset)
+      (when body (set! result #t))
+      ...
+      result)))
 
 ;; like when but it returns #f instead of #<void> if test expression is false
 ;; code modified from official when macro 
@@ -53,8 +63,11 @@
      (magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg)]
     [(_) "no clause found in line"]))
 
-;(define-syntax-rule (offset off)
-;  off)
+(define-syntax-rule (offset off)
+  off)
+
+(define-syntax-rule (reloffset off)
+  (+ last-level-offset off))
 
 (define-syntax (size stx)
   (syntax-parse stx
@@ -85,5 +98,5 @@
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line size any-true? when*)
+ query line offset reloffset size any-true? when*)
 

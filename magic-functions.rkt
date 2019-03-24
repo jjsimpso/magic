@@ -1,7 +1,7 @@
 #lang racket
 
 (provide magic-test)
-(provide offset)
+;(provide offset)
 (provide type)
 (provide compare)
 (provide indoff)
@@ -108,7 +108,7 @@
     (printf "running magic-test: ~a,~a,~a~n" off read-func compare-func)
     ;(display off)
     ;(display read-func)
-    ;(display compare-func)    
+    ;(display compare-func)
     (file-position (current-input-port) off)
     (let* ([data (read-func)]
            [result (compare-func data)])
