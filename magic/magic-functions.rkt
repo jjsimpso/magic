@@ -105,7 +105,7 @@
 ;; ex: (with-input-from-file "/tmp/iexplore.exe" (lambda () (magic-test (indoff 60 (size '(lelong ".l"))) (type '(string8 "string") '(strtest "PE\u0000\u0000")) (compare '(strtest "PE\u0000\u0000")) "PE executable (MS-Windows)")))
 (define (magic-test off read-func compare-func [message ""])
   (with-handlers ([exn:fail? (lambda (exn) #f)])
-    (printf "running magic-test: ~a,~a,~a~n" off read-func compare-func)
+    ;(printf "running magic-test: ~a,~a,~a~n" off read-func compare-func)
     ;(display off)
     ;(display read-func)
     ;(display compare-func)
@@ -113,5 +113,5 @@
     (let* ([data (read-func)]
            [result (compare-func data)])
       (when (and result (non-empty-string? message))
-        (printf "~a~n" message))
+        (printf "~a" message))
       result)))

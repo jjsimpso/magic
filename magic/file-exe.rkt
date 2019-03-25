@@ -7,7 +7,7 @@
 #>>(4.s*512) leshort !0x014c MZ executable (MS-DOS)
 # skip the whole block below if it is not an extended executable
 >0x18       leshort >0x3f
->>(0x3c.l)  string  PE\0\0  PE executable (MS-Windows)
+>>(0x3c.l)  string  PE\0\0  PE executable (MS-Windows) 
 >>>&0       leshort 0x14c   for Intel 80386
 >>>&0       leshort 0x184   for DEC Alpha
 >>>&0       leshort 0x8664  for AMD64

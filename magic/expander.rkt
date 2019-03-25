@@ -18,7 +18,7 @@
   (let ([result #f]
         [tmp-offset (file-position (current-input-port))])
     (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
-      (printf "last level offset is ~a~n" last-level-offset)
+      ;(printf "last level offset is ~a~n" last-level-offset)
       (when body (set! result #t))
       ...
       result)))
