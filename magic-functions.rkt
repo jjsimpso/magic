@@ -5,7 +5,9 @@
 (provide type)
 (provide compare)
 (provide indoff)
-(provide read-leshort read-lelong)
+(provide read-byt read-short read-long read-quad read-float read-double)
+(provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
+(provide read-beshort read-belong read-bequad read-befloat read-bedouble)
 
 (define-struct test-type
   ([type]
@@ -19,6 +21,41 @@
              result
              (loop (bytes-append result (bytes next-char)))))))
 
+(define (read-byt)
+  (let ([data (read-byte)])
+    (when (eof-object? data) (error "eof"))
+    data))
+
+(define (read-short)
+  (let ([data (read-bytes 2)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 2) (error "failure to read sufficient data"))
+    (integer-bytes->integer data #t (system-big-endian?))))
+
+(define (read-long)
+  (let ([data (read-bytes 4)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 4) (error "failure to read sufficient data"))
+    (integer-bytes->integer data #t (system-big-endian?))))
+
+(define (read-quad)
+  (let ([data (read-bytes 8)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
+    (integer-bytes->integer data #t (system-big-endian?))))
+
+(define (read-float)
+  (let ([data (read-bytes 4)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 4) (error "failure to read sufficient data"))
+    (floating-point-bytes->real data (system-big-endian?))))
+
+(define (read-double)
+  (let ([data (read-bytes 8)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
+    (floating-point-bytes->real data (system-big-endian?))))
+
 ;; I don't think the null terminated read works with magic. The null bytes must be made explicit in the comparison.
 (define (read-string8 [len 0])
   (if (> len 0)
@@ -30,16 +67,84 @@
 (define (read-leshort)
   (let ([data (read-bytes 2)])
     (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 2) (error "failure to read sufficient data"))
     (bitwise-ior (arithmetic-shift (bytes-ref data 1) 8)
                  (bytes-ref data 0))))
 
 (define (read-lelong)
   (let ([data (read-bytes 4)])
     (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 4) (error "failure to read sufficient data"))
     (bitwise-ior (arithmetic-shift (bytes-ref data 3) 24)
                  (arithmetic-shift (bytes-ref data 2) 16)
                  (arithmetic-shift (bytes-ref data 1) 8)
                  (bytes-ref data 0))))
+
+(define (read-lequad)
+  (let ([data (read-bytes 8)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
+    (bitwise-ior (arithmetic-shift (bytes-ref data 7) 56)
+                 (arithmetic-shift (bytes-ref data 6) 48)
+                 (arithmetic-shift (bytes-ref data 5) 40)
+                 (arithmetic-shift (bytes-ref data 4) 32)
+                 (arithmetic-shift (bytes-ref data 3) 24)
+                 (arithmetic-shift (bytes-ref data 2) 16)
+                 (arithmetic-shift (bytes-ref data 1) 8)
+                 (bytes-ref data 0))))
+
+(define (read-lefloat)
+  (let ([data (read-bytes 4)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 4) (error "failure to read sufficient data"))
+    (floating-point-bytes->real data #f)))
+
+(define (read-ledouble)
+  (let ([data (read-bytes 8)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
+    (floating-point-bytes->real data #f)))
+
+(define (read-beshort)
+  (let ([data (read-bytes 2)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 2) (error "failure to read sufficient data"))
+    (bitwise-ior (arithmetic-shift (bytes-ref data 0) 8)
+                 (bytes-ref data 1))))
+
+(define (read-belong)
+  (let ([data (read-bytes 4)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 4) (error "failure to read sufficient data"))
+    (bitwise-ior (arithmetic-shift (bytes-ref data 0) 24)
+                 (arithmetic-shift (bytes-ref data 1) 16)
+                 (arithmetic-shift (bytes-ref data 2) 8)
+                 (bytes-ref data 3))))
+
+(define (read-bequad)
+  (let ([data (read-bytes 8)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
+    (bitwise-ior (arithmetic-shift (bytes-ref data 0) 56)
+                 (arithmetic-shift (bytes-ref data 1) 48)
+                 (arithmetic-shift (bytes-ref data 2) 40)
+                 (arithmetic-shift (bytes-ref data 3) 32)
+                 (arithmetic-shift (bytes-ref data 4) 24)
+                 (arithmetic-shift (bytes-ref data 5) 16)
+                 (arithmetic-shift (bytes-ref data 6) 8)
+                 (bytes-ref data 7))))
+
+(define (read-befloat)
+  (let ([data (read-bytes 4)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 4) (error "failure to read sufficient data"))
+    (floating-point-bytes->real data #t)))
+
+(define (read-bedouble)
+  (let ([data (read-bytes 8)])
+    (when (eof-object? data) (error "eof"))
+    (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
+    (floating-point-bytes->real data #t)))
 
 (define (offset off)
   off)
@@ -60,6 +165,8 @@
   (case size-expr
     [((leshort ".s")) read-leshort]
     [((lelong ".l")) read-lelong]
+    [((beshort ".S")) read-beshort]
+    [((belong ".L")) read-belong]
   ))
 
 (define (op op-expr)
@@ -90,7 +197,23 @@
                (error "eof")
                (bytes->string/utf-8 data)))))]
     ;[((search "string")) read-str]
-    [((numeric "leshort")) read-leshort]))
+    [((numeric "byte")) read-byt]
+    [((numeric "short")) read-short]
+    [((numeric "long")) read-long]
+    [((numeric "quad")) read-quad]
+    [((numeric "float")) read-float]
+    [((numeric "double")) read-double]
+    [((numeric "leshort")) read-leshort]
+    [((numeric "lelong")) read-lelong]
+    [((numeric "lequad")) read-lequad]
+    [((numeric "lefloat")) read-lefloat]
+    [((numeric "ledouble")) read-ledouble]
+    [((numeric "beshort")) read-beshort]
+    [((numeric "belong")) read-belong]
+    [((numeric "bequad")) read-bequad]
+    [((numeric "befloat")) read-befloat]
+    [((numeric "bedouble")) read-bedouble]
+    ))
 
 ;; returns a function to check the value read from the file
 (define (compare compare-expr)
@@ -104,7 +227,9 @@
 ;; ex: (with-input-from-file "adventure.rkt" (lambda () (magic-test 0 (type '(string8 "string") '(strtest "MZ")) (compare '(strtest "MZ")) "dos executable")))
 ;; ex: (with-input-from-file "/tmp/iexplore.exe" (lambda () (magic-test (indoff 60 (size '(lelong ".l"))) (type '(string8 "string") '(strtest "PE\u0000\u0000")) (compare '(strtest "PE\u0000\u0000")) "PE executable (MS-Windows)")))
 (define (magic-test off read-func compare-func [message ""])
-  (with-handlers ([exn:fail? (lambda (exn) #f)])
+  (with-handlers ([exn:fail? (lambda (exn) 
+                               (printf "error: ~a~n" (exn-message exn))
+                               #f)])
     ;(printf "running magic-test: ~a,~a,~a~n" off read-func compare-func)
     ;(display off)
     ;(display read-func)

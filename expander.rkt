@@ -73,7 +73,10 @@
   (syntax-parse stx
     #:datum-literals (leshort lelong)
     [(_ (leshort ".s")) #'read-leshort]
-    [(_ (lelong ".l")) #'read-lelong]))
+    [(_ (lelong ".l")) #'read-lelong]
+    [(_ (beshort ".s")) #'read-beshort]
+    [(_ (belong ".l")) #'read-belong]
+    ))
 
 ;(define-syntax-rule (type expr)
 
