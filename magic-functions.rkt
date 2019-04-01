@@ -124,6 +124,20 @@
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data #t)))
 
+;; not sure if I'll need these
+(define (read-leshort-signed)
+  (read-leshort #t))
+
+(define (read-lelong-signed)
+  (read-lelong #t))
+
+(define (read-beshort-signed)
+  (read-beshort #t))
+
+(define (read-belong-signed)
+  (read-belong #t))
+
+
 (define (offset off)
   off)
 
