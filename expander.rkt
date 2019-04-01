@@ -71,7 +71,7 @@
 
 (define-syntax (size stx)
   (syntax-parse stx
-    #:datum-literals (leshort lelong)
+    #:datum-literals (leshort lelong beshort belong)
     [(_ (leshort ".s")) #'read-leshort]
     [(_ (lelong ".l")) #'read-lelong]
     [(_ (beshort ".s")) #'read-beshort]

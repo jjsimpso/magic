@@ -9,11 +9,6 @@
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
 
-(define-struct test-type
-  ([type]
-   [flags])
-  #:transparent)
-
 (define (read-null-terminated-ascii-string [port (current-input-port)])
    (let loop ((result #""))
       (let ((next-char (read-byte port)))
