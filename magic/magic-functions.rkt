@@ -208,6 +208,7 @@
     [(list 'strtest x) (lambda (s) (string=? s x))]
     [(list 'numtest "<" x) (lambda (n) (< n x))]
     [(list 'numtest ">" x) (lambda (n) (> n x))]
+    [(list 'numtest "!" x) (lambda (n) (not (= n x)))]
     [(list 'numtest x) (lambda (n) (= n x))]
     [_ 'nothing]))
 
