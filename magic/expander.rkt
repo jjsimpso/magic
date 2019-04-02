@@ -78,6 +78,21 @@
     [(_ (belong ".l")) #'read-belong]
     ))
 
+(define-syntax (op stx)
+  (syntax-parse stx
+    [(_ "*") #'*]
+    [(_ "+") #'+]
+    [(_ "-") #'-]
+    [(_ "/") #'/]
+    [(_ "%") #'remainder]
+    [(_ "&") #'bitwise-and]
+    [(_ "|") #'bitwise-ior]
+    [(_ "^") #'bitwise-xor]
+    ))
+
+(define-syntax-rule (disp arg)
+  arg)
+
 ;(define-syntax-rule (type expr)
 
 (define-syntax (query stx)
@@ -101,5 +116,5 @@
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line offset reloffset size any-true? when*)
+ query line offset reloffset size op disp any-true? when*)
 
