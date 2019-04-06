@@ -19,7 +19,8 @@
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!+-*/%|")))
 (define-lex-abbrev paren (:= 1 (char-set "()")))
 (define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") "\\"))
-(define-lex-abbrev key-word (:or "beshort" "leshort" "byte" "short" "string"))
+(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "string" "search" "regex"))
+(define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
 (define (magic-string-to-racket s)
@@ -36,6 +37,10 @@
     (begin
       (set! hws-count 0)
       (token 'COMMENT #:skip? #t))]
+   [(from/to "!:" "\n")
+    (begin
+      (set! hws-count 0)
+      (token 'MIME #:skip? #t))]
    ["\n" 
     (begin
       (displayln "newline found1") 
@@ -50,11 +55,11 @@
    [paren (token lexeme lexeme)]
    [(:seq "." size-specifier) (token lexeme lexeme)]
    [key-word (token lexeme lexeme)]
-   [(:seq "u" key-word) (let ([pos (file-position input-port)])
-                          (file-position input-port (- pos 
-                                                       (- (string-length lexeme) 
-                                                          1)))
-                          (token "u" "u"))]
+   [(:seq "u" integer-type) (let ([pos (file-position input-port)])
+                              (file-position input-port (- pos 
+                                                           (- (string-length lexeme) 
+                                                              1)))
+                              (token "u" "u"))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [string-chars (token 'STRING (magic-string-to-racket lexeme))]
