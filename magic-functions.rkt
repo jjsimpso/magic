@@ -177,7 +177,9 @@
   (case type-expr
     ;[((string8 "string")) read-string8]
     [((string8 "string")) 
-     (let ([len (string-length (cadr compare-expr))]) ; len calculation may not work for all cases
+     (let ([len (string-length (last compare-expr))]) ; len calculation may not work for all cases
+                                ; the last here is making the assumption that the string to search for
+                                ; is the last element of the (strtest ...) form
        (lambda () 
          (let ([data (read-bytes len)])
            (if (eof-object? data)
@@ -206,10 +208,22 @@
 (define (compare compare-expr)
   (match compare-expr
     [(list 'strtest x) (lambda (s) (string=? s x))]
+    [(list 'strtest "<" x) (lambda (s) (string<? s x))]
+    [(list 'strtest ">" x) (lambda (s) (string>? s x))]
+    [(list 'strtest "=" x) (lambda (s) (string=? s x))]
+    [(list 'numtest x) (lambda (n) (= n x))]
     [(list 'numtest "<" x) (lambda (n) (< n x))]
     [(list 'numtest ">" x) (lambda (n) (> n x))]
     [(list 'numtest "!" x) (lambda (n) (not (= n x)))]
-    [(list 'numtest x) (lambda (n) (= n x))]
+    ; the next three haven't been fully tested
+    [(list 'numtest "&" x) (lambda (n) 
+                             (not (= (bitwise-and n x) 
+                                     0)))]
+    [(list 'numtest "^" x) (lambda (n)
+                             (not
+                              (bitwise-ior n (bitwise-and n x))))]
+    [(list 'numtest "~" x) (lambda (n) (= n (bitwise-not x)))]
+    [(list 'numtest "=" x) (lambda (n) (= n x))]
     [_ 'nothing]))
 
 ;; ex: (with-input-from-file "adventure.rkt" (lambda () (magic-test 0 (type '(string8 "string") '(strtest "MZ")) (compare '(strtest "MZ")) "dos executable")))
