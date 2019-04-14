@@ -8,6 +8,9 @@
 (provide read-byt read-short read-long read-quad read-float read-double)
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
+(provide read-byt-signed read-short-signed read-long-signed read-quad-signed)
+(provide read-leshort-signed read-lelong-signed read-lequad-signed)
+(provide read-beshort-signed read-belong-signed read-bequad-signed)
 
 (define (read-null-terminated-ascii-string [port (current-input-port)])
    (let loop ((result #""))
@@ -16,10 +19,10 @@
              result
              (loop (bytes-append result (bytes next-char)))))))
 
-(define (read-byt)
+(define (read-byt [signed? #f])
   (let ([data (read-byte)])
     (when (eof-object? data) (error "eof"))
-    data))
+    (integer-bytes->integer (bytes data) signed?)))
 
 (define (read-short [signed? #f])
   (let ([data (read-bytes 2)])
@@ -119,12 +122,26 @@
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data #t)))
 
-;; not sure if I'll need these
+(define (read-byt-signed)
+  (read-byt #t))
+
+(define (read-short-signed)
+  (read-short #t))
+
+(define (read-long-signed)
+  (read-long #t))
+
+(define (read-quad-signed)
+  (read-quad #t))
+
 (define (read-leshort-signed)
   (read-leshort #t))
 
 (define (read-lelong-signed)
   (read-lelong #t))
+
+(define (read-lequad-signed)
+  (read-lequad #t))
 
 (define (read-beshort-signed)
   (read-beshort #t))
@@ -132,6 +149,8 @@
 (define (read-belong-signed)
   (read-belong #t))
 
+(define (read-bequad-signed)
+  (read-bequad #t))
 
 (define (offset off)
   off)
@@ -174,6 +193,11 @@
 ;; some types of comparisons benefit from knowing the data to compare to when reading from the file
 ;; for string8s, for instance, we need to read the exact number of bytes required to match the string
 (define (type type-expr compare-expr)
+  (define signed-compare (if (and (eq? (car compare-expr) 'numtest)
+                                  (< (last compare-expr) 0))
+                             #t
+                             #f))
+  ;(printf "type expr: ") (display type-expr) (printf "~n")
   (case type-expr
     ;[((string8 "string")) read-string8]
     [((string8 "string")) 
@@ -186,20 +210,30 @@
                (error "eof")
                (bytes->string/utf-8 data)))))]
     ;[((search "string")) read-str]
-    [((numeric "byte")) read-byt]
-    [((numeric "short")) read-short]
-    [((numeric "long")) read-long]
-    [((numeric "quad")) read-quad]
+    [((numeric "byte")) (if signed-compare read-byt-signed read-byt)]
+    [((numeric "u" "byte")) read-byt]
+    [((numeric "short")) (if signed-compare read-short-signed read-short)]
+    [((numeric "u" "short")) read-short]
+    [((numeric "long")) (if signed-compare read-long-signed read-long)]
+    [((numeric "u" "long")) read-long]
+    [((numeric "quad")) (if signed-compare read-quad-signed read-quad)]
+    [((numeric "u" "quad")) read-quad]
     [((numeric "float")) read-float]
     [((numeric "double")) read-double]
-    [((numeric "leshort")) read-leshort]
-    [((numeric "lelong")) read-lelong]
-    [((numeric "lequad")) read-lequad]
+    [((numeric "leshort")) (if signed-compare read-leshort-signed read-leshort)]
+    [((numeric "u" "leshort")) read-leshort]
+    [((numeric "lelong")) (if signed-compare read-lelong-signed read-lelong)]
+    [((numeric "u" "lelong")) read-lelong]
+    [((numeric "lequad")) (if signed-compare read-lequad-signed read-lequad)]
+    [((numeric "u" "lequad")) read-lequad]
     [((numeric "lefloat")) read-lefloat]
     [((numeric "ledouble")) read-ledouble]
-    [((numeric "beshort")) read-beshort]
-    [((numeric "belong")) read-belong]
-    [((numeric "bequad")) read-bequad]
+    [((numeric "beshort")) (if signed-compare read-beshort-signed read-beshort)]
+    [((numeric "u" "beshort")) read-beshort]
+    [((numeric "belong")) (if signed-compare read-belong-signed read-belong)]
+    [((numeric "u" "belong")) read-belong]
+    [((numeric "bequad")) (if signed-compare read-bequad-signed read-bequad)]
+    [((numeric "u" "bequad")) read-bequad]
     [((numeric "befloat")) read-befloat]
     [((numeric "bedouble")) read-bedouble]
     ))
