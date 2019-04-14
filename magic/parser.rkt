@@ -36,15 +36,15 @@ memvalue : "(" INTEGER ")"
 ;; the same size as <offset1>
 relindoff : /"&" indoff	; add <indoff> to the last match offset at one level up
 
-type : [ unsigned ] ( numeric | strtype | default )
+type : ( numeric | strtype | default )
 
-unsigned : "u"
+@unsigned : "u"
 ;; The value is unsigned.
 ;; This affects the sign extension of numeric
 ;; types and the '<' and '>' compares.  It is
 ;; intended for numeric types, but allowed on
 ;; all types.
-numeric : ( numtype | datetype ) [ nummask ]
+numeric : [ unsigned ] ( numtype | datetype ) [ nummask ]
 
 @numtype : byt | short | long | quad
 @byt : "byte"

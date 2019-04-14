@@ -61,6 +61,7 @@
                                                               1)))
                               (token "u" "u"))]
    [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [string-chars (token 'STRING (magic-string-to-racket lexeme))]
    ;[any-char (token 'CHAR lexeme)]))
