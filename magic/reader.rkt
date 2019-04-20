@@ -26,11 +26,32 @@
 (define-lex-abbrev string-type (:or "string" "search" "regex"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
-(define (magic-string-to-racket s)
+(define (raw-string-to-racket s)
   ;(string-replace s "\\0" "\u0000"))
   ; convert raw string bytes to racket unicode representation
-  (regexp-replace* #px"\\\\(\\d{1,2})" s "\u00\\2"))
+  ;(regexp-replace* #px"\\\\(\\d{1,2})" s "\u00\\2"))
+  (define (escapable-char? c)
+    (and (not (eof-object? c))
+         (or (char=? c #\a) (char=? c #\b) (char=? c #\f) (char=? c #\n) (char=? c #\r) (char=? c #\t) (char=? c #\v) 
+             (char=? c #\\) (char=? c #\0) (char=? c #\space)
+             )))
+  (define (escape c)
+    (cond [(char=? c #\n) "\n"]
+          [(char=? c #\0) "\0"]
+          [(char=? c #\space) " "]
+          [(char=? c #\\) "\\"]))
 
+  (define sp (open-input-string s))
+  (let loop ([new-string ""]
+             [c (read-char sp)])
+    (cond 
+      [(eof-object? c) new-string]
+      [(and (char=? c #\\) (escapable-char? (peek-char sp)))
+       (loop (string-append new-string (escape (read-char sp)))
+             (read-char sp))]
+      [else (loop (string-append new-string (string c))
+                  (read-char sp))])))
+    
 (define magic-lexer
   (lexer-srcloc
    ;[(char-set "><-.,+[]") lexeme]
@@ -68,7 +89,7 @@
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   ;[string-chars (token 'STRING (magic-string-to-racket lexeme))]
+   ;[string-chars (token 'STRING (raw-string-to-racket lexeme))]
    ;[any-char (token 'CHAR lexeme)]))
 ))
 
@@ -82,7 +103,7 @@
    [(from/stop-before any-char "\n") 
     (begin
       (set! hws-count 0)
-      (token 'STRING (magic-string-to-racket lexeme)))]))
+      (token 'STRING (raw-string-to-racket lexeme)))]))
    ;[any-string (token 'STRING lexeme)]))
 
 (define magic-lexer-string-flags
@@ -105,7 +126,8 @@
    [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
     (begin
       (set! current-lexer magic-lexer)
-      (token 'STRING (magic-string-to-racket lexeme)))]))
+      (printf "lexeme read as: ~a, converted to: ~a~n" lexeme (raw-string-to-racket lexeme))
+      (token 'STRING (raw-string-to-racket lexeme)))]))
 
 
 (define hws-count 0)

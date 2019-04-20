@@ -14,3 +14,5 @@
 >>(0x3c.l)  string  LX\0\0  LX executable (OS/2)
 
 0	beshort	0x0206	ALAN game data
+
+0	string	t\\0	test string escapes
