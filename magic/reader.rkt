@@ -127,7 +127,7 @@
     (string-append lexeme (magic-lexer-string-helper input-port))]
    [(:seq "\\" any-char)
     (string-append lexeme (magic-lexer-string-helper input-port))]
-   [(from/to (:~ " " "\t" "\n" "\\") (:seq "\\" " "))
+   [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
     (string-append lexeme (magic-lexer-string-helper input-port))]
    [(from/stop-before (:~ " " "\\") (:or " " "\t" "\n"))
     lexeme]))

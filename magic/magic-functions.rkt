@@ -208,7 +208,7 @@
          (let ([data (read-bytes len)])
            (if (eof-object? data)
                (error "eof")
-               (bytes->string/utf-8 data)))))]
+               (bytes->string/latin-1 data)))))]
     ;[((search "string")) read-str]
     [((numeric "byte")) (if signed-compare read-byt-signed read-byt)]
     [((numeric "u" "byte")) read-byt]
