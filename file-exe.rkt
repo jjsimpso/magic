@@ -15,4 +15,6 @@
 
 0	beshort	0x0206	ALAN game data
 
-0	string	t\ \t    test string escapes
+0	string	t\ \t\    test string escapes
+
+0	string	MZ\ 
