@@ -39,6 +39,7 @@
     (cond [(char=? c #\n) "\n"]
           [(char=? c #\0) "\0"]
           [(char=? c #\space) " "]
+          [(char=? c #\t) "\t"]
           [(char=? c #\\) "\\"]))
 
   (define sp (open-input-string s))
@@ -116,13 +117,31 @@
       (set! current-lexer magic-lexer-string)
       (token 'HWS #:skip? #f))]))
 
+(define magic-lexer-string-helper
+  (lexer
+   [(:or " " "\t" "\n")
+    (begin
+      (file-position input-port (sub1 (file-position input-port)))
+      "")]
+   [(:seq "\\" " ") 
+    (string-append lexeme (magic-lexer-string-helper input-port))]
+   [(:seq "\\" any-char)
+    (string-append lexeme (magic-lexer-string-helper input-port))]
+   [(from/to (:~ " " "\t" "\n" "\\") (:seq "\\" " "))
+    (string-append lexeme (magic-lexer-string-helper input-port))]
+   [(from/stop-before (:~ " " "\\") (:or " " "\t" "\n"))
+    lexeme]))
+
 (define magic-lexer-string
   (lexer-srcloc
-   [hws
-    (begin 
-      (set! hws-count (add1 hws-count))
-      (token 'HWS #:skip? #f))]
-   ;[string-chars
+   ;; include escaped space characters in the string
+   ;; always longer than the case below because it includes the escaped space character in the match
+   [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
+    (begin
+      (set! current-lexer magic-lexer)
+      (printf "running string helper~n")
+      (token 'STRING (raw-string-to-racket (string-append lexeme (magic-lexer-string-helper input-port)))))]
+   ;; the simple case with no escaped space characters
    [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
     (begin
       (set! current-lexer magic-lexer)

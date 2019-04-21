@@ -16,6 +16,6 @@
   ;"10	ubyte	-35	byte at address 0xa: signed when decimal comparison\n")
   ;"(0x3c.l)  string  =PE\\0\\0  PE executable (MS-Windows)\n")
   ;"18	search/4261301	TRUEVISION-XFILE.\\0\n")
-  "18	search	TRUEVISION-XFILE.\\0   matched truevision\n")
+  "18	search	A\\ \\tTRUEVISION-XFILE.\\0   matched truevision\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")
