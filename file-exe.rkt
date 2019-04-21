@@ -17,4 +17,5 @@
 
 0	string	t\ \t\    test string escapes
 
-0	string	MZ\ 
+0	string	MZ 
+>0x2    string  aaa       testing
