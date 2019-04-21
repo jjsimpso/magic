@@ -101,7 +101,7 @@
       (displayln "newline found2") 
       (set! hws-count 0)
       (token 'EOL))]
-   [(from/stop-before any-char "\n") 
+   [(from/stop-before (:~ "\n") "\n") 
     (begin
       (set! hws-count 0)
       (token 'STRING (raw-string-to-racket lexeme)))]))
@@ -129,7 +129,7 @@
     (string-append lexeme (magic-lexer-string-helper input-port))]
    [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
     (string-append lexeme (magic-lexer-string-helper input-port))]
-   [(from/stop-before (:~ " " "\\") (:or " " "\t" "\n"))
+   [(from/stop-before (:~ " " "\t" "\n" "\\") (:or " " "\t" "\n"))
     lexeme]))
 
 (define magic-lexer-string
@@ -139,7 +139,7 @@
    [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
     (begin
       (set! current-lexer magic-lexer)
-      (printf "running string helper~n")
+      (printf "running string helper, lexeme = ~a~n" lexeme)
       (token 'STRING (raw-string-to-racket (string-append lexeme (magic-lexer-string-helper input-port)))))]
    ;; the simple case with no escaped space characters
    [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
