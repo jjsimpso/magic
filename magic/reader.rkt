@@ -123,11 +123,7 @@
     (begin
       (file-position input-port (sub1 (file-position input-port)))
       "")]
-   [(:seq "\\" " ") 
-    (string-append lexeme (magic-lexer-string-helper input-port))]
-   [(:seq "\\" any-char)
-    (string-append lexeme (magic-lexer-string-helper input-port))]
-   [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
+   [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" any-char)) 
     (string-append lexeme (magic-lexer-string-helper input-port))]
    [(from/stop-before (:~ " " "\t" "\n" "\\") (:or " " "\t" "\n"))
     lexeme]))
