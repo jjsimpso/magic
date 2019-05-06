@@ -81,6 +81,10 @@
     (begin
       (set! current-lexer magic-lexer-string-flags)
       (token lexeme lexeme))]
+   ["name"
+    (begin
+      (set! current-lexer magic-lexer-name)
+      (token lexeme lexeme))]
    [key-word (token lexeme lexeme)]
    [(:seq "u" integer-type) (let ([pos (file-position input-port)])
                               (file-position input-port (- pos 
@@ -144,6 +148,14 @@
       (printf "lexeme read as: ~a, converted to: ~a~n" lexeme (raw-string-to-racket lexeme))
       (token 'STRING (raw-string-to-racket lexeme)))]))
 
+(define magic-lexer-name
+  (lexer-srcloc
+   [hws 
+    (token 'HWS #:skip? #f)]
+   [(from/stop-before (:~ " " "\t" "\n") "\n") 
+    (begin
+      (set! current-lexer magic-lexer)
+      (token 'MAGIC-NAME lexeme))]))
 
 (define hws-count 0)
 (define current-lexer magic-lexer)
