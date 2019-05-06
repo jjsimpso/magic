@@ -1,9 +1,12 @@
 #lang brag
 
-magic : EOL* query+
+magic : EOL* (query | named-query)+
 query : line (level+ line)* /EOL*
 level : /">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
+
+named-query : name-line (level+ line)* /EOL*
+name-line : offset /HWS name-type /HWS MAGIC-NAME /EOL
 
 offset : absoffset | reloffset | indoffset
 @absoffset : INTEGER     ; An absolute offset from the start of the file.
@@ -93,6 +96,8 @@ truetest : "x"	    ; This always returns true. To test for the string "x" use "=
 
 message : [ nospflag ] ( STRING | FMT_STRING )  ; Message to print if test result is true.
 nospflag : "%x08" | "\b"	  ; Do not insert a space before the message. By default, messages are separated by a " ".
+
+name-type : "name"
 
 ;HWS : " " | "\t"
 ;EOL : "\n"
