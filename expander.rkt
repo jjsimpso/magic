@@ -106,11 +106,50 @@
     (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
-(define-syntax-rule (magic-module-begin (magic QUERY ...))
+#;(define-syntax-rule (magic-module-begin (magic QUERY ...))
   (#%module-begin 
    (define (magic-query) 
      (or QUERY ...))
    (provide magic-query)))
+
+#;(define-syntax (magic-module-begin stx)
+  (define (query? expr)
+    (if (and (pair? expr) 
+             (equal? (car expr) 'query))
+        #t
+        #f))
+  (define (named-query? expr)
+    (if (and (pair? expr)
+             (equal? (car expr) 'named-query))
+        #t
+        #f))
+  (syntax-parse stx
+    #:datum-literals (magic)
+    [(_ (magic expr ...))
+        #'(#%module-begin
+           (define (magic-query) 
+             (or expr ...))
+           (provide magic-query))]))
+
+(define-syntax (magic-module-begin stx)
+  (define (query? expr)
+    (if (and (pair? expr) 
+             (equal? (car expr) 'query))
+        #t
+        #f))
+  (define (named-query? expr)
+    (if (and (pair? expr)
+             (equal? (car expr) 'named-query))
+        #t
+        #f))
+  (let ([exprs (cdadr (syntax->datum stx))])
+    ;(display queries)
+    (let ([queries (filter query? exprs)]
+          [named-queries (filter named-query? exprs)])
+      #`(#%module-begin 
+         (define (magic-query) 
+           (or #,@queries))
+         (provide magic-query)))))
 
 (provide
  (except-out (all-from-out racket/base) #%module-begin) 
