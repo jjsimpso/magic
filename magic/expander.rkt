@@ -106,6 +106,14 @@
     (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
+(define-syntax (named-query stx)
+  (syntax-case stx (name-line)
+    [(_ (name-line (_ 0) (_ "name") magic-name) . rst)
+     #'(define #,(string->symbol magic-name)
+         (lambda () (void)))]))
+  ;#'(query #,stx))
+  ;#'(void))
+
 #;(define-syntax-rule (magic-module-begin (magic QUERY ...))
   (#%module-begin 
    (define (magic-query) 
@@ -147,7 +155,8 @@
     (let ([queries (filter query? exprs)]
           [named-queries (filter named-query? exprs)])
       #`(#%module-begin 
-         (define (magic-query) 
+         (define (magic-query)
+           #,@named-queries
            (or #,@queries))
          (provide magic-query)))))
 
