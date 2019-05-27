@@ -236,6 +236,7 @@
     [((numeric "u" "bequad")) read-bequad]
     [((numeric "befloat")) read-befloat]
     [((numeric "bedouble")) read-bedouble]
+    [((default "default")) (lambda () 42)] ; could return anything
     ))
 
 ;; returns a function to check the value read from the file
@@ -258,6 +259,7 @@
                               (bitwise-ior n (bitwise-and n x))))]
     [(list 'numtest "~" x) (lambda (n) (= n (bitwise-not x)))]
     [(list 'numtest "=" x) (lambda (n) (= n x))]
+    [(list 'truetest "x") (lambda (n) #t)]
     [_ 'nothing]))
 
 ;; ex: (with-input-from-file "adventure.rkt" (lambda () (magic-test 0 (type '(string8 "string") '(strtest "MZ")) (compare '(strtest "MZ")) "dos executable")))
