@@ -98,7 +98,7 @@
 (define-syntax (query stx)
   ; investigate syntax->list so that i don't loose src location and other syntax info here
   (let ([lines (cdr (syntax->datum stx))])
-    ;(display lines)
+    (display lines) (printf "~n")
     ;(define lines-syntax-tree (parse-levels lines 0))
     (define lines-syntax-tree (transform-levels 
                                (parse-levels lines 0)))
@@ -106,11 +106,19 @@
     (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
+(define-for-syntax always-true-line '(line (offset 0) (type (default "default")) (test (truetest "x"))))
+
 (define-syntax (named-query stx)
   (syntax-case stx (name-line)
+    [(_ (name-line (_ 0) (_ "name") magic-name))
+     (with-syntax ([name (string->symbol (syntax->datum #'magic-name))])
+       #'(define name
+           (lambda () (void))))]
     [(_ (name-line (_ 0) (_ "name") magic-name) . rst)
-     #'(define #,(string->symbol magic-name)
-         (lambda () (void)))]))
+     (with-syntax ([name (string->symbol (syntax->datum #'magic-name))]
+                   [modified-rst (cons (datum->syntax #'rst always-true-line) #'rst)])
+       #'(define name
+           (lambda () (query . modified-rst))))]))
   ;#'(query #,stx))
   ;#'(void))
 
