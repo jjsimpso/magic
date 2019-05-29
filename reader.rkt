@@ -85,6 +85,10 @@
     (begin
       (set! current-lexer magic-lexer-name)
       (token lexeme lexeme))]
+   ["use"
+    (begin
+      (set! current-lexer magic-lexer-name)
+      (token lexeme lexeme))]
    [key-word (token lexeme lexeme)]
    [(:seq "u" integer-type) (let ([pos (file-position input-port)])
                               (file-position input-port (- pos 

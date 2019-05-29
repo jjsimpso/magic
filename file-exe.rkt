@@ -22,4 +22,10 @@
 
 #	display tga bitmap image information
 0	name				tga-image
->2	ubyte		<34		Targa image data
+>2	byte		<34		Targa image data
+#>2	ubyte		<34		Targa image data
+
+0       name    always-true
+>0      default x
+
+0       use     always-true

@@ -39,7 +39,7 @@ memvalue : "(" INTEGER ")"
 ;; the same size as <offset1>
 relindoff : /"&" indoff	; add <indoff> to the last match offset at one level up
 
-type : ( numeric | strtype | default )
+type : ( numeric | strtype | default | use)
 
 @unsigned : "u"
 ;; The value is unsigned.
@@ -76,6 +76,7 @@ srchcnt : INTEGER     ; The number of search tries.  If this is missing or zero,
 string8 : ( "string" | "pstring" ) [ "/" strflag+ ]
 strflag : "b" | "B" | "c" | "C"
 string16 : "bestring16" | "lestring16"
+use : "use"
 default : "default"
 ;; This is intended to be used with the
 ;; <truetest> ("x" below).  It is matched if
@@ -84,7 +85,7 @@ default : "default"
 ;; that level.  It is useful for implementing
 ;; switch-like and if/else constructions.
 
-test : numtest | strtest | truetest   ; Test to preform on <type> read from file.
+test : numtest | strtest | truetest | use-name  ; Test to preform on <type> read from file.
 numtest : [ compare ] INTEGER	      ; If compare is missing, "=" is assumed.
 strtest : [ compare ] STRING	
 ;; If compare is missing, "=" is assumed.
@@ -93,6 +94,7 @@ strtest : [ compare ] STRING
 ;; omitted.
 @compare : "=" | "!" | "<" | ">" | "&" | "^"
 truetest : "x"	    ; This always returns true. To test for the string "x" use "=x".
+use-name : MAGIC-NAME
 
 message : [ nospflag ] ( STRING | FMT_STRING )  ; Message to print if test result is true.
 nospflag : "%x08" | "\b"	  ; Do not insert a space before the message. By default, messages are separated by a " ".
