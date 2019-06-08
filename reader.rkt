@@ -37,9 +37,14 @@
              )))
   (define (escape c)
     (cond [(char=? c #\n) "\n"]
-          [(char=? c #\0) "\0"]
-          [(char=? c #\space) " "]
+          [(char=? c #\a) "\a"]
+          [(char=? c #\b) "\b"]
+          [(char=? c #\f) "\f"]
+          [(char=? c #\r) "\r"]
           [(char=? c #\t) "\t"]
+          [(char=? c #\v) "\v"]
+          [(char=? c #\space) " "]
+          [(char=? c #\0) "\0"]
           [(char=? c #\\) "\\"]))
 
   (define sp (open-input-string s))
@@ -170,7 +175,7 @@
   (define (next-token)
     (cond [(= hws-count 3)
            (begin
-             (displayln "calling lexer2")
+             (displayln "calling message lexer")
              (magic-lexer-message port))]
           [else 
            (current-lexer port)]))
