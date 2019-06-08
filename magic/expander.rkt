@@ -115,8 +115,8 @@
     ;(define lines-syntax-tree (parse-levels lines 0))
     (define lines-syntax-tree (transform-levels 
                                (parse-levels lines 0)))
-    ;(display lines-syntax-tree)
-    ;(printf "~n")
+    (display lines-syntax-tree)
+    (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
 (define-for-syntax always-true-line '(line (offset 0) (type (default "default")) (test (truetest "x"))))
