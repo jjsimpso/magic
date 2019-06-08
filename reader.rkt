@@ -47,6 +47,10 @@
           [(char=? c #\0) "\0"]
           [(char=? c #\\) "\\"]))
 
+  ;; read the two characters after '\x' in a string and convert to character of the form #\u00xx
+  (define (read-hex-number in)
+    (integer->char (string->number (read-string 2 in) 16)))
+
   (define sp (open-input-string s))
   (let loop ([new-string ""]
              [c (read-char sp)])
@@ -55,9 +59,14 @@
       [(and (char=? c #\\) (escapable-char? (peek-char sp)))
        (loop (string-append new-string (escape (read-char sp)))
              (read-char sp))]
+      [(and (char=? c #\\) (char=? (peek-char sp) #\x))
+       ; discard the 'x' character
+       (read-char sp)
+       (loop (string-append new-string (string (read-hex-number sp)))
+             (read-char sp))]
       [else (loop (string-append new-string (string c))
                   (read-char sp))])))
-    
+
 (define magic-lexer
   (lexer-srcloc
    ;[(char-set "><-.,+[]") lexeme]

@@ -26,6 +26,6 @@
 #>2	ubyte		<34		Targa image data
 
 0       name    always-true
->0      default x
+>0      default x  force true
 
 0       use     always-true
