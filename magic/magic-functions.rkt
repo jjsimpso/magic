@@ -276,5 +276,5 @@
     (let* ([data (read-func)]
            [result (compare-func data)])
       (when (and result (non-empty-string? message))
-        (printf "~a" message))
+        (printf "~a " message))
       result)))
