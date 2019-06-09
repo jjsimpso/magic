@@ -1,0 +1,13 @@
+- fix parsing of minus as negative number, ex: (2.S-2)
+- implement string and search flags
+- add support for relative indirect offsets
+- implement printf substitution in message
+- fix macro stepper problems with certain lines
+- implement mime and strength lines
+- check for eof returns from peek-char in raw-string-to-racket
+
+- consider a better way to bypass offset macro other than adding
+  additional patterns to the line macro
+- rewrite macros in expander.rkt with syntax-parse
+- test file's handling of relative offsets in named query (i made
+  assumptions)
