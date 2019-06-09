@@ -11,6 +11,10 @@
   (lambda (stx)
     (raise-syntax-error (syntax-e stx) "can only be used inside any-true?")))
 
+(define-syntax-parameter name-offset 
+  (lambda (stx)
+    #'0))
+
 ;; any-true? is like an or that doesn't short circuit
 ;; since any-true? indicates the start of a new level we save the current
 ;; file position to use for relative offsets at this level.
@@ -18,7 +22,7 @@
   (let ([result #f]
         [tmp-offset (file-position (current-input-port))])
     (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
-      ;(printf "last level offset is ~a~n" last-level-offset)
+      ;(printf "any-true: last level offset is ~a~n" last-level-offset)
       (when body (set! result #t))
       ...
       result)))
@@ -66,18 +70,32 @@
     [(_) "no clause found in line"]))
 
 (define-syntax (line stx)
-  (syntax-case stx (offset type test message)
-    [(line (offset 0) (type (_ "use")) (test (_ magic-name)))
+  (syntax-case stx (offset reloffset relindoff type test message)
+    [(line (offset off) (type (_ "use")) (test (_ magic-name)))
      (with-syntax ([name (datum->syntax #'magic-name (string->symbol (syntax->datum #'magic-name)))])
-       #'(name))]
+       #'(name off))]
+    ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
+    [(line (offset (reloffset off)) (type type-expr) (test test-expr)) 
+     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr))))]
+    [(line (offset (relindoff off)) (type type-expr) (test test-expr)) 
+     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr))))]
     [(line (offset off) (type type-expr) (test test-expr)) 
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr))))]
+    ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
+    [(line (offset (reloffset off)) (type type-expr) (test test-expr) (message msg)) 
+     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg))]
+    [(line (offset (relindoff off)) (type type-expr) (test test-expr) (message msg)) 
+     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg))]
     [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg))]
     [(_) #'"no clause found in line"]))
 
+;; in named queries, absolute offsets are relative to the argument of the query.
+;; so add that offset here, which will be zero for regular queries.
+;; because of this, relative offsets in named queries can't use this macro, since the last-level-offset
+;; will have already taken the name-offset into account.
 (define-syntax-rule (offset off)
-  off)
+  (+ name-offset off))
 
 (define-syntax-rule (reloffset off)
   (+ last-level-offset off))
@@ -126,12 +144,15 @@
     [(_ (name-line (_ 0) (_ "name") magic-name))
      (with-syntax ([name (datum->syntax #'magic-name (string->symbol (syntax->datum #'magic-name)))])
        #'(define name
-           (lambda () (void))))]
+           (lambda (new-offset) (void))))]
     [(_ (name-line (_ 0) (_ "name") magic-name) . rst)
      (with-syntax ([name (datum->syntax #'magic-name (string->symbol (syntax->datum #'magic-name)))]
                    [modified-rst (cons (datum->syntax #'rst always-true-line) #'rst)])
        #'(define name
-           (lambda () (query . modified-rst))))]))
+           (lambda (new-offset)
+             (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
+               ;(printf "name: offset = ~a~n" name-offset)
+               (query . modified-rst)))))]))
   ;#'(query #,stx))
   ;#'(void))
 
