@@ -89,8 +89,11 @@
       (token 'HWS #:skip? #f))]
    ;[">" (token 'LEVEL)]
    [op (token lexeme lexeme)]
-   [paren (token lexeme lexeme)]
-   [(:seq "." size-specifier) (token lexeme lexeme)]
+   [paren
+    (begin
+      (set! current-lexer magic-lexer-indirect-offset)
+      (token lexeme lexeme))]
+   ;[(:seq "." size-specifier) (token lexeme lexeme)]
    [string-type 
     (begin
       (set! current-lexer magic-lexer-string-flags)
@@ -115,6 +118,45 @@
    ;[string-chars (token 'STRING (raw-string-to-racket lexeme))]
    ;[any-char (token 'CHAR lexeme)]))
 ))
+
+(define magic-lexer-indirect-offset
+  (lexer-srcloc
+   [")"
+    (begin
+      (set! current-lexer magic-lexer)
+      (token lexeme lexeme))]
+   ["&" (token lexeme lexeme)]
+   [(:seq "." size-specifier)
+    (begin
+      (set! current-lexer magic-lexer-indirect-offset-op)
+      (token lexeme lexeme))]
+   [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
+
+(define magic-lexer-indirect-offset-op
+  (lexer-srcloc
+   ["("
+    (begin
+      (set! current-lexer magic-lexer-nested-indirect-offset)
+      (token lexeme lexeme))]
+   [")"
+    (begin
+      (set! current-lexer magic-lexer)
+      (token lexeme lexeme))]
+   [op (token lexeme lexeme)]
+   [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
+
+(define magic-lexer-nested-indirect-offset
+  (lexer-srcloc
+   [")"
+    (begin
+      (set! current-lexer magic-lexer-indirect-offset)
+      (token lexeme lexeme))]
+   [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
 
 (define magic-lexer-message
   (lexer-srcloc

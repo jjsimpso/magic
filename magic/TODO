@@ -1,9 +1,9 @@
-- fix parsing of minus as negative number, ex: (2.S-2)
 - implement string and search flags
 - add support for relative indirect offsets
 - implement printf substitution in message
 - fix macro stepper problems with certain lines
 - implement mime and strength lines
+- check parsing of minus as negative number when nummask is expected
 - check for eof returns from peek-char in raw-string-to-racket
 
 - consider a better way to bypass offset macro other than adding
