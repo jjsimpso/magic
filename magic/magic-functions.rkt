@@ -262,6 +262,11 @@
     [(list 'truetest "x") (lambda (n) #t)]
     [_ 'nothing]))
 
+(define (single-cprintf-sub str val)
+  (if (string-contains? str "%d") 
+      (format (string-replace str "%d" "~a" #:all? #f) val)
+      str))
+
 ;; ex: (with-input-from-file "adventure.rkt" (lambda () (magic-test 0 (type '(string8 "string") '(strtest "MZ")) (compare '(strtest "MZ")) "dos executable")))
 ;; ex: (with-input-from-file "/tmp/iexplore.exe" (lambda () (magic-test (indoff 60 (size '(lelong ".l"))) (type '(string8 "string") '(strtest "PE\u0000\u0000")) (compare '(strtest "PE\u0000\u0000")) "PE executable (MS-Windows)")))
 (define (magic-test off read-func compare-func [message ""])
@@ -276,5 +281,5 @@
     (let* ([data (read-func)]
            [result (compare-func data)])
       (when (and result (non-empty-string? message))
-        (printf "~a " message))
+        (printf "~a " (single-cprintf-sub message data)))
       result)))
