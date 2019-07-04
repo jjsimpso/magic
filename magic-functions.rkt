@@ -198,9 +198,22 @@
                              #t
                              #f))
   ;(printf "type expr: ") (display type-expr) (printf "~n")
-  (case type-expr
+  (match type-expr
     ;[((string8 "string")) read-string8]
-    [((string8 "string")) 
+    [(list 'string8 "string" (list 'strflag flag) ...)
+     (let ([len (string-length (last compare-expr))]
+           [binary? (member "b" flag)]
+           [text? (member "t" flag)]
+           [trim? (member "T" flag)]
+           [compact-whitespace? (member "W" flag)])
+       (lambda () 
+         (let ([data (read-bytes len)])
+           (when (eof-object? data) (error "eof"))
+           (define str (bytes->string/latin-1 data))
+           (when trim? (set! str (string-trim str)))
+           (when compact-whitespace? (set! str (string-normalize-spaces str #:trim? #f)))
+           str)))]
+    [(list 'string8 "string") 
      (let ([len (string-length (last compare-expr))]) ; len calculation may not work for all cases
                                 ; the last here is making the assumption that the string to search for
                                 ; is the last element of the (strtest ...) form
@@ -210,33 +223,34 @@
                (error "eof")
                (bytes->string/latin-1 data)))))]
     ;[((search "string")) read-str]
-    [((numeric "byte")) (if signed-compare read-byt-signed read-byt)]
-    [((numeric "u" "byte")) read-byt]
-    [((numeric "short")) (if signed-compare read-short-signed read-short)]
-    [((numeric "u" "short")) read-short]
-    [((numeric "long")) (if signed-compare read-long-signed read-long)]
-    [((numeric "u" "long")) read-long]
-    [((numeric "quad")) (if signed-compare read-quad-signed read-quad)]
-    [((numeric "u" "quad")) read-quad]
-    [((numeric "float")) read-float]
-    [((numeric "double")) read-double]
-    [((numeric "leshort")) (if signed-compare read-leshort-signed read-leshort)]
-    [((numeric "u" "leshort")) read-leshort]
-    [((numeric "lelong")) (if signed-compare read-lelong-signed read-lelong)]
-    [((numeric "u" "lelong")) read-lelong]
-    [((numeric "lequad")) (if signed-compare read-lequad-signed read-lequad)]
-    [((numeric "u" "lequad")) read-lequad]
-    [((numeric "lefloat")) read-lefloat]
-    [((numeric "ledouble")) read-ledouble]
-    [((numeric "beshort")) (if signed-compare read-beshort-signed read-beshort)]
-    [((numeric "u" "beshort")) read-beshort]
-    [((numeric "belong")) (if signed-compare read-belong-signed read-belong)]
-    [((numeric "u" "belong")) read-belong]
-    [((numeric "bequad")) (if signed-compare read-bequad-signed read-bequad)]
-    [((numeric "u" "bequad")) read-bequad]
-    [((numeric "befloat")) read-befloat]
-    [((numeric "bedouble")) read-bedouble]
-    [((default "default")) (lambda () 42)] ; could return anything
+    [(list 'numeric "byte") (if signed-compare read-byt-signed read-byt)]
+    [(list 'numeric "u" "byte") read-byt]
+    [(list 'numeric "short") (if signed-compare read-short-signed read-short)]
+    [(list 'numeric "u" "short") read-short]
+    [(list 'numeric "long") (if signed-compare read-long-signed read-long)]
+    [(list 'numeric "u" "long") read-long]
+    [(list 'numeric "quad") (if signed-compare read-quad-signed read-quad)]
+    [(list 'numeric "u" "quad") read-quad]
+    [(list 'numeric "float") read-float]
+    [(list 'numeric "double") read-double]
+    [(list 'numeric "leshort") (if signed-compare read-leshort-signed read-leshort)]
+    [(list 'numeric "u" "leshort") read-leshort]
+    [(list 'numeric "lelong") (if signed-compare read-lelong-signed read-lelong)]
+    [(list 'numeric "u" "lelong") read-lelong]
+    [(list 'numeric "lequad") (if signed-compare read-lequad-signed read-lequad)]
+    [(list 'numeric "u" "lequad") read-lequad]
+    [(list 'numeric "lefloat") read-lefloat]
+    [(list 'numeric "ledouble") read-ledouble]
+    [(list 'numeric "beshort") (if signed-compare read-beshort-signed read-beshort)]
+    [(list 'numeric "u" "beshort") read-beshort]
+    [(list 'numeric "belong") (if signed-compare read-belong-signed read-belong)]
+    [(list 'numeric "u" "belong") read-belong]
+    [(list 'numeric "bequad") (if signed-compare read-bequad-signed read-bequad)]
+    [(list 'numeric "u" "bequad") read-bequad]
+    [(list 'numeric "befloat") read-befloat]
+    [(list 'numeric "bedouble") read-bedouble]
+    [(list 'default "default") (lambda () 42)] ; could return anything
+    [_ (error (string-append "type expression doesn't match: " (~a type-expr)))]
     ))
 
 ;; returns a function to check the value read from the file
@@ -260,7 +274,7 @@
     [(list 'numtest "~" x) (lambda (n) (= n (bitwise-not x)))]
     [(list 'numtest "=" x) (lambda (n) (= n x))]
     [(list 'truetest "x") (lambda (n) #t)]
-    [_ 'nothing]))
+    [_ (error (string-append "test expression doesn't match: " (~a compare-expr)))]))
 
 (define (single-cprintf-sub str val)
   (if (string-contains? str "%d") 

@@ -1,5 +1,8 @@
 #lang reader "reader.rkt"
 
+0	string/b	DDS Microsoft DirectDraw Surface (DDS):
+0	string/W	test\ compacted\ whitespace	W flag passed
+
 # MS Windows executables are also valid MS-DOS executables
 0           string  MZ
 >0x18       leshort <0x40
