@@ -21,6 +21,7 @@
 (define-lex-abbrev paren (:= 1 (char-set "()")))
 ;(define-lex-abbrev string-chars (complement (:+ " " "\t" "\n")))
 (define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.") "\\"))
+(define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "string" "search" "regex" "default" "x"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev string-type (:or "string" "search" "regex"))
@@ -94,9 +95,17 @@
       (set! current-lexer magic-lexer-indirect-offset)
       (token lexeme lexeme))]
    ;[(:seq "." size-specifier) (token lexeme lexeme)]
-   [string-type 
+   ["string"
     (begin
       (set! current-lexer magic-lexer-string-flags)
+      (token lexeme lexeme))]
+   ["search"
+    (begin
+      (set! current-lexer magic-lexer-search-flags)
+      (token lexeme lexeme))]
+   ["regex"
+    (begin
+      (set! current-lexer magic-lexer-search-flags)
       (token lexeme lexeme))]
    ["name"
     (begin
@@ -172,6 +181,16 @@
    ;[any-string (token 'STRING lexeme)]))
 
 (define magic-lexer-string-flags
+  (lexer-srcloc
+   ["/" (token lexeme lexeme)]
+   [string-flag (token lexeme lexeme)]
+   [hws
+    (begin 
+      (set! hws-count (add1 hws-count))
+      (set! current-lexer magic-lexer-string)
+      (token 'HWS #:skip? #f))]))
+
+(define magic-lexer-search-flags
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]

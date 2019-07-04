@@ -1,3 +1,6 @@
+0	string/W	test\ compacted\ whitespace	W flag passed
+0	string/T	test\ trimming	 		T flag passed
+
 0	string	a	File A
 >1	string	b	File B
 >>2	string	c	File C

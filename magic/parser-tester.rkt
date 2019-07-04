@@ -20,6 +20,7 @@
   ;"0    use    tga-image\n")
   ;"0    default   x\n")
   ;"&18	search	A\\ \\tTRUEVISION-XFILE.\\0   matched truevision\n")
-  "(2.S-2)   belong   !0x28632943\n")
+  "0	string/b	DDS Microsoft DirectDraw Surface (DDS):\n")
+  ;"(2.S-2)   belong   !0x28632943\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")
