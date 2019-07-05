@@ -289,12 +289,33 @@
     ))
 
 ;; returns a function to check the value read from the file
-(define (compare compare-expr)
+(define (compare compare-expr type-expr)
+  (define strflags 
+    (match type-expr
+      [(list 'string8 "string" (list 'strflag flag) ...)
+       flag]
+      [(list 'search "string" (list 'srchflag flag) ...)
+       flag]
+      [_ '()]))
+  (define ci-flag? (and (member "c" strflags) (member "C" strflags)))
+  
   (match compare-expr
-    [(list 'strtest x) (lambda (s) (string=? s x))]
-    [(list 'strtest "<" x) (lambda (s) (string<? s x))]
-    [(list 'strtest ">" x) (lambda (s) (string>? s x))]
-    [(list 'strtest "=" x) (lambda (s) (string=? s x))]
+    [(list 'strtest x) 
+     (if ci-flag? 
+         (lambda (s) (string-ci=? s x))
+         (lambda (s) (string=? s x)))]
+    [(list 'strtest "<" x) 
+     (if ci-flag? 
+         (lambda (s) (string-ci<? s x))
+         (lambda (s) (string<? s x)))]
+    [(list 'strtest ">" x) 
+     (if ci-flag? 
+         (lambda (s) (string-ci>? s x))
+         (lambda (s) (string>? s x)))]
+    [(list 'strtest "=" x) 
+     (if ci-flag? 
+         (lambda (s) (string-ci=? s x))
+         (lambda (s) (string=? s x)))]
     [(list 'numtest x) (lambda (n) (= n x))]
     [(list 'numtest "<" x) (lambda (n) (< n x))]
     [(list 'numtest ">" x) (lambda (n) (> n x))]
