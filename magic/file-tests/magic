@@ -1,5 +1,6 @@
 0	string/W	test\ compacted\ whitespace	W flag passed
 0	string/T	test\ trimmed\ whitespace	T flag passed
+0	string/cC	testing\ case\ insensitive	cC flag passed
 
 0	string	a	File A
 >1	string	b	File B

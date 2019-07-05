@@ -76,18 +76,18 @@
        #'(name off))]
     ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
     [(line (offset (reloffset off)) (type type-expr) (test test-expr)) 
-     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr))))]
+     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
     [(line (offset (relindoff off)) (type type-expr) (test test-expr)) 
-     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr))))]
+     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
     [(line (offset off) (type type-expr) (test test-expr)) 
-     (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr))))]
+     (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
     ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
     [(line (offset (reloffset off)) (type type-expr) (test test-expr) (message msg)) 
-     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg))]
+     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
     [(line (offset (relindoff off)) (type type-expr) (test test-expr) (message msg)) 
-     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg))]
+     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
     [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
-     (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg))]
+     (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
     [(_) #'"no clause found in line"]))
 
 ;; in named queries, absolute offsets are relative to the argument of the query.
