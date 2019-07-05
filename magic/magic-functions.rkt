@@ -55,12 +55,41 @@
     (floating-point-bytes->real data (system-big-endian?))))
 
 ;; I don't think the null terminated read works with magic. The null bytes must be made explicit in the comparison.
-(define (read-string8 [len 0])
-  (if (> len 0)
-      (let ([data (read-bytes len)])
-        (when (eof-object? data) (error "eof"))
-        (bytes->string/utf-8 data))
-      (bytes->string/utf-8 (read-null-terminated-ascii-string))))
+(define (read-string8 len)
+  (let ([data (read-bytes len)])
+    (if (eof-object? data)
+        (error "eof")
+        (bytes->string/latin-1 data))))
+
+(define (whitespace? b)
+  (if (eof-object? b)
+      #f
+      (or (= b 32)
+          (and (>= b 9) (<= b 13)))))
+
+(define (discard-whitespace)
+  (when (whitespace? (peek-byte))
+    (read-byte)
+    (discard-whitespace)))
+
+;; don't know correct behavior, stub out for now
+(define (read-string8-trim-ws len)
+  (read-string8 len))
+
+(define (read-string8-compact-ws len)
+  (let loop ([num-read 0]
+             [data #""])
+    (if (= num-read len) 
+        (bytes->string/latin-1 data)
+        (let ([next-char (read-byte)])
+          (cond [(eof-object? next-char) (bytes->string/latin-1 data)]
+                [(whitespace? next-char)
+                 (discard-whitespace)
+                 (loop (add1 num-read)
+                       (bytes-append data (bytes next-char)))]
+                [else 
+                 (loop (add1 num-read) 
+                       (bytes-append data (bytes next-char)))])))))
 
 (define (read-leshort [signed? #f])
   (let ([data (read-bytes 2)])
@@ -199,8 +228,24 @@
                              #f))
   ;(printf "type expr: ") (display type-expr) (printf "~n")
   (match type-expr
-    ;[((string8 "string")) read-string8]
     [(list 'string8 "string" (list 'strflag flag) ...)
+     (let ([len (string-length (last compare-expr))]
+           [binary? (member "b" flag)]
+           [text? (member "t" flag)]
+           [trim? (member "T" flag)]
+           [compact-whitespace? (member "W" flag)])
+       (cond
+         ;[(and trim? compact-whitespace?)]
+         [trim? (lambda () (read-string8-trim-ws len))]
+         [compact-whitespace? (lambda () (read-string8-compact-ws len))]
+         [else (lambda () (read-string8 len))]))]
+    [(list 'string8 "string") 
+     (let ([len (string-length (last compare-expr))]) ; len calculation may not work for all cases
+                                ; the last here is making the assumption that the string to search for
+                                ; is the last element of the (strtest ...) form
+       (lambda () 
+         (read-string8 len)))]
+    [(list 'search "string" (list 'srchflag flag) ...)
      (let ([len (string-length (last compare-expr))]
            [binary? (member "b" flag)]
            [text? (member "t" flag)]
@@ -213,16 +258,6 @@
            (when trim? (set! str (string-trim str)))
            (when compact-whitespace? (set! str (string-normalize-spaces str #:trim? #f)))
            str)))]
-    [(list 'string8 "string") 
-     (let ([len (string-length (last compare-expr))]) ; len calculation may not work for all cases
-                                ; the last here is making the assumption that the string to search for
-                                ; is the last element of the (strtest ...) form
-       (lambda () 
-         (let ([data (read-bytes len)])
-           (if (eof-object? data)
-               (error "eof")
-               (bytes->string/latin-1 data)))))]
-    ;[((search "string")) read-str]
     [(list 'numeric "byte") (if signed-compare read-byt-signed read-byt)]
     [(list 'numeric "u" "byte") read-byt]
     [(list 'numeric "short") (if signed-compare read-short-signed read-short)]
