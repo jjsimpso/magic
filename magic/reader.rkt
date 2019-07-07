@@ -11,7 +11,7 @@
 
 (define (read-syntax path port)
   (define parse-tree (parse path (make-tokenizer port)))
-  (strip-context #`(module magic-mod "expander.rkt"
+  (strip-context #`(module magic-mod magic/expander
                           #,parse-tree)))
 
 (define-lex-abbrev hws (:+ " " "\t"))
