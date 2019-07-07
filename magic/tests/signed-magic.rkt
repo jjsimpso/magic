@@ -1,4 +1,4 @@
-#lang reader "reader.rkt"
+#lang magic
 
 #0	leshort	0x2350
 
