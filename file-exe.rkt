@@ -1,4 +1,4 @@
-#lang reader "reader.rkt"
+#lang magic
 
 # MS Windows executables are also valid MS-DOS executables
 0           string  MZ
