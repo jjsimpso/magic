@@ -192,15 +192,20 @@
              (equal? (car expr) 'named-query))
         #t
         #f))
+  (define (wrap-with-delimiter-print expr)
+    (list 'when* expr '(printf "*** ")))
+
   (let ([exprs (cdadr (syntax->datum stx))])
     ;(display queries)
     (let ([queries (filter query? exprs)]
           [named-queries (filter named-query? exprs)])
       #`(#%module-begin 
+         #,@named-queries
          (define (magic-query)
-           #,@named-queries
            (or #,@queries))
-         (provide magic-query)))))
+         (define (magic-query-run-all)
+           (any-true? #,@(map wrap-with-delimiter-print queries)))
+         (provide magic-query magic-query-run-all)))))
 
 (provide
  (except-out (all-from-out racket/base) #%module-begin) 
