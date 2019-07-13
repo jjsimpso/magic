@@ -1,8 +1,8 @@
 #lang racket
 
-(require (rename-in "file-exe.rkt" (magic-query exe-query)))
-(require (rename-in "debugtest.rkt" (magic-query image-query)))
-(require (rename-in "string-test.rkt" (magic-query string-query)))
+(require (only-in "file-exe.rkt" (magic-query exe-query) (magic-query-run-all exe-query-all)))
+(require (only-in "debugtest.rkt" (magic-query image-query)))
+(require (only-in "string-test.rkt" (magic-query string-query)))
 
 (define (build-string-output-thunk thnk)
   (lambda ()
@@ -28,3 +28,5 @@
 (with-input-from-file "small_avatar.png" (build-string-output-thunk image-query))
 (with-input-from-file "thg2.png" image-query)
 (with-input-from-file "thg2.png" (build-string-output-thunk image-query))
+
+(with-input-from-file "iexplore.exe" exe-query-all)
