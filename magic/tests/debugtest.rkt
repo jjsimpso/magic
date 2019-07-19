@@ -53,4 +53,4 @@
 !:ext jpeg/jpg/jpe/jfif
 >6	string		JFIF		\b, JFIF standard
 >6	string		Exif		\b, Exif standard: [
->>12	string		x		\b]
+>>12	default		x		\b]
