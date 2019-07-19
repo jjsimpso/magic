@@ -29,4 +29,9 @@
 (with-input-from-file "thg2.png" image-query)
 (with-input-from-file "thg2.png" (build-string-output-thunk image-query))
 
+(with-input-from-file "sundesk2.gif" image-query)
+(with-input-from-file "pantherxl.jpg" image-query)
+(with-input-from-file "Pureyouth.jpg" image-query)
+(with-input-from-file "Pureyouth.jpg" (build-string-output-thunk image-query))
+
 (with-input-from-file "iexplore.exe" exe-query-all)

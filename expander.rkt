@@ -9,7 +9,7 @@
 
 (define-syntax-parameter last-level-offset
   (lambda (stx)
-    (raise-syntax-error (syntax-e stx) "can only be used inside any-true?")))
+    (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-true")))
 
 (define-syntax-parameter name-offset 
   (lambda (stx)
@@ -26,6 +26,14 @@
       (when body (set! result #t))
       ...
       result)))
+
+;; like any-true? but always returns true
+(define-syntax-rule (begin-true body ...)
+  (let ([tmp-offset (file-position (current-input-port))])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
+      body
+      ...
+      #t)))
 
 ;; like when but it returns #f instead of #<void> if test expression is false
 ;; code modified from official when macro 
@@ -204,6 +212,7 @@
          (define (magic-query)
            (or #,@queries))
          (define (magic-query-run-all)
+           ; any-true? creates a binding for last-level-offset which we probably don't want here. investigate.
            (any-true? #,@(map wrap-with-delimiter-print queries)))
          (provide magic-query magic-query-run-all)))))
 
@@ -211,5 +220,5 @@
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line offset reloffset size op disp any-true? when*)
+ query line offset reloffset size op disp any-true? begin-true when*)
 
