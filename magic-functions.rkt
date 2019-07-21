@@ -8,9 +8,6 @@
 (provide read-byt read-short read-long read-quad read-float read-double)
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
-(provide read-byt-signed read-short-signed read-long-signed read-quad-signed)
-(provide read-leshort-signed read-lelong-signed read-lequad-signed)
-(provide read-beshort-signed read-belong-signed read-bequad-signed)
 
 (define (read-null-terminated-ascii-string [port (current-input-port)])
    (let loop ((result #""))
@@ -151,36 +148,6 @@
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data #t)))
 
-(define (read-byt-signed)
-  (read-byt #t))
-
-(define (read-short-signed)
-  (read-short #t))
-
-(define (read-long-signed)
-  (read-long #t))
-
-(define (read-quad-signed)
-  (read-quad #t))
-
-(define (read-leshort-signed)
-  (read-leshort #t))
-
-(define (read-lelong-signed)
-  (read-lelong #t))
-
-(define (read-lequad-signed)
-  (read-lequad #t))
-
-(define (read-beshort-signed)
-  (read-beshort #t))
-
-(define (read-belong-signed)
-  (read-belong #t))
-
-(define (read-bequad-signed)
-  (read-bequad #t))
-
 (define (offset off)
   off)
 
@@ -218,6 +185,16 @@
 (define (disp arg)
   arg)
 
+(define (build-numeric-read-func signed? mask-expr func)
+  ; numeric read functions default to unsigned reads
+  (if mask-expr
+      (lambda () 
+        (apply (op (car mask-expr))
+               (list (second mask-expr) (func signed?))))
+      (if signed?
+          (lambda () (func #t))
+          func)))
+      
 ;; returns a function to read the needed data from the file
 ;; some types of comparisons benefit from knowing the data to compare to when reading from the file
 ;; for string8s, for instance, we need to read the exact number of bytes required to match the string
@@ -226,8 +203,21 @@
                                   (< (last compare-expr) 0))
                              #t
                              #f))
+
+  (define mask-expr
+    (match type-expr
+      [(list 'numeric _ _ (list 'nummask (list 'op op) x)) (list op x)]
+      [_ #f]))
+  
+  (define trimmed-type-expr
+    (if mask-expr
+        (match type-expr
+          [(list x ... (list 'nummask (list 'op _) _)) x]
+          [_ (error (string-append "type expression doesn't match for trimming nummask: " (~a type-expr)))])
+        type-expr))
+  
   ;(printf "type expr: ") (display type-expr) (printf "~n")
-  (match type-expr
+  (match trimmed-type-expr
     [(list 'string8 "string" (list 'strflag flag) ...)
      (let ([len (string-length (last compare-expr))]
            [binary? (member "b" flag)]
@@ -258,33 +248,33 @@
            (when trim? (set! str (string-trim str)))
            (when compact-whitespace? (set! str (string-normalize-spaces str #:trim? #f)))
            str)))]
-    [(list 'numeric "byte") (if signed-compare read-byt-signed read-byt)]
-    [(list 'numeric "u" "byte") read-byt]
-    [(list 'numeric "short") (if signed-compare read-short-signed read-short)]
-    [(list 'numeric "u" "short") read-short]
-    [(list 'numeric "long") (if signed-compare read-long-signed read-long)]
-    [(list 'numeric "u" "long") read-long]
-    [(list 'numeric "quad") (if signed-compare read-quad-signed read-quad)]
-    [(list 'numeric "u" "quad") read-quad]
-    [(list 'numeric "float") read-float]
-    [(list 'numeric "double") read-double]
-    [(list 'numeric "leshort") (if signed-compare read-leshort-signed read-leshort)]
-    [(list 'numeric "u" "leshort") read-leshort]
-    [(list 'numeric "lelong") (if signed-compare read-lelong-signed read-lelong)]
-    [(list 'numeric "u" "lelong") read-lelong]
-    [(list 'numeric "lequad") (if signed-compare read-lequad-signed read-lequad)]
-    [(list 'numeric "u" "lequad") read-lequad]
-    [(list 'numeric "lefloat") read-lefloat]
-    [(list 'numeric "ledouble") read-ledouble]
-    [(list 'numeric "beshort") (if signed-compare read-beshort-signed read-beshort)]
-    [(list 'numeric "u" "beshort") read-beshort]
-    [(list 'numeric "belong") (if signed-compare read-belong-signed read-belong)]
-    [(list 'numeric "u" "belong") read-belong]
-    [(list 'numeric "bequad") (if signed-compare read-bequad-signed read-bequad)]
-    [(list 'numeric "u" "bequad") read-bequad]
-    [(list 'numeric "befloat") read-befloat]
-    [(list 'numeric "bedouble") read-bedouble]
-    [(list 'default "default") (lambda () 42)] ; could return anything
+    [(list 'numeric "byte")        (build-numeric-read-func signed-compare mask-expr read-byt)]
+    [(list 'numeric "u" "byte")    (build-numeric-read-func #f mask-expr read-byt)]
+    [(list 'numeric "short")       (build-numeric-read-func signed-compare mask-expr read-short)]
+    [(list 'numeric "u" "short")   (build-numeric-read-func #f mask-expr read-short)]
+    [(list 'numeric "long")        (build-numeric-read-func signed-compare mask-expr read-long)]
+    [(list 'numeric "u" "long")    (build-numeric-read-func #f mask-expr read-long)]
+    [(list 'numeric "quad")        (build-numeric-read-func signed-compare mask-expr read-quad)]
+    [(list 'numeric "u" "quad")    (build-numeric-read-func #f mask-expr read-quad)]
+    [(list 'numeric "float")       read-float]
+    [(list 'numeric "double")      read-double]
+    [(list 'numeric "leshort")     (build-numeric-read-func signed-compare mask-expr read-leshort)]
+    [(list 'numeric "u" "leshort") (build-numeric-read-func #f mask-expr read-leshort)]
+    [(list 'numeric "lelong")      (build-numeric-read-func signed-compare mask-expr read-lelong)]
+    [(list 'numeric "u" "lelong")  (build-numeric-read-func #f mask-expr read-lelong)]
+    [(list 'numeric "lequad")      (build-numeric-read-func signed-compare mask-expr read-lequad)]
+    [(list 'numeric "u" "lequad")  (build-numeric-read-func #f mask-expr read-lequad)]
+    [(list 'numeric "lefloat")     read-lefloat]
+    [(list 'numeric "ledouble")    read-ledouble]
+    [(list 'numeric "beshort")     (build-numeric-read-func signed-compare mask-expr read-beshort)]
+    [(list 'numeric "u" "beshort") (build-numeric-read-func #f mask-expr read-beshort)]
+    [(list 'numeric "belong")      (build-numeric-read-func signed-compare mask-expr read-belong)]
+    [(list 'numeric "u" "belong")  (build-numeric-read-func #f mask-expr read-belong)]
+    [(list 'numeric "bequad")      (build-numeric-read-func signed-compare mask-expr read-bequad)]
+    [(list 'numeric "u" "bequad")  (build-numeric-read-func #f mask-expr read-bequad)]
+    [(list 'numeric "befloat")     read-befloat]
+    [(list 'numeric "bedouble")    read-bedouble]
+    [(list 'default "default")     (lambda () 42)] ; could return anything
     [_ (error (string-append "type expression doesn't match: " (~a type-expr)))]
     ))
 

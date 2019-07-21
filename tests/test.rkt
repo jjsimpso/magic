@@ -33,5 +33,6 @@
 (with-input-from-file "pantherxl.jpg" image-query)
 (with-input-from-file "Pureyouth.jpg" image-query)
 (with-input-from-file "Pureyouth.jpg" (build-string-output-thunk image-query))
+(with-input-from-file "TOWN.PCX" image-query)
 
 (with-input-from-file "iexplore.exe" exe-query-all)
