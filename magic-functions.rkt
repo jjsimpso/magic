@@ -185,6 +185,20 @@
 (define (disp arg)
   arg)
 
+(define (build-search-read-func cnt flags)
+  (let ([len cnt]
+        [binary? (member "b" flags)]
+        [text? (member "t" flags)]
+        [trim? (member "T" flags)]
+        [compact-whitespace? (member "W" flags)])
+    (lambda () 
+      (let ([data (read-bytes len)])
+        (when (eof-object? data) (error "eof"))
+        (define str (bytes->string/latin-1 data))
+        (when trim? (set! str (string-trim str)))
+        (when compact-whitespace? (set! str (string-normalize-spaces str #:trim? #f)))
+        str))))
+
 (define (build-numeric-read-func signed? mask-expr func)
   ; numeric read functions default to unsigned reads
   (if mask-expr
@@ -235,19 +249,15 @@
                                 ; is the last element of the (strtest ...) form
        (lambda () 
          (read-string8 len)))]
-    [(list 'search "string" (list 'srchflag flag) ...)
-     (let ([len (string-length (last compare-expr))]
-           [binary? (member "b" flag)]
-           [text? (member "t" flag)]
-           [trim? (member "T" flag)]
-           [compact-whitespace? (member "W" flag)])
-       (lambda () 
-         (let ([data (read-bytes len)])
-           (when (eof-object? data) (error "eof"))
-           (define str (bytes->string/latin-1 data))
-           (when trim? (set! str (string-trim str)))
-           (when compact-whitespace? (set! str (string-normalize-spaces str #:trim? #f)))
-           str)))]
+    [(list 'search (list 'srchcnt cnt) (list 'strflag flag) ...)
+     (build-search-read-func cnt flag)]
+    [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
+     (build-search-read-func cnt flag)]
+    [(list 'search (list 'strflag flag) ...)
+     ; default count to 4096 for now, but need to read the entire file if necessary
+     ; after the match is found, should the file offset be set to the end of the match?
+     (build-search-read-func 4096 flag)]
+    [(list 'search) (build-search-read-func 4096 '())]
     [(list 'numeric "byte")        (build-numeric-read-func signed-compare mask-expr read-byt)]
     [(list 'numeric "u" "byte")    (build-numeric-read-func #f mask-expr read-byt)]
     [(list 'numeric "short")       (build-numeric-read-func signed-compare mask-expr read-short)]
@@ -284,16 +294,23 @@
     (match type-expr
       [(list 'string8 "string" (list 'strflag flag) ...)
        flag]
-      [(list 'search "string" (list 'srchflag flag) ...)
-       flag]
+      [(list 'search (list 'strflag flag) ...)
+       (cons 'search flag)]
+      [(list 'search (list 'srchcnt cnt) (list 'strflag flag) ...)
+       (cons 'search flag)]
+      [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
+       (cons 'search flag)]
       [_ '()]))
   (define ci-flag? (and (member "c" strflags) (member "C" strflags)))
-  
+  (define search? (member 'search strflags))
+
   (match compare-expr
-    [(list 'strtest x) 
-     (if ci-flag? 
-         (lambda (s) (string-ci=? s x))
-         (lambda (s) (string=? s x)))]
+    [(list 'strtest x)
+     (if search?
+         (lambda (s) (string-contains? s x))
+         (if ci-flag? 
+             (lambda (s) (string-ci=? s x))
+             (lambda (s) (string=? s x))))]
     [(list 'strtest "<" x) 
      (if ci-flag? 
          (lambda (s) (string-ci<? s x))
