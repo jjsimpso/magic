@@ -2,6 +2,9 @@
 
 0	string/b	DDS\040\174\000\000\000 Microsoft DirectDraw Surface (DDS):
 
+0	search/4096/cwt	  <head>		HTML document text
+0	search/4096/cwt	  <html>		HTML document text
+
 # PCX image files
 # From: Dan Fandrich <dan@coneharvesters.com>
 # updated by Joerg Jenderek at Feb 2013 by http://de.wikipedia.org/wiki/PCX

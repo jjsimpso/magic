@@ -194,6 +194,7 @@
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
+   [string-flag (token lexeme lexeme)]
    [hws
     (begin 
       (set! hws-count (add1 hws-count))
