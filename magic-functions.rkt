@@ -288,6 +288,28 @@
     [_ (error (string-append "type expression doesn't match: " (~a type-expr)))]
     ))
 
+(define (char-case=? c match-char lci? uci?)
+  (cond 
+    [(and lci? (char-lower-case? match-char)) (char-ci=? c match-char)]
+    [(and uci? (char-upper-case? match-char)) (char-ci=? c match-char)]
+    [else (char=? c match-char)]))
+
+; s and match-str must be the same length, but string-case-contains? ensures this
+(define (string-case=? s match-str lci? uci?)
+  (for/and ([c (in-string s)]
+            [match-char (in-string match-str)])
+    (char-case=? c match-char lci? uci?)))
+
+(define (string-case-contains? s contained lc-insensitive? uc-insensitive?)
+  (define len (string-length contained))
+  
+  (for/first ([c (in-string s)]
+              [i (in-range 0 (- (string-length s) (- len 1)))]
+              #:when (and (char-case=? c (string-ref contained 0) lc-insensitive? uc-insensitive?)
+                          (string-case=? (substring s i (+ i len)) contained lc-insensitive? uc-insensitive?)))
+    #t))
+    ;(list i c)))
+
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
   (define strflags 
@@ -302,12 +324,14 @@
        (cons 'search flag)]
       [_ '()]))
   (define ci-flag? (and (member "c" strflags) (member "C" strflags)))
+  (define lci-flag? (member "c" strflags))
+  (define uci-flag? (member "C" strflags))
   (define search? (member 'search strflags))
 
   (match compare-expr
     [(list 'strtest x)
      (if search?
-         (lambda (s) (string-contains? s x))
+         (lambda (s) (string-case-contains? s x lci-flag? uci-flag?))
          (if ci-flag? 
              (lambda (s) (string-ci=? s x))
              (lambda (s) (string=? s x))))]
