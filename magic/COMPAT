@@ -2,5 +2,6 @@ Differences from Ian Darwin's File command
 (http://www.darwinsys.com/file/) :
 
 - the always true test value x doesn't work with string types. use
-default instead.
+default type instead.
+- it is not required to backslash escape space characters
 

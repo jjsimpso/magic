@@ -65,6 +65,9 @@
        (read-char sp)
        (loop (string-append new-string (string (read-hex-number sp)))
              (read-char sp))]
+      [(char=? c #\\)
+       ; discard the '\' character
+       (loop new-string (read-char sp))]
       [else (loop (string-append new-string (string c))
                   (read-char sp))])))
 
