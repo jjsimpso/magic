@@ -1,5 +1,19 @@
 #lang racket
 
+;;Copyright 2019 Jonathan Simpson
+;;
+;;   Licensed under the Apache License, Version 2.0 (the "License");
+;;   you may not use this file except in compliance with the License.
+;;   You may obtain a copy of the License at
+;;
+;;       http://www.apache.org/licenses/LICENSE-2.0
+;;
+;;   Unless required by applicable law or agreed to in writing, software
+;;   distributed under the License is distributed on an "AS IS" BASIS,
+;;   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;;   See the License for the specific language governing permissions and
+;;   limitations under the License.
+
 (provide parse-levels)
 (provide transform-levels)
 
@@ -86,78 +100,3 @@
   
   ;; remove one level of list
   (car (transform-levels-helper tree)))
-
-
-;; probably don't need these
-(define (make-expr test)
-  (list test))
-
-(define (make-test func expr)
-  (cons func expr))
-
-(define (get-func test)
-  (car test))
-
-(define (get-expr test)
-  (cdr test))
-
-;; not final. doesn't work if level drops. need a new algorithm.
-;; probably not going to use
-(define (build-exp lines last-line cur-level new-level)
-  (cond 
-    [(null? lines) (make-expr (make-test (car last-line) '()))]
-    [(and (pair? (car lines)) 
-          (equal? (caar lines) 'level))
-     (printf "increment level~n") 
-     (build-exp (cdr lines) last-line cur-level (add1 new-level))]
-    [(= new-level (add1 cur-level))
-     (printf "add new line with higher level~n") 
-     (if (null? last-line)
-         (build-exp (cdr lines) 
-                    (car lines) 
-                    (add1 cur-level) 
-                    0)
-         (make-expr (make-test (car last-line) 
-                               (make-expr 
-                                (build-exp (cdr lines) 
-                                           (car lines) 
-                                           (add1 cur-level) 
-                                           0)))))]
-    [(= new-level cur-level)
-     (printf "new line at same level~n") 
-     (if (null? last-line)
-         (build-exp (cdr lines) 
-                    (car lines)
-                    cur-level 
-                    0)
-         (cons (make-test (car last-line) '()) 
-               (build-exp (cdr lines) (car lines) cur-level 0)))]
-    ;[(< new-level cur-level)
-     
-    ))
-
-
-;; sample walk of a tree of tests
-(define (line1) #t)
-(define (line2) #f)
-(define (line3) #t)
-(define (line4) #f)
-(define (line5) #f)
-
-(define test-exp `((,line1 ((,line2) (,line3 ((,line4) (,line5)))))))
-(define test-exp2 `((,line1) (,line2) (,line3)))
-
-(define (test-walk exp)
-  (cond [(null? exp) #f]
-        [(not (pair? exp)) #f]
-        [(list? (car exp)) 
-         (let ([result (test-walk (car exp))])
-           (if (eq? result 'match)
-               'match
-               (test-walk (cdr exp))))]
-        [((car exp))
-         (printf "matched ~a~n" (car exp))
-         (if (null? (cdr exp))
-             'match
-             (test-walk (cdr exp)))]
-        [else #f]))
