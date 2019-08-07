@@ -4,7 +4,9 @@
 #lang magic is a Racket implementation of the mini language used by the Unix file command. This is a language designed to write tests to determine a file's type. Thousands of tests written in the magic language can be seamlessly incorporated into Racket applications using #lang magic. In addition, compared to the file command, Racket provides a secure environment for executing these tests.
 
 ## Requirements
-#lang magic has only been tested on Racket 6.11 on Linux. Testing on other platforms and a current version of Racket are near term goals.
+#lang magic is currently being developed and tested with Racket 6.11 on Linux. It has also been tested briefly on Windows with Racket 7.3 and didn't exhibit any obvious problems.
+
+The only dependency besides standard Racket is brag, which can be installed with `raco pkg install brag`.
 
 ## Description 
 For the curious, The man pages for 'magic' describes the magic language in considerable, but not exhaustive, detail. A code sample to check for Microsoft executables provides the flavor of the language:
