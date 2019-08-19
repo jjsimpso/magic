@@ -252,7 +252,7 @@
    [(from/stop-before (:~ " " "\t" "\n") "\n") 
     (begin
       (set! current-lexer magic-lexer)
-      (token 'MAGIC-NAME lexeme))]))
+      (token 'MAGIC-NAME (string->symbol lexeme)))]))
 
 (define hws-count 0)
 (define current-lexer magic-lexer)

@@ -18,7 +18,7 @@
 
 (require "magic-functions.rkt")
 (require racket/stxparam)
-(require (for-syntax racket/base syntax/stx syntax/parse))
+(require (for-syntax racket/base syntax/stx syntax/parse racket/syntax))
 (require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
 
 (define-syntax-parameter last-level-offset
@@ -94,8 +94,7 @@
 (define-syntax (line stx)
   (syntax-case stx (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
-     (with-syntax ([name (datum->syntax #'magic-name (string->symbol (syntax->datum #'magic-name)))])
-       #'(name off))]
+     #'(magic-name off)]
     ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
     [(line (offset (reloffset off)) (type type-expr) (test test-expr)) 
      (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
@@ -164,13 +163,12 @@
 (define-syntax (named-query stx)
   (syntax-case stx (name-line)
     [(_ (name-line (_ 0) (_ "name") magic-name))
-     (with-syntax ([name (datum->syntax #'magic-name (string->symbol (syntax->datum #'magic-name)))])
-       #'(define name
-           (lambda (new-offset) (void))))]
+     #'(define magic-name
+         (lambda (new-offset) (void)))]
     [(_ (name-line (_ 0) (_ "name") magic-name) . rst)
-     (with-syntax ([name (datum->syntax #'magic-name (string->symbol (syntax->datum #'magic-name)))]
+     (with-syntax (;[name (format-id stx "~a" (syntax-e #'magic-name))]
                    [modified-rst (cons (datum->syntax #'rst always-true-line) #'rst)])
-       #'(define name
+       #'(define magic-name
            (lambda (new-offset)
              (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
                ;(printf "name: offset = ~a~n" name-offset)
