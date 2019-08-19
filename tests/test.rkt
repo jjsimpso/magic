@@ -14,6 +14,8 @@
 ;;   See the License for the specific language governing permissions and
 ;;   limitations under the License.
 
+(require rackunit)
+
 (require (only-in "file-exe.rkt" (magic-query exe-query) (magic-query-run-all exe-query-all)))
 (require (only-in "debugtest.rkt" (magic-query image-query)))
 (require (only-in "string-test.rkt" (magic-query string-query)))
@@ -26,28 +28,60 @@
           #f))))
 
 (with-input-from-file "iexplore.exe" exe-query)
-(with-input-from-file "iexplore.exe" (build-string-output-thunk exe-query))
+(check-equal? 
+ (with-input-from-file "iexplore.exe" (build-string-output-thunk exe-query)) 
+ "PE executable (MS-Windows) for AMD64 ")
 (with-input-from-file "mm3.exe" exe-query)
-(with-input-from-file "mm3.exe" (build-string-output-thunk exe-query))
+(check-equal? 
+ (with-input-from-file "mm3.exe" (build-string-output-thunk exe-query)) 
+ "MZ executable (MS-DOS) ")
 ;(with-input-from-file "SIMTOWER.EXE" exe-query)
 (with-input-from-file "/home/jonathan/.bash_history" exe-query)
-(with-input-from-file "/home/jonathan/.bash_history" (build-string-output-thunk exe-query))
+(check-equal? 
+ (with-input-from-file "/home/jonathan/.bash_history" (build-string-output-thunk exe-query)) 
+ #f)
 
 (with-input-from-file "../file-tests/W-flag-test.txt" string-query)
-(with-input-from-file "../file-tests/W-flag-test.txt" (build-string-output-thunk string-query))
+(check-equal? 
+ (with-input-from-file "../file-tests/W-flag-test.txt" (build-string-output-thunk string-query)) 
+ "W flag passed ")
 (with-input-from-file "../file-tests/cC-flag-test.txt" string-query)
-(with-input-from-file "../file-tests/cC-flag-test.txt" (build-string-output-thunk string-query))
+(check-equal? 
+ (with-input-from-file "../file-tests/cC-flag-test.txt" (build-string-output-thunk string-query)) 
+ "cC flag passed ")
 
 (with-input-from-file "small_avatar.png" image-query)
-(with-input-from-file "small_avatar.png" (build-string-output-thunk image-query))
+(check-equal? 
+ (with-input-from-file "small_avatar.png" (build-string-output-thunk image-query)) 
+ "PNG image data \b, 94 x 159, 8-bit colormap, non-interlaced ")
 (with-input-from-file "thg2.png" image-query)
-(with-input-from-file "thg2.png" (build-string-output-thunk image-query))
+(check-equal? 
+ (with-input-from-file "thg2.png" (build-string-output-thunk image-query)) 
+ "PNG image data \b, 1282 x 476, 8-bit \b/color RGB, non-interlaced ")
 
 (with-input-from-file "sundesk2.gif" image-query)
+(check-equal? 
+ (with-input-from-file "sundesk2.gif" (build-string-output-thunk image-query))
+ "GIF image data \b, version 8%s, 1152 x 900 ")
+
 (with-input-from-file "pantherxl.jpg" image-query)
+(check-equal? 
+ (with-input-from-file "pantherxl.jpg" (build-string-output-thunk image-query))
+ "JPEG image data \b, JFIF standard ")
 (with-input-from-file "Pureyouth.jpg" image-query)
-(with-input-from-file "Pureyouth.jpg" (build-string-output-thunk image-query))
+(check-equal? 
+ (with-input-from-file "Pureyouth.jpg" (build-string-output-thunk image-query))
+ "JPEG image data \b, Exif standard: [ \b] ")
 (with-input-from-file "TOWN.PCX" image-query)
+(check-equal? 
+ (with-input-from-file "TOWN.PCX" (build-string-output-thunk image-query))
+ "PCX ver. 3.0 image data bounding box [0, 0] - [639, 679], 1-bit colour, image, 150 x 150 dpi, RLE compressed ")
 (with-input-from-file "gs3armor.htm" image-query)
+(check-equal? 
+ (with-input-from-file "gs3armor.htm" (build-string-output-thunk image-query))
+ "HTML document text ")
 
 (with-input-from-file "iexplore.exe" exe-query-all)
+(check-equal? 
+ (with-input-from-file "iexplore.exe" (build-string-output-thunk exe-query-all))
+ "PE executable (MS-Windows) for AMD64 *** *** ")
