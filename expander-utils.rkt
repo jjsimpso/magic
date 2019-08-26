@@ -17,6 +17,9 @@
 (provide parse-levels)
 (provide transform-levels)
 
+(require syntax/parse)
+(require (for-syntax syntax/parse))
+
 (define (eat-lines-with-greater-level lines level)
   (define next-line-level
     (for/fold ([level 0])
@@ -64,6 +67,29 @@
 (define (level-tree-to-code tree)
   #f)
 
+(define-syntax-class level
+  (pattern ({~datum level})))
+
+(define-syntax-class line
+  (pattern ({~literal line} expr ...)))
+
+;; (syntax-parse #'((level) (level)) [(((~datum level)) ((~datum level))) #t])
+;; (syntax-parse #'(line 0 run-test) [(line e ...) #t])
+;; (syntax-parse #'(line 0 run-test) [({~literal line} expr ...) #'(line expr ...)])
+;; (syntax-parse #'((level) (line 0 run-test) (line 1 run-test)) [(({~datum level}) ...+ ({~literal line} expr ...) ...) #'(level (line expr ...) ...)])
+;; (syntax-parse #'((level) (line 0 run-test) (line 1 run-test) (level)) [(lvl:level ...+ ln:line ~rest r) #'r])
+;; 
+(define-syntax (parse-level0 stx)
+  (syntax-parse stx
+    [(_ ({~literal line} expr ...)) #'(line expr ...)]
+    [(_ ({~datum level}) ({~literal line} expr ...) ...) 
+     #'(level (line expr ...) ...)]
+    [_ #f]))
+
+(define-syntax (parse-level1 stx)
+  (syntax-parse stx
+    [(_ ({~literal line} expr ...)) #'(line expr ...)]
+    [_ #f]))
 
 ;; transforms code from something like this:
 ;; ((line1)
