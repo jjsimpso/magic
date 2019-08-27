@@ -20,6 +20,7 @@
 (require racket/stxparam)
 (require (for-syntax racket/base syntax/stx syntax/parse racket/syntax))
 (require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
+(require "expander-utils.rkt")
 
 (define-syntax-parameter last-level-offset
   (lambda (stx)
