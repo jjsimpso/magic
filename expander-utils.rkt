@@ -76,6 +76,48 @@
     (pattern ({~literal line} expr ...)))
 )
 
+;; temporary
+(define-syntax (line stx)
+  (syntax-parse stx
+    [(_ e ...) #'(quote (e ...))]))
+
+#;(define-syntax (splice-to-level stx)
+  (syntax-parse stx
+    [(_ ln1:mag-line)
+     #'ln1]
+    [(_ ln1:mag-line ln2:mag-line expr ...)
+     #'(ln1 (splice-to-level ln2 expr ...))]
+    ))
+
+(define-for-syntax (splice-to-level stx)
+  (display stx)
+  (syntax-parse stx
+    [(ln1:mag-line)
+     (printf "splice to level 1~n")
+     #'(ln1)]
+    [(ln1:mag-line ln2:mag-line expr ...)
+     (printf "splice to level 2~n")
+     #`(ln1 #,@(splice-to-level #'(ln2 expr ...)))]
+    [(ln:mag-line ({~literal level} lexpr ...) expr ...)
+     (printf "splice to level 3~n")
+     #`((when ln (level lexpr ...))
+        #,@(splice-to-level #'(expr ...)))]
+    [() #'()]))
+
+(define-syntax (level stx)
+  (syntax-parse stx
+    [(_ ln:mag-line ...)
+     #'(begin ln ...)]
+    [(_ ln:mag-line ({~literal level} lexpr ...) . rst)
+     (with-syntax ([(expr ...) #'rst])
+       #`(begin 
+           (when ln (level lexpr ...))
+           #,@(splice-to-level #'rst)))]
+    [(_ ln:mag-line . rst)
+     #`(begin 
+         ln
+         #,@(splice-to-level #'rst))]))
+
 ;; (syntax-parse #'((level) (level)) [(((~datum level)) ((~datum level))) #t])
 ;; (syntax-parse #'(line 0 run-test) [(line e ...) #t])
 ;; (syntax-parse #'(line 0 run-test) [({~literal line} expr ...) #'(line expr ...)])
@@ -85,14 +127,15 @@
 ;; (parse-level0 (level) (line (offset 0) (type (default "default")) (test (truetest "x"))))
 (define-syntax (parse-level0 stx)
   (syntax-parse stx
-    [(_ ln:mag-line) #'ln]
+    ;[(_ ln:mag-line) #'(ln)]
+    [(_ ln:mag-line . rst) #'(ln (parse-level1 rst))]
     [(_ lvl:mag-lvl ln:mag-line) 
      #'(level ln)]
-    [_ #f]))
+    [_ #'()]))
 
 (define-syntax (parse-level1 stx)
   (syntax-parse stx
-    [(_ ({~literal line} expr ...)) #'(line expr ...)]
+    [(_ ()) #'void]
     [_ #f]))
 
 ;; transforms code from something like this:
