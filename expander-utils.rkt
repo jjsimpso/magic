@@ -147,14 +147,17 @@
     [_ #'(error "syntax error at level 0")]))
 
 (define-for-syntax (parse-level1 stx)
+  (printf "parse-level1 input: ")
   (display stx)
   (syntax-parse stx
     [(lvl:mag-lvl ln:mag-line expr ...)
      (printf "parse-level1 1~n")
      #`(ln #,@(parse-level1 #'(expr ...)))]
-    [(lvl1:mag-lvl lvl2:mag-lvl ln:mag-line expr ...)
+    [(lvlx:mag-lvl lvly:mag-lvl ln:mag-line (~seq lvl1:mag-lvl lvl2:mag-lvl ...+ ln2:mag-line) ... expr ...)
+     #:with branch-lines #'((~@ lvl1 lvl2 ... ln2) ...)
      (printf "parse-level1 2~n")
-     #`(level ln #,@(parse-level2 #'(expr ...)))]
+     #`((level ln #,@(parse-level2 #'branch-lines))
+        #,@(parse-level1 #'(expr ...)))]
     [(())
      (printf "parse-level1 3~n") 
      #'()]
@@ -165,7 +168,13 @@
      #'(error "skipped level at level 1")]))
 
 (define-for-syntax (parse-level2 stx)
-  (display stx))
+  (printf "parse-level2 input: ")
+  (display stx)
+  (syntax-parse stx
+    [()
+     (printf "parse-level2 4~n") 
+     #'()]))
+    
   
 ;; transforms code from something like this:
 ;; ((line1)
