@@ -74,6 +74,13 @@
   
   (define-syntax-class mag-line
     (pattern ({~literal line} expr ...)))
+
+  (define-syntax-class lvl>0
+    #:datum-literals (level)
+    #:literals (line)
+    ;(pattern ((~between ({~datum level}) 2 +inf.0) ln:mag-line)))
+    ;(pattern (lvl:mag-level lvlx:mag-level ...+ ln:mag-line)))
+    (pattern (lvl:mag-lvl ...+ ln:mag-line)))
 )
 
 ;; temporary
@@ -125,25 +132,47 @@
 ;; (syntax-parse #'((level) (line 0 run-test) (line 1 run-test) (level)) [(lvl:mag-lvl ...+ ln:mag-line ~rest r) #'r])
 ;; (parse-level0 (line (offset 0) (type (default "default")) (test (truetest "x"))))
 ;; (parse-level0 (level) (line (offset 0) (type (default "default")) (test (truetest "x"))))
+;; (syntax-parse #'(1 2 2 a 2 2 b 2 c) [(1 (~seq n:nat ...+ x) ...) #'((~@ n ... x) ...)])
 (define-syntax (parse-level0 stx)
   (syntax-parse stx
-    ;[(_ ln:mag-line) #'(ln)]
-    [(_ ln:mag-line . rst) #'(ln (parse-level1 rst))]
-    [(_ lvl:mag-lvl ln:mag-line) 
-     #'(level ln)]
-    [_ #'()]))
+    [(_ ln:mag-line) #'ln]
+    ;[(_ ln:mag-line lvl:mag-lvl ln2:mag-line expr ...)
+    [(_ ln:mag-line (~seq lvl:mag-lvl ...+ ln2:mag-line) ...+)
+     #:with branch-lines #'((~@ lvl ... ln2) ...)
+     (printf "parse-level0 1~n")
+     #`(ln (level 
+            #,@(parse-level1 #'branch-lines)))]
+    [(_ lvl:mag-lvl ...+ expr ...) 
+     #'(error "no line at level 0")]
+    [_ #'(error "syntax error at level 0")]))
 
-(define-syntax (parse-level1 stx)
+(define-for-syntax (parse-level1 stx)
+  (display stx)
   (syntax-parse stx
-    [(_ ()) #'void]
-    [_ #f]))
+    [(lvl:mag-lvl ln:mag-line expr ...)
+     (printf "parse-level1 1~n")
+     #`(ln #,@(parse-level1 #'(expr ...)))]
+    [(lvl1:mag-lvl lvl2:mag-lvl ln:mag-line expr ...)
+     (printf "parse-level1 2~n")
+     #`(level ln #,@(parse-level2 #'(expr ...)))]
+    [(())
+     (printf "parse-level1 3~n") 
+     #'()]
+    [()
+     (printf "parse-level1 4~n") 
+     #'()]
+    [(_ lvl:mag-lvl ... expr ...) 
+     #'(error "skipped level at level 1")]))
 
+(define-for-syntax (parse-level2 stx)
+  (display stx))
+  
 ;; transforms code from something like this:
 ;; ((line1)
-;;  (level) (line2)
-;;          (line3)
-;;          (level (line4)
-;;                 (line5))))
+;;  (level (line2)
+;;         (line3)
+;;         (level (line4)
+;;                (line5))))
 ;;
 ;; to this:
 ;; (when (line1)
