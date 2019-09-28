@@ -16,10 +16,57 @@
 
 (provide parse-levels)
 (provide transform-levels)
+(provide last-level-offset any-true? begin-true when*)
 (provide parse-level0)
 
-(require syntax/parse)
-(require (for-syntax syntax/parse))
+(require syntax/parse racket/stxparam)
+(require (for-syntax syntax/stx syntax/parse))
+
+(define-syntax-parameter last-level-offset
+  (lambda (stx)
+    (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-true")))
+
+;; any-true? is like an or that doesn't short circuit
+;; since any-true? indicates the start of a new level we save the current
+;; file position to use for relative offsets at this level.
+(define-syntax-rule (any-true? body ...)
+  (let ([result #f]
+        [tmp-offset (file-position (current-input-port))])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
+      ;(printf "any-true: last level offset is ~a~n" last-level-offset)
+      (when body (set! result #t))
+      ...
+      result)))
+
+;; like any-true? but always returns true
+(define-syntax-rule (begin-true body ...)
+  (let ([tmp-offset (file-position (current-input-port))])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
+      body
+      ...
+      #t)))
+
+;; like when but it returns #f instead of #<void> if test expression is false
+;; code modified from official when macro 
+(define-syntax when*
+  (lambda (x)
+    (let ([l (syntax->list x)])
+      (if (and l
+               (> (length l) 2))
+          (datum->syntax
+           (quote-syntax here)
+           (list (quote-syntax if)
+                 (stx-car (stx-cdr x))
+                 (list*
+                  (quote-syntax let-values)
+                  (quote-syntax ())
+                  (stx-cdr (stx-cdr x)))
+                 (quote-syntax #f))
+           x)
+          (raise-syntax-error
+           #f
+           "bad syntax"
+           x)))))
 
 (define (eat-lines-with-greater-level lines level)
   (define next-line-level
@@ -107,21 +154,21 @@
      #`(ln1 #,@(splice-to-level #'(ln2 expr ...)))]
     [(ln:mag-line ({~literal level} lexpr ...) expr ...)
      (printf "splice to level 3~n")
-     #`((when ln (level lexpr ...))
+     #`((when* ln (level lexpr ...))
         #,@(splice-to-level #'(expr ...)))]
     [() #'()]))
 
 (define-syntax (level stx)
   (syntax-parse stx
     [(_ ln:mag-line ...)
-     #'(begin ln ...)]
+     #'(begin-true ln ...)]
     [(_ ln:mag-line ({~literal level} lexpr ...) . rst)
      (with-syntax ([(expr ...) #'rst])
-       #`(begin 
-           (when ln (level lexpr ...))
+       #`(begin-true 
+           (when* ln (level lexpr ...))
            #,@(splice-to-level #'rst)))]
     [(_ ln:mag-line . rst)
-     #`(begin 
+     #`(begin-true 
          ln
          #,@(splice-to-level #'rst))]))
 
@@ -140,7 +187,7 @@
     [(_ ln:mag-line (~seq lvl:mag-lvl ...+ ln2:mag-line) ...+)
      #:with branch-lines #'((~@ lvl ... ln2) ...)
      (printf "parse-level0 1~n")
-     #`(ln (level 
+     #`(when* ln (level 
             #,@(parse-level1 #'branch-lines)))]
     [(_ lvl:mag-lvl ...+ expr ...) 
      #'(error "no line at level 0")]
@@ -158,14 +205,9 @@
      (printf "parse-level1 2~n")
      #`((level ln #,@(parse-level2 #'branch-lines))
         #,@(parse-level1 #'(expr ...)))]
-    [(())
-     (printf "parse-level1 3~n") 
-     #'()]
     [()
-     (printf "parse-level1 4~n") 
-     #'()]
-    [(_ lvl:mag-lvl ... expr ...) 
-     #'(error "skipped level at level 1")]))
+     (printf "parse-level1 3~n") 
+     #'()]))
 
 (define-for-syntax (parse-level2 stx)
   (printf "parse-level2 input: ")

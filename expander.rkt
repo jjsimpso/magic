@@ -22,56 +22,10 @@
 (require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
 (require "expander-utils.rkt")
 
-(define-syntax-parameter last-level-offset
-  (lambda (stx)
-    (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-true")))
-
 (define-syntax-parameter name-offset 
   (lambda (stx)
     #'0))
 
-;; any-true? is like an or that doesn't short circuit
-;; since any-true? indicates the start of a new level we save the current
-;; file position to use for relative offsets at this level.
-(define-syntax-rule (any-true? body ...)
-  (let ([result #f]
-        [tmp-offset (file-position (current-input-port))])
-    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
-      ;(printf "any-true: last level offset is ~a~n" last-level-offset)
-      (when body (set! result #t))
-      ...
-      result)))
-
-;; like any-true? but always returns true
-(define-syntax-rule (begin-true body ...)
-  (let ([tmp-offset (file-position (current-input-port))])
-    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
-      body
-      ...
-      #t)))
-
-;; like when but it returns #f instead of #<void> if test expression is false
-;; code modified from official when macro 
-(define-syntax when*
-  (lambda (x)
-    (let ([l (syntax->list x)])
-      (if (and l
-               (> (length l) 2))
-          (datum->syntax
-           (quote-syntax here)
-           (list (quote-syntax if)
-                 (stx-car (stx-cdr x))
-                 (list*
-                  (quote-syntax let-values)
-                  (quote-syntax ())
-                  (stx-cdr (stx-cdr x)))
-                 (quote-syntax #f))
-           x)
-          (raise-syntax-error
-           #f
-           "bad syntax"
-           x)))))
-  
 #|
 (define-syntax (level stx)
   (syntax-parse stx
