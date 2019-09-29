@@ -113,6 +113,12 @@
     (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
+#;(define-syntax (query stx)
+  (printf "~a~n" stx)
+  (syntax-parse stx
+    [(_ expr ...)
+     #'(parse-level0 expr ...)]))
+
 (define-for-syntax always-true-line '(line (offset 0) (type (default "default")) (test (truetest "x"))))
 
 (define-syntax (named-query stx)

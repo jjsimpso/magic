@@ -17,7 +17,7 @@
 (provide parse-levels)
 (provide transform-levels)
 (provide last-level-offset any-true? begin-true when*)
-(provide parse-level0)
+(provide level parse-level0)
 
 (require syntax/parse racket/stxparam)
 (require (for-syntax syntax/stx syntax/parse))
@@ -120,7 +120,7 @@
     (pattern ({~datum level})))
   
   (define-syntax-class mag-line
-    (pattern ({~literal line} expr ...)))
+    (pattern ({~datum line} expr ...)))
 
   (define-syntax-class lvl>0
     #:datum-literals (level)
@@ -181,6 +181,8 @@
 ;; (parse-level0 (level) (line (offset 0) (type (default "default")) (test (truetest "x"))))
 ;; (syntax-parse #'(1 2 2 a 2 2 b 2 c) [(1 (~seq n:nat ...+ x) ...) #'((~@ n ... x) ...)])
 (define-syntax (parse-level0 stx)
+  (printf "parse-level0 input: ")
+  (display stx) (printf "~n")
   (syntax-parse stx
     [(_ ln:mag-line) #'ln]
     ;[(_ ln:mag-line lvl:mag-lvl ln2:mag-line expr ...)
@@ -191,11 +193,14 @@
             #,@(parse-level1 #'branch-lines)))]
     [(_ lvl:mag-lvl ...+ expr ...) 
      #'(error "no line at level 0")]
-    [_ #'(error "syntax error at level 0")]))
+    [_
+     (printf "parse-level0 error on input: ")
+     (display stx) (printf "~n") 
+     #'(error "syntax error at level 0")]))
 
 (define-for-syntax (parse-level1 stx)
   (printf "parse-level1 input: ")
-  (display stx)
+  (display stx) (printf "~n")
   (syntax-parse stx
     [(lvl:mag-lvl ln:mag-line expr ...)
      (printf "parse-level1 1~n")
