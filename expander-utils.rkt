@@ -20,7 +20,7 @@
 (provide level parse-level0)
 
 (require syntax/parse racket/stxparam)
-(require (for-syntax syntax/stx syntax/parse))
+(require (for-syntax syntax/stx syntax/parse racket/syntax racket/list))
 
 (define-syntax-parameter last-level-offset
   (lambda (stx)
@@ -131,7 +131,7 @@
 )
 
 ;; temporary
-(define-syntax (line stx)
+#;(define-syntax (line stx)
   (syntax-parse stx
     [(_ e ...) #'(quote (e ...))]))
 
@@ -180,9 +180,10 @@
 ;; (parse-level0 (line (offset 0) (type (default "default")) (test (truetest "x"))))
 ;; (parse-level0 (level) (line (offset 0) (type (default "default")) (test (truetest "x"))))
 ;; (syntax-parse #'(1 2 2 a 2 2 b 2 c) [(1 (~seq n:nat ...+ x) ...) #'((~@ n ... x) ...)])
+;; (syntax-parse #'(1 2 3) [((~between x:integer 3 3) ...) #'1])
 (define-syntax (parse-level0 stx)
-  (printf "parse-level0 input: ")
-  (display stx) (printf "~n")
+  ;(printf "parse-level0 input: ")
+  ;(display stx) (printf "~n")
   (syntax-parse stx
     [(_ ln:mag-line) #'ln]
     ;[(_ ln:mag-line lvl:mag-lvl ln2:mag-line expr ...)
@@ -194,8 +195,8 @@
     [(_ lvl:mag-lvl ...+ expr ...) 
      #'(error "no line at level 0")]
     [_
-     (printf "parse-level0 error on input: ")
-     (display stx) (printf "~n") 
+     ;(printf "parse-level0 error on input: ")
+     ;(display stx) (printf "~n") 
      #'(error "syntax error at level 0")]))
 
 (define-for-syntax (parse-level1 stx)
@@ -214,7 +215,33 @@
      (printf "parse-level1 3~n") 
      #'()]))
 
-(define-for-syntax (parse-level2 stx)
+(define-syntax (define-parse-level-func stx)
+  (display stx)
+  (syntax-parse stx
+    [(_ plevel:integer)
+     #:with name (format-id stx "parse-level~a" (syntax-e #'plevel))
+     #:with level-prefix (make-list (syntax-e #'plevel) 'lvl)
+     #:with ooo (quote-syntax ...)
+     #:with ooo+ (quote-syntax ...+)
+     #'(define-for-syntax (name stx)
+         (syntax-parse stx
+           [(((~between ({~datum level}) plevel plevel) ooo) ln:mag-line expr ooo)
+            (printf "~a 1~n" name)
+            #`(ln #,@(name #'(expr ooo)))]
+           [(lvlx:mag-lvl lvly:mag-lvl ln:mag-line (~seq lvl1:mag-lvl lvl2:mag-lvl ooo+ ln2:mag-line) ooo expr ooo)
+            #:with branch-lines #'(((... ~@) lvl1 lvl2 ooo ln2) ooo)
+            (printf "~a 2~n" name)
+            #`((level ln #,@(parse-level2 #'branch-lines))
+               #,@(parse-level1 #'(expr ooo)))]
+           [()
+            (printf "~a 3~n" name)
+            #'()]))]
+     [(_) (error "invalid argument")]))
+
+
+(define-parse-level-func 2)
+
+#;(define-for-syntax (parse-level2 stx)
   (printf "parse-level2 input: ")
   (display stx)
   (syntax-parse stx
