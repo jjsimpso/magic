@@ -131,7 +131,7 @@
 )
 
 ;; temporary
-(define-syntax (line stx)
+#;(define-syntax (line stx)
   (syntax-parse stx
     [(_ e ...) #'(quote (e ...))]))
 
@@ -190,7 +190,7 @@
     ;[(_ ln:mag-line lvl:mag-lvl ln2:mag-line expr ...)
     [(_ ln:mag-line (~seq lvl:mag-lvl ...+ ln2:mag-line) ...+)
      #:with branch-lines #'((~@ lvl ... ln2) ...)
-     (printf "parse-level0 1~n")
+     ;(printf "parse-level0 1~n")
      #`(when* ln (level 
             #,@(parse-level1 #'branch-lines)))]
     [(_ lvl:mag-lvl ...+ expr ...) 
@@ -201,19 +201,19 @@
      #'(error "syntax error at level 0")]))
 
 (define-for-syntax (parse-level1 stx)
-  (printf "parse-level1 input: ")
-  (display stx) (printf "~n")
+  ;(printf "parse-level1 input: ")
+  ;(display stx) (printf "~n")
   (syntax-parse stx
     [(lvl:mag-lvl ln:mag-line expr ...)
-     (printf "parse-level1 1~n")
+     ;(printf "parse-level1 1~n")
      #`(ln #,@(parse-level1 #'(expr ...)))]
     [(lvlx:mag-lvl lvly:mag-lvl ln:mag-line (~seq lvl1:mag-lvl lvl2:mag-lvl ...+ ln2:mag-line) ... expr ...)
      #:with branch-lines #'((~@ lvl1 lvl2 ... ln2) ...)
-     (printf "parse-level1 2~n")
+     ;(printf "parse-level1 2~n")
      #`((level ln #,@(parse-level2 #'branch-lines))
         #,@(parse-level1 #'(expr ...)))]
     [()
-     (printf "parse-level1 3~n") 
+     ;(printf "parse-level1 3~n") 
      #'()]))
 
 (define-syntax (define-parse-level-func stx)
@@ -227,21 +227,21 @@
      #:with ooo (quote-syntax ...)
      #:with ooo+ (quote-syntax ...+)
      #'(define-for-syntax (name stx)
-         (printf "~a input: " name)
-         (display stx) (printf "~n")
+         ;(printf "~a input: " name)
+         ;(display stx) (printf "~n")
          (syntax-parse stx
            [((~between lvl:mag-lvl plevel plevel) ooo ln:mag-line expr ooo)
-            (printf "~a 1~n" name)
+            ;(printf "~a 1~n" name)
             #`(ln #,@(name #'(expr ooo)))]
            [((~between lvlx:mag-lvl nlevel nlevel) ooo ln:mag-line 
-             (~seq ((~between lvl1:mag-lvl plevel plevel) ooo) lvl2:mag-lvl ooo+ ln2:mag-line) ooo expr ooo)
+             (~seq (~between lvl1:mag-lvl plevel plevel) ooo lvl2:mag-lvl ooo+ ln2:mag-line) ooo expr ooo)
             #:with branch-lines #'(((... ~@) lvl1 ooo lvl2 ooo ln2) ooo)
-            (printf "~a 2: " name)
-            (display #'branch-lines) (printf "~n")
+            ;(printf "~a 2: " name)
+            ;(display #'branch-lines) (printf "~n")
             #`((level ln #,@(nested-name #'branch-lines))
                #,@(name #'(expr ooo)))]
            [()
-            (printf "~a 3~n" name)
+            ;(printf "~a 3~n" name)
             #'()]
            [_
             (printf "~a error on input: " name)
@@ -252,11 +252,18 @@
 
 (define-parse-level-func 2)
 (define-parse-level-func 3)
+(define-parse-level-func 4)
+(define-parse-level-func 5)
+(define-parse-level-func 6)
+(define-parse-level-func 7)
+(define-parse-level-func 8)
+(define-parse-level-func 9)
 
 ;; stub out the deepest level possible to resolve unbound reference and stop the recursion
-(define-for-syntax (parse-level4 stx)
-  (printf "parse-level3 input: ")
+(define-for-syntax (parse-level10 stx)
+  (printf "parse-level10 input: ")
   (display stx)
+  (error "Exceeded max nesting level of 9")
   #'())
 
 #;(define-for-syntax (parse-level2 stx)

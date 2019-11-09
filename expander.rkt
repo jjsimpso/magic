@@ -102,7 +102,7 @@
 
 ;(define-syntax-rule (type expr)
 
-(define-syntax (query stx)
+#;(define-syntax (query stx)
   ; investigate syntax->list so that i don't loose src location and other syntax info here
   (let ([lines (cdr (syntax->datum stx))])
     ;(display lines) (printf "~n")
@@ -113,7 +113,7 @@
     (printf "~n")
     (datum->syntax stx lines-syntax-tree)))
 
-#;(define-syntax (query stx)
+(define-syntax (query stx)
   (printf "~a~n" stx)
   (syntax-parse stx
     [(_ expr ...)

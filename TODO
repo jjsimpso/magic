@@ -1,7 +1,6 @@
 - implement independent case insensitive string flags
 - add backslash octal parsing
 - handle >,<,= ops as first character of string tests
-- previously defined named tests aren't visible within a named test. need to fix.
 - add support for relative indirect offsets
 - implement full printf substitution in message
 - fix macro stepper problems with certain lines

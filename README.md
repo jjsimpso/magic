@@ -4,9 +4,9 @@
 #lang magic is a Racket implementation of the mini language used by the Unix file command. This is a language designed to write tests to determine a file's type. Thousands of tests written in the magic language can be seamlessly incorporated into Racket applications using #lang magic. In addition, compared to the file command, Racket provides a secure environment for executing these tests.
 
 ## Requirements
-#lang magic is currently being developed and tested with Racket 6.11 on Linux. It has also been tested briefly on Windows with Racket 7.3 and didn't exhibit any obvious problems.
-
-The only dependency besides standard Racket is brag, which can be installed with `raco pkg install brag`.
+* Racket version 7.4.0.902 or higher. 
+* The brag Racket package. Install with `raco pkg install brag`.
+* #lang magic is currently being developed and tested with Racket on Linux. It has also been tested briefly on Windows and didn't exhibit any obvious problems. I will occassionaly spot check the Windows version, but I'm not currently testing every commit against Windows.
 
 ## Description 
 For the curious, The man pages for 'magic' describes the magic language in considerable, but not exhaustive, detail. A code sample to check for Microsoft executables provides the flavor of the language:
@@ -31,7 +31,7 @@ In #lang magic the code sample above compiles to one magic query. A #lang magic 
 This is a brief summary, so consult 'man magic' for a complete explanation of magic syntax. Windows users can google the Linux man page for 'magic'. The tests/ directory also contains sample magic files and calls to them from test.rkt.
 
 ## Status 
-There is still a lot of work to do. Most of the macros need revising and should probably be rewritten with syntax/parse. The lexer could be improved as well. And of course there are missing features, some of which are documented in the TODO file.
+There is still a lot of work to do. Some of the macros need revising and should probably be rewritten with syntax/parse. The lexer could be improved as well. And of course there are missing features, some of which are documented in the TODO file.
 
 ## Goals 
 The goal is to get as close to 100% compatibility as possible with Ian Darwin's version(available at https://www.darwinsys.com/file/) found in most Linux and BSD distributions.
