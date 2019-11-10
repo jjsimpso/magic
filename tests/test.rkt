@@ -79,7 +79,16 @@
 (with-input-from-file "gs3armor.htm" image-query)
 (check-equal? 
  (with-input-from-file "gs3armor.htm" (build-string-output-thunk image-query))
- "HTML document text ")
+ "HTML document text gs3armor.htm ")
+(with-input-from-file "../file-tests/abcdef" image-query)
+(check-equal? 
+ (with-input-from-file "../file-tests/abcdef" (build-string-output-thunk image-query))
+ "bc \bdef ")
+
+(with-input-from-file "03.tga" image-query)
+(check-equal? 
+ (with-input-from-file "03.tga" (build-string-output-thunk image-query))
+ "Targa image data - RGB - RLE 500 x 387 x 24 ")
 
 (with-input-from-file "iexplore.exe" exe-query-all)
 (check-equal? 

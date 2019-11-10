@@ -80,9 +80,9 @@
   (syntax-parse stx
     #:datum-literals (leshort lelong beshort belong)
     [(_ (leshort ".s")) #'read-leshort]
-    [(_ (lelong ".l")) #'read-lelong]
-    [(_ (beshort ".s")) #'read-beshort]
-    [(_ (belong ".l")) #'read-belong]
+    [(_ (lelong  ".l")) #'read-lelong]
+    [(_ (beshort ".S")) #'read-beshort]
+    [(_ (belong  ".L")) #'read-belong]
     ))
 
 (define-syntax (op stx)

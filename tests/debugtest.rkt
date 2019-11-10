@@ -2,8 +2,13 @@
 
 0	string/b	DDS\040\174\000\000\000 Microsoft DirectDraw Surface (DDS):
 
-0	search/4096/cwt	  \<head\>		HTML document text
+# test the offset after search offset is set to end of matched string
 0	search/4096/cwt	  \<html\>		HTML document text
+>&0     string            \<BODY                gs3armor.htm
+
+# test that the search flag "s" leaves offset at the beginning of the match
+0       search/s          bc                    bc
+>&0     string            bcdef                 \bdef
 
 # PCX image files
 # From: Dan Fandrich <dan@coneharvesters.com>
@@ -90,3 +95,99 @@
 >6	string		JFIF		\b, JFIF standard
 >6	string		Exif		\b, Exif standard: [
 >>12	default		x		\b]
+
+
+# Targa - matches `povray', `ppmtotga' and `xv' outputs
+# by Philippe De Muyter <phdm@macqel.be>
+# URL: http://justsolve.archiveteam.org/wiki/TGA
+# Reference: http://www.dca.fee.unicamp.br/~martino/disciplinas/ea978/tgaffs.pdf
+# Update: Joerg Jenderek
+# at 2, byte ImgType must be 1, 2, 3, 9, 10 or 11
+#	,32 or 33 (both not observed)
+# at 1, byte CoMapType must be 1 if ImgType is 1 or 9, 0 otherwise
+#	or theoretically 2-128 reserved for use by Truevision or 128-255 may be used for developer applications
+# at 3, leshort Index is 0 for povray, ppmtotga and xv outputs
+# `xv' recognizes only a subset of the following (RGB with pixelsize = 24)
+# `tgatoppm' recognizes a superset (Index may be anything)
+#
+# test of Color Map Type 0~no 1~color map
+# and Image Type 1 2 3 9 10 11 32 33
+# and Color Map Entry Size 0 15 16 24 32
+0	ubequad&0x00FeC400000000C0	0
+# Prevent conflicts with CRI ADX.
+>(2.S-2) belong	!0x28632943
+# skip more garbage like *.iso by looking for positive image type
+>>2	ubyte			>0
+# skip some compiled terminfo like xterm+tmux by looking for image type less equal 33
+>>>2	ubyte			<34
+# skip arches.3200 , Finder.Root , Slp.1 by looking for low pixel depth 1 8 15 16 24 32
+>>>>16	ubyte			1
+>>>>>0		use		tga-image
+>>>>16	ubyte			8
+>>>>>0		use		tga-image
+>>>>16	ubyte			15
+>>>>>0		use		tga-image
+>>>>16	ubyte			16
+>>>>>0		use		tga-image
+>>>>16	ubyte			24
+>>>>>0		use		tga-image
+>>>>16	ubyte			32
+>>>>>0		use		tga-image
+#	display tga bitmap image information
+0	name				tga-image
+>2	ubyte		<34		Targa image data
+!:mime	image/x-tga
+!:apple	????TPIC
+# normal extension .tga but some Truevision products used others:
+# tpic (Apple),icb (Image Capture Board),vda (Video Display Adapter),vst (NuVista),win (UNSURE about that)
+!:ext	tga/tpic/icb/vda/vst
+# image type 1 2 3 9 10 11 32 33
+>2	ubyte&0xF7	1		- Map
+>2	ubyte&0xF7	2		- RGB
+# alpha channel
+>>17	ubyte&0x0F	>0		\bA
+>2	ubyte&0xF7	3		- Mono
+# type not found, but by http://www.fileformat.info/format/tga/corion.htm
+# Compressed color-mapped data, using Huffman, Delta, and runlength encoding
+>2	ubyte		32		- Color
+# Compressed color-mapped data, using Huffman, Delta, and RLE. 4-pass quadtree- type process
+>2	ubyte		33		- Color
+# Color Map Type 0~no 1~color map
+>1	ubyte		1		(
+# first color map entry, 0 normal
+>>3	uleshort	>0		\b%d-
+# color map length 0 2 1dh 3bh d9h 100h
+>>5	uleshort	x		\b%d)
+# 8~run length encoding bit
+>2	ubyte&0x08	8		- RLE
+# gimp can create big pictures!
+>12	uleshort	>0		%d x
+>12	uleshort	=0		65536 x
+# image height. 0 interpreted as 65536
+>14	uleshort	>0		%d
+>14	uleshort	=0		65536
+# Image Pixel depth 1 8 15 16 24 32
+>16	ubyte		x		x %d
+# X origin of image. 0 normal
+>8	uleshort	>0		+%d
+# Y origin of image. 0 normal; positive for top
+>10	uleshort	>0		+%d
+# Image descriptor: bits 3-0 give the alpha channel depth, bits 5-4 give direction
+>17	ubyte&0x0F	>0		- %d-bit alpha
+# bits 5-4 give direction. normal bottom left
+>17	ubyte		&0x20		- top
+#>17	ubyte		^0x20		- bottom
+>17	ubyte		&0x10		- right
+#>17	ubyte		^0x10		- left
+# some info say other bits 6-7 should be zero
+# but data storage interleave by http://www.fileformat.info/format/tga/corion.htm
+# 00 - no interleave;01 - even/odd interleave; 10 - four way interleave; 11 - reserved
+#>17	ubyte&0xC0	0x00		- no interleave
+>17	ubyte&0xC0	0x40		- interleave
+>17	ubyte&0xC0	0x80		- four way interleave
+>17	ubyte&0xC0	0xC0		- reserved
+# positive length implies identification field
+>0	ubyte		>0
+>>18	string		x		"%s"
+# last 18 bytes of newer tga file footer signature
+>18	search/4261301/s	TRUEVISION-XFILE.\0

@@ -23,6 +23,11 @@
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
 
+(define (increment-file-position! amt)
+  (file-position 
+   (current-input-port)
+   (+ (file-position (current-input-port)) amt)))
+
 (define (read-null-terminated-ascii-string [port (current-input-port)])
    (let loop ((result #""))
       (let ((next-char (read-byte port)))
@@ -199,6 +204,10 @@
 (define (disp arg)
   arg)
 
+;; the search function should leave the file position set to its original value,
+;; i.e. where the search began. then the compare function will update the 
+;; file offset to either the beginning or end of the match, depending on the
+;; flags.
 (define (build-search-read-func cnt flags)
   (let ([len cnt]
         [binary? (member "b" flags)]
@@ -206,7 +215,10 @@
         [trim? (member "T" flags)]
         [compact-whitespace? (member "W" flags)])
     (lambda () 
+      (define start-offset (file-position (current-input-port)))
       (let ([data (read-bytes len)])
+        (file-position (current-input-port) start-offset)
+        ;(printf "search: setting offset to start of search ~a~n" start-offset)
         (when (eof-object? data) (error "eof"))
         (define str (bytes->string/latin-1 data))
         (when trim? (set! str (string-trim str)))
@@ -308,19 +320,24 @@
     [(and uci? (char-upper-case? match-char)) (char-ci=? c match-char)]
     [else (char=? c match-char)]))
 
-; s and match-str must be the same length, but string-case-contains? ensures this
-(define (string-case=? s match-str lci? uci?)
+; s and match-str must be the same length, but search-case-contains? ensures this
+(define (search-case=? s match-str lci? uci?)
   (for/and ([c (in-string s)]
             [match-char (in-string match-str)])
     (char-case=? c match-char lci? uci?)))
 
-(define (string-case-contains? s contained lc-insensitive? uc-insensitive?)
+(define (search-case-contains? s contained lc-insensitive? uc-insensitive? start-flag?)
   (define len (string-length contained))
   
   (for/first ([c (in-string s)]
               [i (in-range 0 (- (string-length s) (- len 1)))]
               #:when (and (char-case=? c (string-ref contained 0) lc-insensitive? uc-insensitive?)
-                          (string-case=? (substring s i (+ i len)) contained lc-insensitive? uc-insensitive?)))
+                          (search-case=? (substring s i (+ i len)) contained lc-insensitive? uc-insensitive?)))
+    ; if start-flag? is set, set the file offset to the start of the match,
+    ; otherwise set the file offset to the byte after the match
+    (if start-flag?
+        (increment-file-position! i)
+        (increment-file-position! (+ i len)))
     #t))
     ;(list i c)))
 
@@ -340,12 +357,13 @@
   (define ci-flag? (and (member "c" strflags) (member "C" strflags)))
   (define lci-flag? (member "c" strflags))
   (define uci-flag? (member "C" strflags))
+  (define start-flag? (member "s" strflags))
   (define search? (member 'search strflags))
 
   (match compare-expr
     [(list 'strtest x)
      (if search?
-         (lambda (s) (string-case-contains? s x lci-flag? uci-flag?))
+         (lambda (s) (search-case-contains? s x lci-flag? uci-flag? start-flag?))
          (if ci-flag? 
              (lambda (s) (string-ci=? s x))
              (lambda (s) (string=? s x))))]
