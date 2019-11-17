@@ -38,6 +38,7 @@
   ;"0	string/b	DDS Microsoft DirectDraw Surface (DDS):\n")
   ;"0	ubelong&0xffF8fe00	0x0a000000\n")
   ;"(2.S-2)   belong   !0x28632943\n")
-  "18	search/4261301/s	TRUEVISION-XFILE.\0\n")
+  ;"18	search/4261301/s	TRUEVISION-XFILE.\0\n")
+  "(&-4.B)     uleshort                0x01EF\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")

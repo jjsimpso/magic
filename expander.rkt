@@ -78,10 +78,14 @@
 
 (define-syntax (size stx)
   (syntax-parse stx
-    #:datum-literals (leshort lelong beshort belong)
+    #:datum-literals (byte leshort lelong beshort belong)
+    [(_ (byte ".b")) #'read-byt]
+    [(_ (byte ".B")) #'read-byt]
+    [(_ (byte ".c")) #'read-byt]
+    [(_ (byte ".C")) #'read-byt]
     [(_ (leshort ".s")) #'read-leshort]
-    [(_ (lelong  ".l")) #'read-lelong]
     [(_ (beshort ".S")) #'read-beshort]
+    [(_ (lelong  ".l")) #'read-lelong]
     [(_ (belong  ".L")) #'read-belong]
     ))
 
