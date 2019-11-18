@@ -14,5 +14,5 @@
 0          ubelong           0x502319ae            test.bin
 # the following line tests that an end of file error doesn't print anything that is treatead as part
 # of the result
-#>(&2.l-50) leshort           24912                 will trigger error
+>(&2.l-50) leshort           24912                 will trigger error
 >(&2.b-50) leshort           24912                 determined with indirect relative offset test
