@@ -208,12 +208,13 @@
 ;; i.e. where the search began. then the compare function will update the 
 ;; file offset to either the beginning or end of the match, depending on the
 ;; flags.
-(define (build-search-read-func cnt flags)
-  (let ([len cnt]
+(define (build-search-read-func cnt flags needle)
+  (let ([len (+ cnt (string-length needle))]
         [binary? (member "b" flags)]
         [text? (member "t" flags)]
         [trim? (member "T" flags)]
         [compact-whitespace? (member "W" flags)])
+    ;(eprintf "build-search-read-func: flags = ~a~n" flags)
     (lambda () 
       (define start-offset (file-position (current-input-port)))
       (let ([data (read-bytes len)])
@@ -276,14 +277,14 @@
        (lambda () 
          (read-string8 len)))]
     [(list 'search (list 'srchcnt cnt) (list 'strflag flag) ...)
-     (build-search-read-func cnt flag)]
+     (build-search-read-func cnt flag (last compare-expr))]
     [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
-     (build-search-read-func cnt flag)]
+     (build-search-read-func cnt flag (last compare-expr))]
     [(list 'search (list 'strflag flag) ...)
      ; default count to 4096 for now, but need to read the entire file if necessary
      ; after the match is found, should the file offset be set to the end of the match?
-     (build-search-read-func 4096 flag)]
-    [(list 'search) (build-search-read-func 4096 '())]
+     (build-search-read-func 4096 flag (last compare-expr))]
+    [(list 'search) (build-search-read-func 4096 '() (last compare-expr))]
     [(list 'numeric "byte")        (build-numeric-read-func signed-compare mask-expr read-byt)]
     [(list 'numeric "u" "byte")    (build-numeric-read-func #f mask-expr read-byt)]
     [(list 'numeric "short")       (build-numeric-read-func signed-compare mask-expr read-short)]
