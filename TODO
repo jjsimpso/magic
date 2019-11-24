@@ -1,5 +1,4 @@
 - implement independent case insensitive string flags
-- add backslash octal parsing
 - handle >,<,= ops as first character of string tests
 - add support for relative indirect offsets
 - implement full printf substitution in message

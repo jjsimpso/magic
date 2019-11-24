@@ -1,7 +1,5 @@
 #lang magic
 
-0	string/b	DDS\040\174\000\000\000 Microsoft DirectDraw Surface (DDS):
-
 # test the offset after search is set to end of matched string
 0	search/4096/cwt	  \<html\>		HTML document text
 >&0     string            \<BODY                gs3armor.htm
@@ -16,3 +14,6 @@
 # of the result
 >(&2.l-50) leshort           24912                 will trigger error
 >(&2.b-50) leshort           24912                 determined with indirect relative offset test
+
+# test octal escapes
+0	string/b	\46\046\11\61\062\63\12 octal test passed

@@ -113,6 +113,10 @@
 (with-input-from-file "../file-tests/test.bin" (build-string-output-thunk debugtest-query))
  "test.bin determined with indirect relative offset test ")
 
+(with-input-from-file "../file-tests/octal-test.txt" debugtest-query)
+(check-equal? 
+(with-input-from-file "../file-tests/octal-test.txt" (build-string-output-thunk debugtest-query))
+ "octal test passed ")
 
 
 (with-input-from-file "iexplore.exe" exe-query-all)

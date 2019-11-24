@@ -49,7 +49,7 @@
   (define (escapable-char? c)
     (and (not (eof-object? c))
          (or (char=? c #\a) (char=? c #\b) (char=? c #\f) (char=? c #\n) (char=? c #\r) (char=? c #\t) (char=? c #\v) 
-             (char=? c #\\) (char=? c #\0) (char=? c #\space)
+             (char=? c #\\) (char=? c #\space)
              )))
   (define (escape c)
     (cond [(char=? c #\n) "\n"]
@@ -63,9 +63,24 @@
           [(char=? c #\0) "\0"]
           [(char=? c #\\) "\\"]))
 
-  ;; read the two characters after '\x' in a string and convert to character of the form #\u00xx
+  (define (hex-start? c)
+    (and (not (eof-object? c)) 
+         (char=? c #\x)))
   (define (read-hex-number in)
+    ;; read the two characters after '\x' in a string and convert to character of the form #\u00xx
     (integer->char (string->number (read-string 2 in) 16)))
+
+  (define (octal? c)
+    (and (not (eof-object? c)) 
+         (char>=? c #\0) (char<=? c #\7)))
+  (define (read-octal-number in)
+    ;; octal numbers can be from 1 to 3 digits
+    ;; peek ahead to find the length
+    (define len
+      (for/sum ([i (in-range 0 3)]
+                #:break (not (octal? (peek-char in i))))
+        1))
+    (integer->char (string->number (read-string len in) 8)))
 
   (define sp (open-input-string s))
   (let loop ([new-string ""]
@@ -75,10 +90,13 @@
       [(and (char=? c #\\) (escapable-char? (peek-char sp)))
        (loop (string-append new-string (escape (read-char sp)))
              (read-char sp))]
-      [(and (char=? c #\\) (char=? (peek-char sp) #\x))
+      [(and (char=? c #\\) (hex-start? (peek-char sp)))
        ; discard the 'x' character
        (read-char sp)
        (loop (string-append new-string (string (read-hex-number sp)))
+             (read-char sp))]
+      [(and (char=? c #\\) (octal? (peek-char sp)))
+       (loop (string-append new-string (string (read-octal-number sp)))
              (read-char sp))]
       [(char=? c #\\)
        ; discard the '\' character
