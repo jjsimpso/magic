@@ -35,6 +35,7 @@
 (define-lex-abbrev paren (:= 1 (char-set "()")))
 ;(define-lex-abbrev string-chars (complement (:+ " " "\t" "\n")))
 (define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.") "\\"))
+(define-lex-abbrev string-compare (:= 1 (char-set "<>=")))
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTs")))
 (define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "string" "search" "regex" "default" "x"))
@@ -221,9 +222,12 @@
    ["/" (token lexeme lexeme)]
    [string-flag (token lexeme lexeme)]
    [hws
-    (begin 
+    (let ([next-char (peek-char input-port)])
       (set! hws-count (add1 hws-count))
-      (set! current-lexer magic-lexer-string)
+      ;; check for optional comparison operator
+      (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=))
+          (set! current-lexer magic-lexer-string-compare)
+          (set! current-lexer magic-lexer-string))
       (token 'HWS #:skip? #f))]))
 
 (define magic-lexer-search-flags
@@ -236,6 +240,18 @@
       (set! hws-count (add1 hws-count))
       (set! current-lexer magic-lexer-string)
       (token 'HWS #:skip? #f))]))
+
+;; get comparison operator
+(define magic-lexer-string-compare
+  (lexer-srcloc
+   [string-compare
+    (begin
+      (set! current-lexer magic-lexer-string)
+      (token lexeme lexeme))]
+   [any-char
+    (begin 
+      (set! current-lexer magic-lexer-string)
+      (error "Not a string comparison operator"))]))
 
 (define magic-lexer-string-helper
   (lexer

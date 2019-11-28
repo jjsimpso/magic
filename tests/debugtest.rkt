@@ -17,3 +17,6 @@
 
 # test octal escapes
 0	string/b	\46\046\11\61\062\63\12 octal test passed
+
+# test string compare operator
+0       string          >mnww        string greater than passed

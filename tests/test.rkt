@@ -118,6 +118,11 @@
 (with-input-from-file "../file-tests/octal-test.txt" (build-string-output-thunk debugtest-query))
  "octal test passed ")
 
+(with-input-from-file "../file-tests/mnwx" debugtest-query)
+(check-equal? 
+(with-input-from-file "../file-tests/mnwx" (build-string-output-thunk debugtest-query))
+ "string greater than passed ")
+
 
 (with-input-from-file "iexplore.exe" exe-query-all)
 (check-equal? 

@@ -14,6 +14,10 @@
 1	string	g	File G2
 2	string	g	File G3
 
+# this one want match mnwx if the magic below matches (greater strength?)
+0       string          >mnww        string greater than passed
+
+#0	string	p
 0	string	m
 >1	string	n	N
 >1	string	s	S
