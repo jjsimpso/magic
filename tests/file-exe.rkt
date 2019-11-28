@@ -13,19 +13,9 @@
 >>>&0       leshort 0x8664  for AMD64
 >>(0x3c.l)  string  LX\0\0  LX executable (OS/2)
 
-0	beshort	0x0206	ALAN game data
-
-#0	string	t\ \t\    test string escapes
-
-0	string	MZ 
->0x2    string  aaa       testing
-
-#	display tga bitmap image information
-0	name				tga-image
->2	byte		<34		Targa image data
-#>2	ubyte		<34		Targa image data
-
-0       name    always-true
->0      default x  force true
-
-#0       use     always-true
+0                string  MZ
+>0x18            leshort >0x3f
+>>(0x3c.l)       string  LE\0\0 LE executable (MS-Windows)
+# at offset 0x58 inside the LE header, we find the relative offset
+# to a data area where we look for a specific signature
+#>>>&(&0x54.l-3)  string  UNACE  \b, ACE self-extracting archive

@@ -14,7 +14,7 @@
 1	string	g	File G2
 2	string	g	File G3
 
-# this one want match mnwx if the magic below matches (greater strength?)
+# this one won't match mnwx if the magic below matches (greater strength?)
 0       string          >mnww        string greater than passed
 
 #0	string	p
