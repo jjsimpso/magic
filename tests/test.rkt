@@ -20,6 +20,7 @@
 (require (only-in "images.rkt" (magic-query image-query)))
 (require (only-in "debugtest.rkt" (magic-query debugtest-query)))
 (require (only-in "string-test.rkt" (magic-query string-query)))
+(require (only-in "tgaext.rkt" (magic-query tgaext-query)))
 
 (define (build-string-output-thunk thnk)
   (lambda ()
@@ -73,7 +74,7 @@
 (with-input-from-file "sundesk2.gif" image-query)
 (check-equal? 
  (with-input-from-file "sundesk2.gif" (build-string-output-thunk image-query))
- "GIF image data \b, version 8%s, 1152 x 900 ")
+ "GIF image data \b, version 87a, 1152 x 900 ")
 
 (with-input-from-file "pantherxl.jpg" image-query)
 (check-equal? 
@@ -123,6 +124,12 @@
 (with-input-from-file "../file-tests/mnwx" (build-string-output-thunk debugtest-query))
  "string greater than passed ")
 
+#|
+(with-input-from-file "tga2_extension" tgaext-query)
+(check-equal? 
+(with-input-from-file "tga2_extension" (build-string-output-thunk tgaext-query))
+ " ")
+|#
 
 (with-input-from-file "iexplore.exe" exe-query-all)
 (check-equal? 

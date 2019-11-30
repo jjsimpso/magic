@@ -397,9 +397,36 @@
     [_ (error (string-append "test expression doesn't match: " (~a compare-expr)))]))
 
 (define (single-cprintf-sub str val)
-  (if (string-contains? str "%d") 
-      (format (string-replace str "%d" "~a" #:all? #f) val)
-      str))
+  ;; returns three values: the matched format specifier string, width, and precision
+  ;; width and precision will be integers or false
+  ;; a negative width indicates left justification. positive is right justification.
+  ;; precision must be positive
+  (define (get-format-modifiers s)
+    (define format-mod-list (regexp-match #px"%(-?\\d*)\\.(\\d*)[dxs]" s))
+    (if format-mod-list
+        (values (first format-mod-list)
+                (string->number (second format-mod-list))
+                (string->number (third format-mod-list)))
+        (values #f #f #f)))
+  
+  (define (format-mod str substr specifier width precision)
+    (eprintf "substr=~a~n" substr) 
+    (format (string-replace str specifier "~a" #:all? #f) substr))
+
+  (cond 
+    [(string-contains? str "%d") 
+     (format (string-replace str "%d" "~a" #:all? #f) val)]
+    [(string-contains? str "%s") 
+     (format (string-replace str "%s" "~a" #:all? #f) val)]
+    [(string-contains? str "%x") 
+     (format (string-replace str "%x" "~x" #:all? #f) val)]
+    [else
+     ; disable the complicated format strings for now:
+     (define-values (format-specifier width precision) (values #f #f #f))
+     ;(define-values (format-specifier width precision) (get-format-modifiers str))
+     (if (or width precision)
+         (format-mod str val format-specifier width precision)
+         str)]))
 
 ;; ex: (with-input-from-file "adventure.rkt" (lambda () (magic-test 0 (type '(string8 "string") '(strtest "MZ")) (compare '(strtest "MZ")) "dos executable")))
 ;; ex: (with-input-from-file "/tmp/iexplore.exe" (lambda () (magic-test (indoff 60 (size '(lelong ".l"))) (type '(string8 "string") '(strtest "PE\u0000\u0000")) (compare '(strtest "PE\u0000\u0000")) "PE executable (MS-Windows)")))
