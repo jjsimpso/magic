@@ -70,12 +70,36 @@
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data (system-big-endian?))))
 
+;; reads until a null byte is found
+;; returns a string in latin-1 encoding
+(define (read-cstring8)
+  (let loop ((result #""))
+    (let ((next-char (read-byte)))
+      (if (or (eof-object? next-char) (= next-char 0))
+          (bytes->string/latin-1 result)
+          (loop (bytes-append result (bytes next-char)))))))
+
 ;; I don't think the null terminated read works with magic. The null bytes must be made explicit in the comparison.
 (define (read-string8 len)
   (let ([data (read-bytes len)])
     (if (eof-object? data)
         (error "eof")
         (bytes->string/latin-1 data))))
+
+;; read a minimum of len bytes/characters from the current input port
+;; if bytestring read doesn't end in a null byte, read until one is reached (read-cstring8 does this)
+(define (read-string8-till-null len)
+  (define data (read-bytes len))
+  (when (eof-object? data) (error "eof"))
+  
+  (define datalen (bytes-length data))
+  (cond 
+    [(< datalen len)
+     (string-append (bytes->string/latin-1 data) (read-cstring8))]
+    [(= (bytes-ref data (sub1 datalen)) 0)
+     (bytes->string/latin-1 data)]
+    [else
+     (string-append (bytes->string/latin-1 data) (read-cstring8))]))
 
 (define (whitespace? b)
   (if (eof-object? b)
@@ -269,13 +293,10 @@
          ;[(and trim? compact-whitespace?)]
          [trim? (lambda () (read-string8-trim-ws len))]
          [compact-whitespace? (lambda () (read-string8-compact-ws len))]
-         [else (lambda () (read-string8 len))]))]
-    [(list 'string8 "string") 
-     (let ([len (string-length (last compare-expr))]) ; len calculation may not work for all cases
-                                ; the last here is making the assumption that the string to search for
-                                ; is the last element of the (strtest ...) form
-       (lambda () 
-         (read-string8 len)))]
+         [else (lambda () (read-string8-till-null len))]))]
+    [(list 'string8 "string")
+     (let ([len (string-length (last compare-expr))])
+       (lambda () (read-string8-till-null len)))]
     [(list 'search (list 'srchcnt cnt) (list 'strflag flag) ...)
      (build-search-read-func cnt flag (last compare-expr))]
     [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
@@ -342,6 +363,36 @@
     #t))
     ;(list i c)))
 
+(define (build-string-compare-func compare-str op ci-flag? lci-flag? uci-flag?)
+  ;; creates a new, truncated string from s, or returns s if it is shorter than len
+  (define (string-truncate s len)
+    (define slen (string-length s))
+    (if (< slen len)
+        s
+        (substring s 0 len)))
+  
+  (define len (string-length compare-str))
+  
+  (cond 
+    [(string=? op "=")
+     (if ci-flag? 
+         (lambda (s) 
+           (string-ci=? (string-truncate s len) compare-str))
+         (lambda (s) 
+           (string=? (string-truncate s len) compare-str)))]
+    [(string=? op "<")
+     (if ci-flag? 
+         (lambda (s) 
+           (string-ci<? (string-truncate s len) compare-str))
+         (lambda (s) 
+           (string<? (string-truncate s len) compare-str)))]
+    [(string=? op ">")
+     (if ci-flag? 
+         (lambda (s) 
+           (string-ci>? (string-truncate s len) compare-str))
+         (lambda (s) 
+           (string>? (string-truncate s len) compare-str)))]))
+
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
   (define strflags 
@@ -365,21 +416,13 @@
     [(list 'strtest x)
      (if search?
          (lambda (s) (search-case-contains? s x lci-flag? uci-flag? start-flag?))
-         (if ci-flag? 
-             (lambda (s) (string-ci=? s x))
-             (lambda (s) (string=? s x))))]
+         (build-string-compare-func x "=" ci-flag? lci-flag? uci-flag?))]
     [(list 'strtest "<" x) 
-     (if ci-flag? 
-         (lambda (s) (string-ci<? s x))
-         (lambda (s) (string<? s x)))]
+     (build-string-compare-func x "<" ci-flag? lci-flag? uci-flag?)]
     [(list 'strtest ">" x) 
-     (if ci-flag? 
-         (lambda (s) (string-ci>? s x))
-         (lambda (s) (string>? s x)))]
+     (build-string-compare-func x ">" ci-flag? lci-flag? uci-flag?)]
     [(list 'strtest "=" x) 
-     (if ci-flag? 
-         (lambda (s) (string-ci=? s x))
-         (lambda (s) (string=? s x)))]
+     (build-string-compare-func x "=" ci-flag? lci-flag? uci-flag?)]
     [(list 'numtest x) (lambda (n) (= n x))]
     [(list 'numtest "<" x) (lambda (n) (< n x))]
     [(list 'numtest ">" x) (lambda (n) (> n x))]
@@ -410,7 +453,7 @@
         (values #f #f #f)))
   
   (define (format-mod str substr specifier width precision)
-    (eprintf "substr=~a~n" substr) 
+    ;(eprintf "substr=~a width=~a, precision=~a~n" substr width precision) 
     (format (string-replace str specifier "~a" #:all? #f) substr))
 
   (cond 
@@ -421,9 +464,7 @@
     [(string-contains? str "%x") 
      (format (string-replace str "%x" "~x" #:all? #f) val)]
     [else
-     ; disable the complicated format strings for now:
-     (define-values (format-specifier width precision) (values #f #f #f))
-     ;(define-values (format-specifier width precision) (get-format-modifiers str))
+     (define-values (format-specifier width precision) (get-format-modifiers str))
      (if (or width precision)
          (format-mod str val format-specifier width precision)
          str)]))
@@ -441,6 +482,7 @@
     (file-position (current-input-port) off)
     (let* ([data (read-func)]
            [result (compare-func data)])
+      ;(eprintf "data=~a, result=~a~n" data result)
       (when (and result (non-empty-string? message))
         (printf "~a " (single-cprintf-sub message data)))
       result)))
