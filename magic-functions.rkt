@@ -363,7 +363,7 @@
     #t))
     ;(list i c)))
 
-(define (build-string-compare-func compare-str op ci-flag? lci-flag? uci-flag?)
+(define (build-string-compare-func compare-str op lci-flag? uci-flag?)
   ;; creates a new, truncated string from s, or returns s if it is shorter than len
   (define (string-truncate s len)
     (define slen (string-length s))
@@ -375,23 +375,41 @@
   
   (cond 
     [(string=? op "=")
-     (if ci-flag? 
+     (if (and lci-flag? uci-flag?)
          (lambda (s) 
-           (string-ci=? (string-truncate s len) compare-str))
+           (define truncated-str (string-truncate s len))
+           (if (string-ci=? truncated-str compare-str)
+               truncated-str
+               #f))
          (lambda (s) 
-           (string=? (string-truncate s len) compare-str)))]
+           (define truncated-str (string-truncate s len))
+           (if (string=? truncated-str compare-str)
+               truncated-str
+               #f)))]
     [(string=? op "<")
-     (if ci-flag? 
+     (if (and lci-flag? uci-flag?) 
          (lambda (s) 
-           (string-ci<? (string-truncate s len) compare-str))
+           (define truncated-str (string-truncate s len))
+           (if (string-ci<? s compare-str)
+               truncated-str
+               #f))
          (lambda (s) 
-           (string<? (string-truncate s len) compare-str)))]
+           (define truncated-str (string-truncate s len))
+           (if (string<? s compare-str)
+               truncated-str
+               #f)))]
     [(string=? op ">")
-     (if ci-flag? 
+     (if (and lci-flag? uci-flag?)
          (lambda (s) 
-           (string-ci>? (string-truncate s len) compare-str))
+           (define truncated-str (string-truncate s len))
+           (if (string-ci>? s compare-str)
+               truncated-str
+               #f))
          (lambda (s) 
-           (string>? (string-truncate s len) compare-str)))]))
+           (define truncated-str (string-truncate s len))
+           (if (string>? s compare-str)
+               truncated-str
+               #f)))]))
 
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
@@ -406,7 +424,6 @@
       [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
        (cons 'search flag)]
       [_ '()]))
-  (define ci-flag? (and (member "c" strflags) (member "C" strflags)))
   (define lci-flag? (member "c" strflags))
   (define uci-flag? (member "C" strflags))
   (define start-flag? (member "s" strflags))
@@ -415,28 +432,61 @@
   (match compare-expr
     [(list 'strtest x)
      (if search?
-         (lambda (s) (search-case-contains? s x lci-flag? uci-flag? start-flag?))
-         (build-string-compare-func x "=" ci-flag? lci-flag? uci-flag?))]
+         (lambda (s) 
+           (if (search-case-contains? s x lci-flag? uci-flag? start-flag?)
+               s
+               #f))
+         (build-string-compare-func x "=" lci-flag? uci-flag?))]
     [(list 'strtest "<" x) 
-     (build-string-compare-func x "<" ci-flag? lci-flag? uci-flag?)]
+     (build-string-compare-func x "<" lci-flag? uci-flag?)]
     [(list 'strtest ">" x) 
-     (build-string-compare-func x ">" ci-flag? lci-flag? uci-flag?)]
+     (build-string-compare-func x ">" lci-flag? uci-flag?)]
     [(list 'strtest "=" x) 
-     (build-string-compare-func x "=" ci-flag? lci-flag? uci-flag?)]
-    [(list 'numtest x) (lambda (n) (= n x))]
-    [(list 'numtest "<" x) (lambda (n) (< n x))]
-    [(list 'numtest ">" x) (lambda (n) (> n x))]
-    [(list 'numtest "!" x) (lambda (n) (not (= n x)))]
+     (build-string-compare-func x "=" lci-flag? uci-flag?)]
+    [(list 'numtest x) 
+     (lambda (n) 
+       (if (= n x)
+           n
+           #f))]
+    [(list 'numtest "<" x)
+     (lambda (n) 
+       (if (< n x)
+           n
+           #f))]
+    [(list 'numtest ">" x)
+     (lambda (n) 
+       (if (> n x)
+           n
+           #f))]
+    [(list 'numtest "!" x) 
+     (lambda (n) 
+       (if (not (= n x))
+           n
+           #f))]
     ; the next three haven't been fully tested
-    [(list 'numtest "&" x) (lambda (n) 
-                             (not (= (bitwise-and n x) 
-                                     0)))]
-    [(list 'numtest "^" x) (lambda (n)
-                             (not
-                              (bitwise-ior n (bitwise-and n x))))]
-    [(list 'numtest "~" x) (lambda (n) (= n (bitwise-not x)))]
-    [(list 'numtest "=" x) (lambda (n) (= n x))]
-    [(list 'truetest "x") (lambda (n) #t)]
+    [(list 'numtest "&" x) 
+     (lambda (n) 
+       (if (not (= (bitwise-and n x) 0))
+           n
+           #f))]
+    [(list 'numtest "^" x) 
+     (lambda (n)
+       (if (not (bitwise-ior 
+                 n 
+                 (bitwise-and n x)))
+           n
+           #f))]
+    [(list 'numtest "~" x) 
+     (lambda (n) 
+       (if (= n (bitwise-not x))
+           n
+           #f))]
+    [(list 'numtest "=" x)
+     (lambda (n) 
+       (if (= n x)
+           n
+           #f))]
+    [(list 'truetest "x") (lambda (n) n)]
     [_ (error (string-append "test expression doesn't match: " (~a compare-expr)))]))
 
 (define (single-cprintf-sub str val)
@@ -483,6 +533,10 @@
     (let* ([data (read-func)]
            [result (compare-func data)])
       ;(eprintf "data=~a, result=~a~n" data result)
+      ;; if the test is successful, print the message with any printf substitutions
       (when (and result (non-empty-string? message))
-        (printf "~a " (single-cprintf-sub message data)))
-      result)))
+        (printf "~a " (single-cprintf-sub message result)))
+      ;; return true or false to indicate the status of the test
+      (if result
+          #t
+          #f))))

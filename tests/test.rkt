@@ -124,12 +124,12 @@
 (with-input-from-file "../file-tests/mnwx" (build-string-output-thunk debugtest-query))
  "string greater than passed ")
 
-
+#|
 (with-input-from-file "tga2_extension" tgaext-query)
 (check-equal? 
 (with-input-from-file "tga2_extension" (build-string-output-thunk tgaext-query))
  "- author \"Jonathan Simpson\" - comment \"This is a targa version 2 test of the extension area\" 6 \b-11 \b-2019 11 \b:10250 \b:0 ")
-
+|#
 
 (with-input-from-file "iexplore.exe" exe-query-all)
 (check-equal? 

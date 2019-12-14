@@ -1,5 +1,3 @@
-- for string types the result of a match should be the matched string,
-  not the entire string read from the file.
 - implement independent case insensitive string flags
 - add support for relative indirect offsets
 - implement full printf substitution in message
