@@ -375,41 +375,35 @@
   
   (cond 
     [(string=? op "=")
-     (if (and lci-flag? uci-flag?)
-         (lambda (s) 
+     (cond 
+       [(and lci-flag? uci-flag?)
+        (lambda (s) 
            (define truncated-str (string-truncate s len))
            (if (string-ci=? truncated-str compare-str)
                truncated-str
-               #f))
-         (lambda (s) 
-           (define truncated-str (string-truncate s len))
-           (if (string=? truncated-str compare-str)
-               truncated-str
-               #f)))]
+               #f))]
+       [else
+        (lambda (s) 
+          (define truncated-str (string-truncate s len))
+          (if (string=? truncated-str compare-str)
+              truncated-str
+              #f))])]
     [(string=? op "<")
-     (if (and lci-flag? uci-flag?) 
-         (lambda (s) 
-           (define truncated-str (string-truncate s len))
-           (if (string-ci<? s compare-str)
-               truncated-str
-               #f))
-         (lambda (s) 
-           (define truncated-str (string-truncate s len))
-           (if (string<? s compare-str)
-               truncated-str
-               #f)))]
+     (cond 
+       [(and lci-flag? uci-flag?)
+        (lambda (s) 
+          (if (string-ci<? s compare-str) s #f))]
+       [else
+        (lambda (s) 
+          (if (string<? s compare-str) s #f))])]
     [(string=? op ">")
-     (if (and lci-flag? uci-flag?)
-         (lambda (s) 
-           (define truncated-str (string-truncate s len))
-           (if (string-ci>? s compare-str)
-               truncated-str
-               #f))
-         (lambda (s) 
-           (define truncated-str (string-truncate s len))
-           (if (string>? s compare-str)
-               truncated-str
-               #f)))]))
+     (cond 
+       [(and lci-flag? uci-flag?)
+        (lambda (s) 
+          (if (string-ci>? s compare-str) s #f))]
+       [else
+        (lambda (s) 
+          (if (string>? s compare-str) s #f))])]))
 
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
