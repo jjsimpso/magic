@@ -492,13 +492,53 @@
     (define format-mod-list (regexp-match #px"%(-?\\d*)\\.(\\d*)[dxs]" s))
     (if format-mod-list
         (values (first format-mod-list)
+                ;; if the width specifier is just '-' then return negative precision as the width
+                ;; removed this for now since file doesn't seem to do this and not sure of C behaivor
+                ;; when no width is specified
+                #;(let ([second-match (second format-mod-list)]
+                      [third-match (third format-mod-list)])
+                  (if (and (string=? second-match "-") (string->number third-match))
+                      (- (string->number third-match))
+                      (string->number second-match)))
                 (string->number (second format-mod-list))
                 (string->number (third format-mod-list)))
         (values #f #f #f)))
   
-  (define (format-mod str substr specifier width precision)
-    ;(eprintf "substr=~a width=~a, precision=~a~n" substr width precision) 
-    (format (string-replace str specifier "~a" #:all? #f) substr))
+  (define (format-mod str substitution specifier width precision)
+    ;; return justified/padded string (need to check for width of #f)
+    (define (justify str width)
+      (define str-len (string-length str))
+      (cond
+        [(not (integer? width)) str]
+        [(>= str-len (abs width)) str]
+        [(> width 0)  
+         ; right justify
+         (string-append (make-string (- width str-len) #\space) str)]
+        [else 
+         ; left justify
+         (string-append str (make-string (- (abs width) str-len) #\space))]))
+
+    ;(eprintf "specifier=~a substitution=~a width=~a, precision=~a~n" specifier substitution width precision) 
+    ;; get the last character of the format specifier string 
+    (define specifier-type (string-ref specifier (sub1 (string-length specifier))))
+
+    (cond 
+      [(char=? specifier-type #\d)
+       (define sub-length (string-length (number->string substitution)))
+       (define sub-string 
+         (if (<= precision sub-length) 
+             substitution 
+             (string-append (make-string (- precision sub-length) #\0) (number->string substitution)))) 
+       (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
+      [(char=? specifier-type #\s)
+       (define sub-length (string-length substitution))
+       (define sub-string 
+         (if (<= precision sub-length) 
+             (substring substitution 0 precision)
+             substitution))
+       (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
+      [else  ;; fallback case
+       (format (string-replace str specifier "~a" #:all? #f) substitution)]))
 
   (cond 
     [(string-contains? str "%d") 

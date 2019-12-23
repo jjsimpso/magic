@@ -6,7 +6,7 @@
 # AuthorName[41]
 >&0		string			>\0		- author "%-.40s"
 # Comment[324]=4 * 80 null terminated
->&41		string			>\0		- comment "%-.80s"
+>&41		string			>\0		- comment "%-.50s"
 # date
 >&365	ubequad&0xffffFFFFffff0000	!0
 # Day
