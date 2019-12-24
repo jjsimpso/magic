@@ -41,11 +41,9 @@
  (with-input-from-file "mm3.exe" (build-string-output-thunk exe-query)) 
  "MZ executable (MS-DOS) ")
 
-;(with-input-from-file "SIMTOWER.EXE" exe-query)
-
-(with-input-from-file "/home/jonathan/.bash_history" exe-query)
+(with-input-from-file "roc.png" exe-query)
 (check-equal? 
- (with-input-from-file "/home/jonathan/.bash_history" (build-string-output-thunk exe-query)) 
+ (with-input-from-file "roc.png" (build-string-output-thunk exe-query)) 
  #f)
 
 ;; string tests
@@ -61,15 +59,15 @@
 
 ;; image tests
 ;; ------------------------------------------------------------------
-(with-input-from-file "small_avatar.png" image-query)
+(with-input-from-file "wizardry.png" image-query)
 (check-equal? 
- (with-input-from-file "small_avatar.png" (build-string-output-thunk image-query)) 
- "PNG image data \b, 94 x 159, 8-bit colormap, non-interlaced ")
+ (with-input-from-file "wizardry.png" (build-string-output-thunk image-query)) 
+ "PNG image data \b, 320 x 200, 8-bit colormap, non-interlaced ")
 
-(with-input-from-file "thg2.png" image-query)
+(with-input-from-file "roc.png" image-query)
 (check-equal? 
- (with-input-from-file "thg2.png" (build-string-output-thunk image-query)) 
- "PNG image data \b, 1282 x 476, 8-bit \b/color RGB, non-interlaced ")
+ (with-input-from-file "roc.png" (build-string-output-thunk image-query)) 
+ "PNG image data \b, 407 x 177, 8-bit \b/color RGBA, non-interlaced ")
 
 (with-input-from-file "sundesk2.gif" image-query)
 (check-equal? 
