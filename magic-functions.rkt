@@ -70,16 +70,18 @@
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data (system-big-endian?))))
 
-;; reads until a null byte is found
+;; reads until a null byte is found or the max number of bytes are read
 ;; returns a string in latin-1 encoding
-(define (read-cstring8)
-  (let loop ((result #""))
+(define (read-cstring8 max-to-read)
+  (define result (make-bytes max-to-read 0))
+  (let loop ((num-read 0))
     (let ((next-char (read-byte)))
-      (if (or (eof-object? next-char) (= next-char 0))
-          (bytes->string/latin-1 result)
-          (loop (bytes-append result (bytes next-char)))))))
+      (if (or (eof-object? next-char) (= next-char 0) (= num-read max-to-read))
+          (bytes->string/latin-1 (subbytes result 0 num-read))
+          (begin
+            (bytes-set! result num-read next-char)
+            (loop (add1 num-read)))))))
 
-;; I don't think the null terminated read works with magic. The null bytes must be made explicit in the comparison.
 (define (read-string8 len)
   (let ([data (read-bytes len)])
     (if (eof-object? data)
@@ -87,7 +89,8 @@
         (bytes->string/latin-1 data))))
 
 ;; read a minimum of len bytes/characters from the current input port
-;; if bytestring read doesn't end in a null byte, read until one is reached (read-cstring8 does this)
+;; if bytestring read doesn't end in a null byte, read until one is reached or a max number are read 
+;; (read-cstring8 does this)
 (define (read-string8-till-null len)
   (define data (read-bytes len))
   (when (eof-object? data) (error "eof"))
@@ -95,11 +98,11 @@
   (define datalen (bytes-length data))
   (cond 
     [(< datalen len)
-     (string-append (bytes->string/latin-1 data) (read-cstring8))]
+     (string-append (bytes->string/latin-1 data) (read-cstring8 255))]
     [(= (bytes-ref data (sub1 datalen)) 0)
      (bytes->string/latin-1 data)]
     [else
-     (string-append (bytes->string/latin-1 data) (read-cstring8))]))
+     (string-append (bytes->string/latin-1 data) (read-cstring8 255))]))
 
 (define (whitespace? b)
   (if (eof-object? b)
