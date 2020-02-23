@@ -98,7 +98,7 @@
   (define datalen (bytes-length data))
   (cond 
     [(< datalen len)
-     (string-append (bytes->string/latin-1 data) (read-cstring8 255))]
+     (bytes->string/latin-1 data)]
     [(= (bytes-ref data (sub1 datalen)) 0)
      (bytes->string/latin-1 data)]
     [else

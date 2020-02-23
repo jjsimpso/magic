@@ -128,6 +128,7 @@
 (with-input-from-file "tga2_extension" (build-string-output-thunk tgaext-query))
  "- author \"Jonathan Simpson\" - comment \"This is a targa version 2 test of the extension ar\" 6 \b-11 \b-2019 11 \b:07 \b:00 ")
 
+(with-input-from-file "FAQ-by--odino.txt" image-query)
 
 (with-input-from-file "iexplore.exe" exe-query-all)
 (check-equal? 
