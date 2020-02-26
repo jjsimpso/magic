@@ -16,7 +16,7 @@
 
 (provide parse-levels)
 (provide transform-levels)
-(provide last-level-offset any-true? begin-true when*)
+(provide last-level-offset any-true? begin-level test-passed-at-level when*)
 (provide level parse-level0)
 
 (require syntax/parse racket/stxparam)
@@ -24,7 +24,9 @@
 
 (define-syntax-parameter last-level-offset
   (lambda (stx)
-    (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-true")))
+    (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-level")))
+
+(define test-passed-at-level (make-parameter #f))
 
 ;; any-true? is like an or that doesn't short circuit
 ;; since any-true? indicates the start of a new level we save the current
@@ -39,11 +41,12 @@
       result)))
 
 ;; like any-true? but always returns true
-(define-syntax-rule (begin-true body ...)
+(define-syntax-rule (begin-level body ...)
   (let ([tmp-offset (file-position (current-input-port))])
     (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
-      body
-      ...
+      (parameterize ([test-passed-at-level #f])
+        body
+        ...)
       #t)))
 
 ;; like when but it returns #f instead of #<void> if test expression is false
@@ -161,14 +164,14 @@
 (define-syntax (level stx)
   (syntax-parse stx
     [(_ ln:mag-line ...)
-     #'(begin-true ln ...)]
+     #'(begin-level ln ...)]
     [(_ ln:mag-line ({~literal level} lexpr ...) . rst)
      (with-syntax ([(expr ...) #'rst])
-       #`(begin-true 
+       #`(begin-level 
            (when* ln (level lexpr ...))
            #,@(splice-to-level #'rst)))]
     [(_ ln:mag-line . rst)
-     #`(begin-true 
+     #`(begin-level 
          ln
          #,@(splice-to-level #'rst))]))
 
@@ -301,7 +304,7 @@
             (not (empty? (cdr tree)))
             (eq? (caadr tree) 'level))
        (cons (append `(when* ,(car tree))
-                     (list (cons 'begin-true (transform-levels-helper (cdadr tree)))))
+                     (list (cons 'begin-level (transform-levels-helper (cdadr tree)))))
                      ;`((begin ,(transform-levels-helper (cdadr tree)))))
              (transform-levels-helper (cddr tree)))]
       [else 

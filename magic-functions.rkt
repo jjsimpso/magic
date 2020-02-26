@@ -23,6 +23,9 @@
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
 
+;; only need the parameter test-passed-at-level
+(require (only-in "expander-utils.rkt" test-passed-at-level))
+
 (define (increment-file-position! amt)
   (file-position 
    (current-input-port)
@@ -335,7 +338,7 @@
     [(list 'numeric "u" "bequad")  (build-numeric-read-func #f mask-expr read-bequad)]
     [(list 'numeric "befloat")     read-befloat]
     [(list 'numeric "bedouble")    read-bedouble]
-    [(list 'default "default")     (lambda () 42)] ; could return anything
+    [(list 'default "default")     (lambda () (not (test-passed-at-level)))]
     [_ (error (string-append "type expression doesn't match: " (~a type-expr)))]
     ))
 
@@ -366,6 +369,14 @@
     #t))
     ;(list i c)))
 
+(define (build-compare-func f)
+  (lambda (s)
+    (define result (f s))
+    ;; test-passed-at-level is a parameter indicating if any test has passed at the
+    ;; current level so far.
+    (when result (test-passed-at-level #t))
+    result))
+
 (define (build-string-compare-func compare-str op lci-flag? uci-flag?)
   ;; creates a new, truncated string from s, or returns s if it is shorter than len
   (define (string-truncate s len)
@@ -380,33 +391,39 @@
     [(string=? op "=")
      (cond 
        [(and lci-flag? uci-flag?)
-        (lambda (s) 
+        (build-compare-func
+         (lambda (s) 
            (define truncated-str (string-truncate s len))
            (if (string-ci=? truncated-str compare-str)
                truncated-str
-               #f))]
+               #f)))]
        [else
-        (lambda (s) 
-          (define truncated-str (string-truncate s len))
-          (if (string=? truncated-str compare-str)
-              truncated-str
-              #f))])]
+        (build-compare-func
+         (lambda (s) 
+           (define truncated-str (string-truncate s len))
+           (if (string=? truncated-str compare-str)
+               truncated-str
+               #f)))])]
     [(string=? op "<")
      (cond 
        [(and lci-flag? uci-flag?)
-        (lambda (s) 
-          (if (string-ci<? s compare-str) s #f))]
+        (build-compare-func
+         (lambda (s) 
+           (if (string-ci<? s compare-str) s #f)))]
        [else
-        (lambda (s) 
-          (if (string<? s compare-str) s #f))])]
+        (build-compare-func
+         (lambda (s) 
+           (if (string<? s compare-str) s #f)))])]
     [(string=? op ">")
      (cond 
        [(and lci-flag? uci-flag?)
-        (lambda (s) 
-          (if (string-ci>? s compare-str) s #f))]
+        (build-compare-func
+         (lambda (s) 
+           (if (string-ci>? s compare-str) s #f)))]
        [else
-        (lambda (s) 
-          (if (string>? s compare-str) s #f))])]))
+        (build-compare-func
+         (lambda (s) 
+           (if (string>? s compare-str) s #f)))])]))
 
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
@@ -429,10 +446,11 @@
   (match compare-expr
     [(list 'strtest x)
      (if search?
-         (lambda (s) 
-           (if (search-case-contains? s x lci-flag? uci-flag? start-flag?)
-               s
-               #f))
+         (build-compare-func
+          (lambda (s) 
+            (if (search-case-contains? s x lci-flag? uci-flag? start-flag?)
+                s
+                #f)))
          (build-string-compare-func x "=" lci-flag? uci-flag?))]
     [(list 'strtest "<" x) 
      (build-string-compare-func x "<" lci-flag? uci-flag?)]
@@ -440,50 +458,62 @@
      (build-string-compare-func x ">" lci-flag? uci-flag?)]
     [(list 'strtest "=" x) 
      (build-string-compare-func x "=" lci-flag? uci-flag?)]
-    [(list 'numtest x) 
-     (lambda (n) 
-       (if (= n x)
-           n
-           #f))]
+    [(list 'numtest x)
+     (build-compare-func
+      (lambda (n) 
+        (if (= n x)
+            n
+            #f)))]
     [(list 'numtest "<" x)
-     (lambda (n) 
-       (if (< n x)
-           n
-           #f))]
+     (build-compare-func
+      (lambda (n) 
+        (if (< n x)
+            n
+            #f)))]
     [(list 'numtest ">" x)
-     (lambda (n) 
-       (if (> n x)
-           n
-           #f))]
+     (build-compare-func
+      (lambda (n) 
+        (if (> n x)
+            n
+            #f)))]
     [(list 'numtest "!" x) 
-     (lambda (n) 
-       (if (not (= n x))
-           n
-           #f))]
+     (build-compare-func
+      (lambda (n) 
+        (if (not (= n x))
+            n
+            #f)))]
     ; the next three haven't been fully tested
     [(list 'numtest "&" x) 
-     (lambda (n) 
-       (if (not (= (bitwise-and n x) 0))
-           n
-           #f))]
+     (build-compare-func
+      (lambda (n) 
+        (if (not (= (bitwise-and n x) 0))
+            n
+            #f)))]
     [(list 'numtest "^" x) 
-     (lambda (n)
-       (if (not (bitwise-ior 
-                 n 
-                 (bitwise-and n x)))
-           n
-           #f))]
+     (build-compare-func
+      (lambda (n)
+        (if (not (bitwise-ior 
+                  n 
+                  (bitwise-and n x)))
+            n
+            #f)))]
     [(list 'numtest "~" x) 
-     (lambda (n) 
-       (if (= n (bitwise-not x))
-           n
-           #f))]
+     (build-compare-func
+      (lambda (n) 
+        (if (= n (bitwise-not x))
+            n
+            #f)))]
     [(list 'numtest "=" x)
-     (lambda (n) 
-       (if (= n x)
-           n
-           #f))]
-    [(list 'truetest "x") (lambda (n) n)]
+     (build-compare-func
+      (lambda (n) 
+        (if (= n x)
+            n
+            #f)))]
+    [(list 'truetest "x") 
+     ;; this test is designed to always return true for everything but the default type
+     ;; the default type will read false if a test has already passed at the current level and true otherwise
+     ;; truetest will pass a false value along, allowing the default test to fail
+     (build-compare-func (lambda (n) n))]
     [_ (error (string-append "test expression doesn't match: " (~a compare-expr)))]))
 
 (define (single-cprintf-sub str val)

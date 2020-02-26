@@ -197,5 +197,5 @@
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line offset reloffset size op disp any-true? begin-true when*)
+ query line offset reloffset size op disp any-true? begin-level when*)
 

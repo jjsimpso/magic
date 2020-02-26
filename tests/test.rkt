@@ -87,7 +87,7 @@
 (with-input-from-file "TOWN.PCX" image-query)
 (check-equal? 
  (with-input-from-file "TOWN.PCX" (build-string-output-thunk image-query))
- "PCX ver. 3.0 image data bounding box [0, 0] - [639, 679], 1-bit colour, image, 150 x 150 dpi, RLE compressed ")
+ "PCX ver. 3.0 image data bounding box [0, 0] - [639, 679], 1-bit colour, 150 x 150 dpi, RLE compressed ")
 
 (with-input-from-file "03.tga" image-query)
 (check-equal? 
