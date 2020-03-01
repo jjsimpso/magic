@@ -15,11 +15,13 @@
 ;;   limitations under the License.
 
 magic : EOL* (query | named-query)+
-query : line (level+ line)* /EOL*
+query : line (level+ (line | clear-line))* /EOL*
 level : /">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
-named-query : name-line (level+ line)* /EOL*
+clear-line : offset /HWS "clear" /EOL
+
+named-query : name-line (level+ (line | clear-line))* /EOL*
 name-line : offset /HWS name-type /HWS MAGIC-NAME /EOL
 
 offset : absoffset | reloffset | indoffset

@@ -66,6 +66,11 @@
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
     [(_) #'"no clause found in line"]))
 
+(define-syntax (clear-line stx)
+  (syntax-case stx (offset)
+    [(clear-line (offset off) "clear")
+     #'(test-passed-at-level #f)]))
+
 ;; in named queries, absolute offsets are relative to the argument of the query.
 ;; so add that offset here, which will be zero for regular queries.
 ;; because of this, relative offsets in named queries can't use this macro, since the last-level-offset
@@ -197,5 +202,5 @@
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
  (all-from-out "magic-functions.rkt")
- query line offset reloffset size op disp any-true? begin-level when*)
+ query line clear-line offset reloffset size op disp any-true? begin-level when*)
 

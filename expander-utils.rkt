@@ -123,7 +123,7 @@
     (pattern ({~datum level})))
   
   (define-syntax-class mag-line
-    (pattern ({~datum line} expr ...)))
+    (pattern ((~or* {~datum line} {~datum clear-line}) expr ...)))
 
   (define-syntax-class lvl>0
     #:datum-literals (level)

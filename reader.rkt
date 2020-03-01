@@ -38,7 +38,7 @@
 (define-lex-abbrev string-compare (:= 1 (char-set "<>=")))
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTs")))
-(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "string" "search" "regex" "default" "x"))
+(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "string" "search" "regex" "default" "clear" "x"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev string-type (:or "string" "search" "regex"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))

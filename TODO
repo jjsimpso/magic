@@ -1,5 +1,4 @@
 - implement regex
-- implement clear
 - implement use with reverse endianness
 - implement independent case insensitive string flags
 - add support for relative indirect offsets

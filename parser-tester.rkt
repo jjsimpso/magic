@@ -40,6 +40,7 @@
   ;"(2.S-2)   belong   !0x28632943\n")
   ;"18	search/4261301/s	TRUEVISION-XFILE.\0\n")
   ;"(&-4.B)     uleshort                0x01EF\n")
-  "3	ubyte		x	%d-bit\n")
+  "3	ubyte		x	%d-bit\n>68    clear\n>>0    clear\n")
+  ;"3	ubyte		x	%d-bit\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")
