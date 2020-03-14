@@ -7,4 +7,16 @@
 0	name				test-scope
 >0      use                             check-mz
 
-0      use             test-scope
+0       name                            void-name
+
+0       name                            leshort-test
+>2      leshort 0xc000                  leshort match
+
+# it appears that using a name from the top-level doesn't work properly (it never matches)
+# file appears to behave the same way, but I don't remember doing this intentionaly in #lang magic
+# this is logical though, since a use line always matches and you wouldn't want that at the top-level
+0	string	MZ
+>0      use             void-name
+>0      use             ^void-name
+>0      use             ^leshort-test
+>0      use             test-scope

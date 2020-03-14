@@ -241,3 +241,165 @@
 # AttributesType
 #>>>>&492	ubyte			x		- Attributes 0x%x
 ## EndOfTGA
+
+# Tag Image File Format, from Daniel Quinlan (quinlan@yggdrasil.com)
+# The second word of TIFF files is the TIFF version number, 42, which has
+# never changed.  The TIFF specification recommends testing for it.
+0	string		MM\x00\x2a	TIFF image data, big-endian
+!:strength +70
+!:mime	image/tiff
+>(4.L)	use		^tiff_ifd
+0	string		II\x2a\x00	TIFF image data, little-endian
+!:mime	image/tiff
+!:strength +70
+>(4.l)	use		tiff_ifd
+
+0	name		tiff_ifd
+>0	leshort		x		\b, direntries=%d
+>2	use		tiff_entry
+
+0	name		tiff_entry
+# NewSubFileType
+>0	leshort		0xfe
+>>12	use		tiff_entry
+>0	leshort		0x100
+>>4	lelong		1
+>>>12	use		tiff_entry
+>>>8	leshort		x		\b, width=%d
+>0	leshort		0x101
+>>4	lelong		1
+>>>8	leshort		x		\b, height=%d
+>>>12	use		tiff_entry
+>0	leshort		0x102
+>>8	leshort		x		\b, bps=%d
+>>12	use		tiff_entry
+>0	leshort		0x103
+>>4	lelong		1		\b, compression=
+>>>8	leshort		1		\bnone
+>>>8	leshort		2		\bhuffman
+>>>8	leshort		3		\bbi-level group 3
+>>>8	leshort		4		\bbi-level group 4
+>>>8	leshort		5		\bLZW
+>>>8	leshort		6		\bJPEG (old)
+>>>8	leshort		7		\bJPEG
+>>>8	leshort		8		\bdeflate
+>>>8	leshort		9		\bJBIG, ITU-T T.85
+>>>8	leshort		0xa		\bJBIG, ITU-T T.43
+>>>8	leshort		0x7ffe		\bNeXT RLE 2-bit
+>>>8	leshort		0x8005		\bPackBits (Macintosh RLE)
+>>>8	leshort		0x8029		\bThunderscan RLE
+>>>8	leshort		0x807f		\bRasterPadding (CT or MP)
+>>>8	leshort		0x8080		\bRLE (Line Work)
+>>>8	leshort		0x8081		\bRLE (High-Res Cont-Tone)
+>>>8	leshort		0x8082		\bRLE (Binary Line Work)
+>>>8	leshort		0x80b2		\bDeflate (PKZIP)
+>>>8	leshort		0x80b3		\bKodak DCS
+>>>8	leshort		0x8765		\bJBIG
+>>>8	leshort		0x8798		\bJPEG2000
+>>>8	leshort		0x8799		\bNikon NEF Compressed
+>>>8	default		x
+>>>>8	leshort		x		\b(unknown 0x%x)
+>>>12	use		tiff_entry
+>0	leshort		0x106		\b, PhotometricIntepretation=
+>>8	clear
+>>8	leshort		0		\bWhiteIsZero
+>>8	leshort		1		\bBlackIsZero
+>>8	leshort		2		\bRGB
+>>8	leshort		3		\bRGB Palette
+>>8	leshort		4		\bTransparency Mask
+>>8	leshort		5		\bCMYK
+>>8	leshort		6		\bYCbCr
+>>8	leshort		8		\bCIELab
+>>8	default		x
+>>>8	leshort		x		\b(unknown=0x%x)
+>>12	use		tiff_entry
+# FillOrder
+>0	leshort		0x10a
+>>4	lelong		1
+>>>12	use		tiff_entry
+# DocumentName
+>0	leshort		0x10d
+>>(8.l)	string		x		\b, name=%s
+>>>12	use		tiff_entry
+# ImageDescription
+>0	leshort		0x10e
+>>(8.l)	string		x		\b, description=%s
+>>>12	use		tiff_entry
+# Make
+>0	leshort		0x10f
+>>(8.l)	string		x		\b, manufacturer=%s
+>>>12	use		tiff_entry
+# Model
+>0	leshort		0x110
+>>(8.l)	string		x		\b, model=%s
+>>>12	use		tiff_entry
+# StripOffsets
+>0	leshort		0x111
+>>12	use		tiff_entry
+# Orientation
+>0	leshort		0x112		\b, orientation=
+>>8	leshort		1		\bupper-left
+>>8	leshort		3		\blower-right
+>>8	leshort		6		\bupper-right
+>>8	leshort		8		\blower-left
+>>8	leshort		9		\bundefined
+>>8	default		x
+>>>8	leshort		x		\b[*%d*]
+>>12	use		tiff_entry
+# XResolution
+>0	leshort		0x11a
+>>8	lelong		x		\b, xresolution=%d
+>>12	use		tiff_entry
+# YResolution
+>0	leshort		0x11b
+>>8	lelong		x		\b, yresolution=%d
+>>12	use		tiff_entry
+# ResolutionUnit
+>0	leshort		0x128
+>>8	leshort		x		\b, resolutionunit=%d
+>>12	use		tiff_entry
+# Software
+>0	leshort		0x131
+>>(8.l)	string		x		\b, software=%s
+>>12	use		tiff_entry
+# Datetime
+>0	leshort		0x132
+>>(8.l)	string		x		\b, datetime=%s
+>>12	use		tiff_entry
+# HostComputer
+>0	leshort		0x13c
+>>(8.l)	string		x		\b, hostcomputer=%s
+>>12	use		tiff_entry
+# WhitePoint
+>0	leshort		0x13e
+>>12	use		tiff_entry
+# PrimaryChromaticities
+>0	leshort		0x13f
+>>12	use		tiff_entry
+# YCbCrCoefficients
+>0	leshort		0x211
+>>12	use		tiff_entry
+# YCbCrPositioning
+>0	leshort		0x213
+>>12	use		tiff_entry
+# ReferenceBlackWhite
+>0	leshort		0x214
+>>12	use		tiff_entry
+# Copyright
+>0	leshort		0x8298
+>>(8.l)	string		x		\b, copyright=%s
+>>12	use		tiff_entry
+# ExifOffset
+>0	leshort		0x8769
+>>12	use		tiff_entry
+# GPS IFD
+>0	leshort		0x8825		\b, GPS-Data
+>>12	use		tiff_entry
+
+#>0	leshort		x		\b, unknown=0x%x
+#>>12	use		tiff_entry
+
+0	string		MM\x00\x2b	Big TIFF image data, big-endian
+!:mime	image/tiff
+0	string		II\x2b\x00	Big TIFF image data, little-endian
+!:mime	image/tiff

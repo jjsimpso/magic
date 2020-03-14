@@ -22,7 +22,7 @@
 (parse-to-datum
  (apply-tokenizer 
   make-tokenizer 
-  ;"0	beshort	0x0206	ALAN game data\n>2	short	<10	version 2.6%d\n\n0	ubyte    >0	\n")
+  "0	beshort	0x0206	ALAN game data\n>2	short	<10	version 2.6%d\n\n0	ubyte    >0	\n")
   ;"0           string  MZ\n>0x18       leshort <0x40   MZ executable (MS-DOS)\n>0x18       leshort >0x3f\n>>(0x3c.l)  string  PE\\0\\0  PE executable (MS-Windows)\n0	beshort	0x0206	ALAN game data\n")
   ;"(4.s*512)    leshort 0x014c  COFF executable (MS-DOS, DJGPP)\n")
   ;"(4.s*512) leshort !0x014c MZ executable (MS-DOS)\n")
@@ -40,7 +40,7 @@
   ;"(2.S-2)   belong   !0x28632943\n")
   ;"18	search/4261301/s	TRUEVISION-XFILE.\0\n")
   ;"(&-4.B)     uleshort                0x01EF\n")
-  "3	ubyte		x	%d-bit\n>68    clear\n>>0    clear\n")
+  ;"3	ubyte		x	%d-bit\n>68    clear\n>>0    clear\n")
   ;"3	ubyte		x	%d-bit\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")

@@ -130,19 +130,49 @@
 
 (define-for-syntax always-true-line '(line (offset 0) (type (default "default")) (test (truetest "x"))))
 
+(define (swap-endianness item)
+  (cond
+    [(pair? item) 
+     (cons (swap-endianness (car item))
+           (swap-endianness (cdr item)))]
+    [(and (string? item) (string=? item "beshort")) "leshort"]
+    [(and (string? item) (string=? item "belong")) "lelong"]
+    [(and (string? item) (string=? item "bequad")) "lequad"]
+    [(and (string? item) (string=? item "befloat")) "lefloat"]
+    [(and (string? item) (string=? item "bedouble")) "ledouble"]
+
+    [(and (string? item) (string=? item "leshort")) "beshort"]
+    [(and (string? item) (string=? item "lelong")) "belong"]
+    [(and (string? item) (string=? item "lequad")) "bequad"]
+    [(and (string? item) (string=? item "lefloat")) "befloat"]
+    [(and (string? item) (string=? item "ledouble")) "bedouble"]
+
+    [else item]))
+
 (define-syntax (named-query stx)
   (syntax-case stx (name-line)
     [(_ (name-line (_ 0) (_ "name") magic-name))
-     #'(define magic-name
-         (lambda (new-offset) (void)))]
+     (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
+       #'(begin
+           (define magic-name
+             (lambda (new-offset) (void)))
+           (define ^magic-name
+             (lambda (new-offset) (void)))))]
     [(_ (name-line (_ 0) (_ "name") magic-name) . rst)
-     (with-syntax (;[name (format-id stx "~a" (syntax-e #'magic-name))]
+     (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))]
                    [modified-rst (cons (datum->syntax #'rst always-true-line) #'rst)])
-       #'(define magic-name
-           (lambda (new-offset)
-             (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-               ;(printf "name: offset = ~a~n" name-offset)
-               (query . modified-rst)))))]))
+       #`(begin 
+           (define magic-name
+             (lambda (new-offset)
+               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
+                 ;(printf "name: offset = ~a~n" name-offset)
+                 (query . modified-rst))))
+           (define ^magic-name
+             (lambda (new-offset)
+               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
+                 ;(printf "name: offset = ~a~n" name-offset)
+                 (query #,@(reverse-endianness #'modified-rst)))))))]))
+               
   ;#'(query #,stx))
   ;#'(void))
 

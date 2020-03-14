@@ -17,7 +17,7 @@
 (provide parse-levels)
 (provide transform-levels)
 (provide last-level-offset any-true? begin-level test-passed-at-level when*)
-(provide level parse-level0)
+(provide (for-syntax reverse-endianness) level parse-level0)
 
 (require syntax/parse racket/stxparam)
 (require (for-syntax syntax/stx syntax/parse racket/syntax racket/list))
@@ -132,6 +132,48 @@
     ;(pattern (lvl:mag-level lvlx:mag-level ...+ ln:mag-line)))
     (pattern (lvl:mag-lvl ...+ ln:mag-line)))
 )
+
+(define-for-syntax (reverse-line-endianness stx)
+  (syntax-parse stx
+    ;; little endian
+    [(ln off-expr (type (numeric "leshort")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "beshort")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "lelong")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "belong")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "lequad")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "bequad")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "lefloat")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "befloat")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "ledouble")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "bedouble")) test-expr . msg-expr)]
+    ;; big endian
+    [(ln off-expr (type (numeric "beshort")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "leshort")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "belong")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "lelong")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "bequad")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "lequad")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "befloat")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "lefloat")) test-expr . msg-expr)]
+    [(ln off-expr (type (numeric "bedouble")) test-expr ~rest msg-expr)
+     #'(ln off-expr (type (numeric "ledouble")) test-expr . msg-expr)]
+    ;; catch everything else
+    [(expr ...)
+     ;(printf "no endianness conversion~n")
+     #'(expr ...)]))
+
+(define-for-syntax (reverse-endianness stx)
+  ;(printf "reverse-endiannes: ") (display stx) (printf "~n")
+  (syntax-parse stx
+    [(lvl:mag-lvl ...+ expr ...+) 
+     ;(printf "match 1~n")
+     #`(lvl ... #,@(reverse-endianness #'(expr ...)))]
+    [(ln:mag-line expr ...+)
+     ;(printf "match 2~n")
+     #`(#,(reverse-line-endianness #'ln) #,@(reverse-endianness #'(expr ...)))]
+    [(ln:mag-line)
+     ;(printf "match 3~n")
+     #`(#,(reverse-line-endianness #'ln))]))
 
 ;; temporary
 #;(define-syntax (line stx)
