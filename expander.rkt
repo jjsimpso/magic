@@ -128,7 +128,7 @@
     [(_ expr ...)
      #'(parse-level0 expr ...)]))
 
-(define-for-syntax always-true-line '(line (offset 0) (type (default "default")) (test (truetest "x"))))
+(define-for-syntax always-true-line '(line (offset 0) (type (numeric "byte")) (test (truetest "x"))))
 
 (define (swap-endianness item)
   (cond
@@ -165,7 +165,7 @@
            (define magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 ;(printf "name: offset = ~a~n" name-offset)
+                 ;(printf "name offset = ~a~n" name-offset)
                  (query . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)

@@ -10,7 +10,7 @@
 0       name                            void-name
 
 0       name                            leshort-test
->2      leshort 0xc000                  leshort match
+>2      leshort 0x00c0                  leshort match
 
 # it appears that using a name from the top-level doesn't work properly (it never matches)
 # file appears to behave the same way, but I don't remember doing this intentionaly in #lang magic
@@ -18,5 +18,5 @@
 0	string	MZ
 >0      use             void-name
 >0      use             ^void-name
->0      use             ^leshort-test
 >0      use             test-scope
+>0      use             leshort-test
