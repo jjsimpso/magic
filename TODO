@@ -1,5 +1,4 @@
 - verify use with reverse endianness against file's behavior
-- fix bug in name-test.rkt with multiple use calls at same level
 - allow clear parsing to accept test field
 - allow \ escape before ^ (sometimes used in reversed names)
 - implement regex

@@ -21,6 +21,7 @@
 (require (only-in "debugtest.rkt" (magic-query debugtest-query)))
 (require (only-in "string-test.rkt" (magic-query string-query)))
 (require (only-in "tgaext.rkt" (magic-query tgaext-query)))
+(require (only-in "name-test.rkt" (magic-query name-query)))
 
 (define (build-string-output-thunk thnk)
   (lambda ()
@@ -127,6 +128,11 @@
 (check-equal? 
 (with-input-from-file "tga2_extension" (build-string-output-thunk tgaext-query))
  "- author \"Jonathan Simpson\" - comment \"This is a targa version 2 test of the extension ar\" 6 \b-11 \b-2019 11 \b:07 \b:00 ")
+
+(with-input-from-file "mm3.exe" name-query)
+(check-equal? 
+(with-input-from-file "mm3.exe" (build-string-output-thunk name-query))
+ "MZ match leshort match ")
 
 (with-input-from-file "FAQ-by--odino.txt" image-query)
 
