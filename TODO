@@ -1,6 +1,6 @@
 - verify use with reverse endianness against file's behavior
 - allow clear parsing to accept test field
-- allow \ escape before ^ (sometimes used in reversed names)
+- debug TIFF magic
 - implement regex
 - implement independent case insensitive string flags
 - add support for relative indirect offsets

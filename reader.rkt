@@ -286,8 +286,12 @@
     (token 'HWS #:skip? #f)]
    [(from/stop-before (:~ " " "\t" "\n") "\n") 
     (begin
+      ;(printf "running magic-lexer-name, lexeme = ~a~n" lexeme)
       (set! current-lexer magic-lexer)
-      (token 'MAGIC-NAME (string->symbol lexeme)))]))
+      ;; use trim-ends to take the leading backslash off the lexeme if it exists.
+      ;; some magic backslash escapes the leading '^' for reverse names. we don't require
+      ;; this but trimming it here allows us to support it.
+      (token 'MAGIC-NAME (string->symbol (trim-ends "\\" lexeme ""))))]))
 
 (define hws-count 0)
 (define current-lexer magic-lexer)

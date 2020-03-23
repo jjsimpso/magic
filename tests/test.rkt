@@ -95,6 +95,11 @@
  (with-input-from-file "03.tga" (build-string-output-thunk image-query))
  "Targa image data - RGB - RLE 500 x 387 x 24 ")
 
+(with-input-from-file "palmpic2.tif" image-query)
+(check-equal? 
+ (with-input-from-file "palmpic2.tif" (build-string-output-thunk image-query))
+ "TIFF image data, little-endian \b, direntries=16 ")
+
 
 ;; debug tests
 ;; ------------------------------------------------------------------
