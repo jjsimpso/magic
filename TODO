@@ -1,3 +1,4 @@
+- relative offsets within names are probably broken
 - verify use with reverse endianness against file's behavior
 - allow clear parsing to accept test field
 - implement regex
