@@ -49,7 +49,7 @@
 (define-syntax (line stx)
   (syntax-case stx (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
-     #'(magic-name off)]
+     #'(magic-name (offset off))]
     ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
     [(line (offset (reloffset off)) (type type-expr) (test test-expr)) 
      (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
@@ -165,7 +165,7 @@
            (define magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 ;(printf "name offset = ~a~n" name-offset)
+                 (eprintf "~a offset = ~a~n" magic-name name-offset)
                  (query . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
