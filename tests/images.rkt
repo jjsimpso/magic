@@ -301,7 +301,7 @@
 >>>>8	leshort		x		\b(unknown 0x%x)
 >>>12	use		tiff_entry
 >0	leshort		0x106		\b, PhotometricIntepretation=
->>8	clear
+>>8	clear           x
 >>8	leshort		0		\bWhiteIsZero
 >>8	leshort		1		\bBlackIsZero
 >>8	leshort		2		\bRGB

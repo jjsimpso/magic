@@ -19,7 +19,7 @@ query : line (level+ (line | clear-line))* /EOL*
 level : /">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
-clear-line : offset /HWS "clear" /EOL
+clear-line : offset /HWS "clear" (/HWS test)? /EOL
 
 named-query : name-line (level+ (line | clear-line))* /EOL*
 name-line : offset /HWS name-type /HWS MAGIC-NAME /EOL

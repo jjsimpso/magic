@@ -68,6 +68,8 @@
 
 (define-syntax (clear-line stx)
   (syntax-case stx (offset)
+    [(clear-line (offset off) "clear" (test test-expr))
+     #'(test-passed-at-level #f)]
     [(clear-line (offset off) "clear")
      #'(test-passed-at-level #f)]))
 
@@ -165,12 +167,12 @@
            (define magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 (eprintf "~a offset = ~a~n" magic-name name-offset)
+                 ;(eprintf "~a offset = ~a~n" magic-name name-offset)
                  (query . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 ;(printf "name: offset = ~a~n" name-offset)
+                 ;(eprintf "~a offset = ~a~n" magic-name name-offset)
                  (query #,@(reverse-endianness #'modified-rst)))))))]))
                
   ;#'(query #,stx))
