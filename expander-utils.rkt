@@ -28,6 +28,17 @@
 
 (define test-passed-at-level (make-parameter #f))
 
+;; run all top level tests and ...
+;; initialize last-level-offset to 0
+(define-syntax-rule (filter-highest-strength body ...)
+  (let ([result #f]
+        [tmp-offset 0])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
+      ;(printf "any-true: last level offset is ~a~n" last-level-offset)
+      (when body (set! result #t))
+      ...
+      result)))
+
 ;; any-true? is like an or that doesn't short circuit
 ;; since any-true? indicates the start of a new level we save the current
 ;; file position to use for relative offsets at this level.
@@ -133,30 +144,47 @@
     (pattern (lvl:mag-lvl ...+ ln:mag-line)))
 )
 
+;; TODO: catch error when val is greater than size of int as indicated by blen
+;; (would be nice to get a syntax error in this case)
+(define-for-syntax (reverse-bytes val blen signed? big-endian?)
+  (integer-bytes->integer 
+   (integer->integer-bytes val blen signed? (not big-endian?))
+   signed?
+   big-endian?))
+
+(define-for-syntax (reverse-test-value-endianness blen signed? big-endian? stx)
+  (syntax-parse stx #:datum-literals (test numtest)
+    [(test (numtest val)) 
+     ; ignore the signed? parameter and always treat as unsigned
+     #`(test (numtest #,(reverse-bytes (syntax->datum #'val) blen #f big-endian?)))]
+    [(expr ...)
+     #'(expr ...)]))
+
+;; TODO: add support for all type parameters
 (define-for-syntax (reverse-line-endianness stx)
   (syntax-parse stx
     ;; little endian
     [(ln off-expr (type (numeric "leshort")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "beshort")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "beshort")) #,(reverse-test-value-endianness 2 #t #t #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "lelong")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "belong")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "belong")) #,(reverse-test-value-endianness 4 #t #t #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "lequad")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "bequad")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "bequad")) #,(reverse-test-value-endianness 8 #t #t #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "lefloat")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "befloat")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "befloat")) #,(reverse-test-value-endianness 4 #t #t #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "ledouble")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "bedouble")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "bedouble")) #,(reverse-test-value-endianness 8 #t #t #'test-expr) . msg-expr)]
     ;; big endian
     [(ln off-expr (type (numeric "beshort")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "leshort")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "leshort")) #,(reverse-test-value-endianness 2 #t #f #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "belong")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "lelong")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "lelong")) #,(reverse-test-value-endianness 4 #t #f #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "bequad")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "lequad")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "lequad")) #,(reverse-test-value-endianness 8 #t #f #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "befloat")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "lefloat")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "lefloat")) #,(reverse-test-value-endianness 4 #t #f #'test-expr) . msg-expr)]
     [(ln off-expr (type (numeric "bedouble")) test-expr ~rest msg-expr)
-     #'(ln off-expr (type (numeric "ledouble")) test-expr . msg-expr)]
+     #`(ln off-expr (type (numeric "ledouble")) #,(reverse-test-value-endianness 8 #t #f #'test-expr) . msg-expr)]
     ;; catch everything else
     [(expr ...)
      ;(printf "no endianness conversion~n")

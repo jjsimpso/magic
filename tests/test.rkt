@@ -137,7 +137,7 @@
 (with-input-from-file "mm3.exe" name-query)
 (check-equal? 
 (with-input-from-file "mm3.exe" (build-string-output-thunk name-query))
- "MZ match leshort match ")
+ "MZ match leshort match beshort match ")
 
 (with-input-from-file "FAQ-by--odino.txt" image-query)
 
