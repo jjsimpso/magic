@@ -147,16 +147,22 @@
 ;; TODO: catch error when val is greater than size of int as indicated by blen
 ;; (would be nice to get a syntax error in this case)
 (define-for-syntax (reverse-bytes val blen signed? big-endian?)
-  (integer-bytes->integer 
-   (integer->integer-bytes val blen signed? (not big-endian?))
-   signed?
-   big-endian?))
+  (if (inexact? val)
+      (floating-point-bytes->real
+       ; only support signed floats
+       (real->floating-point-bytes val blen #t (not big-endian?))
+       #t
+       big-endian?)
+      (integer-bytes->integer 
+       (integer->integer-bytes val blen signed? (not big-endian?))
+       signed?
+       big-endian?)))
 
 (define-for-syntax (reverse-test-value-endianness blen signed? big-endian? stx)
   (syntax-parse stx #:datum-literals (test numtest)
     [(test (numtest val)) 
-     ; ignore the signed? parameter and always treat as unsigned
-     #`(test (numtest #,(reverse-bytes (syntax->datum #'val) blen #f big-endian?)))]
+     ; treat as unsigned unless val is a negative number
+     #`(test (numtest #,(reverse-bytes (syntax->datum #'val) blen (< (syntax->datum #'val) 0) big-endian?)))]
     [(expr ...)
      #'(expr ...)]))
 

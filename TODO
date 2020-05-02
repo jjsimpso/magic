@@ -1,8 +1,4 @@
 - relative offsets within names are probably broken
-- problem with reverse endianness and signed/unsigned
-  behavior. reverse endianness currently treats all
-  values as unsigned when reversing bytes. may lead
-  to compile errors with negative test values.
 - update reverse endianness to handle all numeric type parameters
 - implement regex
 - implement independent case insensitive string flags
