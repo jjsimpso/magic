@@ -10,8 +10,11 @@
 0       name                            void-name
 
 0       name                            leshort-test
->2      leshort 192                  leshort match,
+>2      leshort 192                     leshort match,
 #>2      leshort 0x00c0                  leshort match
+
+0       name                            uleshort-test
+>2      uleshort <193                   uleshort match,
 
 0       name                            beshort-test
 >2      beshort 0xc000                  beshort match,
@@ -25,4 +28,5 @@
 >0      use             ^void-name
 >0      use             test-scope
 >0      use             leshort-test
+>0      use             ^uleshort-test
 >0      use             ^beshort-test
