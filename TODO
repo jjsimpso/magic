@@ -1,3 +1,7 @@
+- catching eof errors is causing some tests to abort without printing
+  their message. this could be just an issues with reading to far and
+  not stopping at the null character. (i.e. not reading
+  byte-by-byte). investigate. example is TIFF name= printing.
 - relative offsets within names are probably broken
 - update reverse endianness to handle all numeric type parameters
 - implement regex

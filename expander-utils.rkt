@@ -173,31 +173,43 @@
     [(expr ...)
      #'(expr ...)]))
 
+(define-for-syntax (reverse-mask-value-endianness blen stx)
+  (syntax-parse stx #:datum-literals (nummask op)
+    [(nummask (op operator:string) val)
+     #`(nummask (op operator) #,(reverse-bytes (syntax->datum #'val) blen #f #f))]
+    [#f #'()]
+    [(expr ...)
+     #'(expr ...)]))
+
 ;; TODO: add support for all type parameters
 (define-for-syntax (reverse-line-endianness stx)
   (syntax-parse stx
     ;; little endian
     [(ln off-expr (type (numeric (~optional u:string) "leshort")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "beshort")) #,(reverse-test-value-endianness 2 #t #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "beshort")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "lelong")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "belong")) #,(reverse-test-value-endianness 4 #t #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "belong")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "lequad")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "bequad")) #,(reverse-test-value-endianness 8 #t #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "bequad")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "lefloat")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "befloat")) #,(reverse-test-value-endianness 4 #t #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "befloat")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "ledouble")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "bedouble")) #,(reverse-test-value-endianness 8 #t #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "bedouble")) test-expr . msg-expr)]
     ;; big endian
     [(ln off-expr (type (numeric (~optional u:string) "beshort")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "leshort")) #,(reverse-test-value-endianness 2 #f #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "leshort")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "belong")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "lelong")) #,(reverse-test-value-endianness 4 #f #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "lelong")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "bequad")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "lequad")) #,(reverse-test-value-endianness 8 #f #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "lequad")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "befloat")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "lefloat")) #,(reverse-test-value-endianness 4 #f #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "lefloat")) test-expr . msg-expr)]
     [(ln off-expr (type (numeric (~optional u:string) "bedouble")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "ledouble")) #,(reverse-test-value-endianness 8 #f #'test-expr) . msg-expr)]
+     #`(ln off-expr (type (numeric (~? u) "ledouble")) test-expr . msg-expr)]
+    ;; Reverse endianness of used names
+    [(ln off-expr (type (_ "use")) (test (_ magic-name)))
+     (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
+       #`(ln off-expr (type (use "use")) (test (use-name ^magic-name))))]
     ;; catch everything else
     [(expr ...)
      ;(printf "no endianness conversion~n")

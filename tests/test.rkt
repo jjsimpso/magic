@@ -100,6 +100,16 @@
  (with-input-from-file "palmpic2.tif" (build-string-output-thunk image-query))
  "TIFF image data, little-endian \b, direntries=16 \b, height=223 \b, bps=206 \b, compression= \bnone \b, PhotometricIntepretation= \bRGB \b, width=164 ")
 
+(with-input-from-file "le.tif" image-query)
+(check-equal? 
+ (with-input-from-file "le.tif" (build-string-output-thunk image-query))
+ "TIFF image data, little-endian \b, direntries=21 \b, height=223 \b, bps=44462 \b, compression= \bnone \b, PhotometricIntepretation= \bRGB \b, width=164 ")
+
+(with-input-from-file "be.tif" image-query)
+(check-equal? 
+ (with-input-from-file "be.tif" (build-string-output-thunk image-query))
+ "TIFF image data, big-endian \b, direntries=21 \b, height=223 \b, bps=1 \b, compression= \bnone \b, PhotometricIntepretation= \bRGB \b, width=164 ")
+
 
 ;; debug tests
 ;; ------------------------------------------------------------------
