@@ -1,9 +1,7 @@
-- catching eof errors is causing some tests to abort without printing
-  their message. this could be just an issues with reading to far and
-  not stopping at the null character. (i.e. not reading
-  byte-by-byte). investigate. example is TIFF name= printing.
 - relative offsets within names are probably broken
 - update reverse endianness to handle all numeric type parameters
+- update reverse endianness to reverse indirect offset types(this will
+  fix big endian TIFF magic).
 - implement regex
 - implement independent case insensitive string flags
 - add support for relative indirect offsets
@@ -12,8 +10,6 @@
 - implement mime and strength lines
 - check parsing of minus as negative number when nummask is expected
 
-- consider a better way to bypass offset macro other than adding
-  additional patterns to the line macro
 - rewrite macros in expander.rkt with syntax-parse
 - test file's handling of relative offsets in named query (i made
   assumptions)
