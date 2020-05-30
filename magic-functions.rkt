@@ -96,7 +96,8 @@
 ;; (read-cstring8 does this)
 (define (read-string8-till-null len)
   (define data (read-bytes len))
-  (when (eof-object? data) (error "eof"))
+  (when (eof-object? data) 
+    (error (string-append "read-string8-till-null: eof, read len = " (~a len))))
   
   (define datalen (bytes-length data))
   (cond 
@@ -203,7 +204,9 @@
 (define (indoff initial-offset [read-func read-lelong] [operation #f] [arg #f])
   (with-handlers ([exn:fail? (lambda (exn) #f)])
     (file-position (current-input-port) initial-offset)
+    ;(eprintf "indoff: read offset from 0x~a = " (number->string initial-offset 16))
     (let ([off (read-func)])
+      ;(eprintf "0x~a~n" (number->string off 16))
       (if (and operation arg)
           (operation off arg)
           off))))

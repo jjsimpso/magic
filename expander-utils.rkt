@@ -207,7 +207,7 @@
     [(ln off-expr (type (numeric (~optional u:string) "bedouble")) test-expr ~rest msg-expr)
      #`(ln off-expr (type (numeric (~? u) "ledouble")) test-expr . msg-expr)]
     ;; Reverse endianness of used names
-    [(ln off-expr (type (_ "use")) (test (_ magic-name)))
+    [(ln off-expr (type (use "use")) (test (use-name magic-name)))
      (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
        #`(ln off-expr (type (use "use")) (test (use-name ^magic-name))))]
     ;; catch everything else

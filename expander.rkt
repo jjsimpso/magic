@@ -50,18 +50,8 @@
   (syntax-case stx (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
      #'(magic-name (offset off))]
-    ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
-    [(line (offset (reloffset off)) (type type-expr) (test test-expr)) 
-     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
-    [(line (offset (relindoff off)) (type type-expr) (test test-expr)) 
-     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
     [(line (offset off) (type type-expr) (test test-expr)) 
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
-    ; match relative offsets so that we can bypass the offset macro, which conflicts with named queries
-    [(line (offset (reloffset off)) (type type-expr) (test test-expr) (message msg)) 
-     (syntax-protect #'(magic-test (reloffset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
-    [(line (offset (relindoff off)) (type type-expr) (test test-expr) (message msg)) 
-     (syntax-protect #'(magic-test (relindoff off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
     [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr)) msg))]
     [(_) #'"no clause found in line"]))
@@ -77,8 +67,26 @@
 ;; so add that offset here, which will be zero for regular queries.
 ;; because of this, relative offsets in named queries can't use this macro, since the last-level-offset
 ;; will have already taken the name-offset into account.
-(define-syntax-rule (offset off)
+#;(define-syntax-rule (offset off)
   (+ name-offset off))
+
+(define-syntax (offset stx)
+  (syntax-parse stx
+    [(_ off:integer)
+     #'(+ name-offset off)]
+    ;; indirect offset
+    [(_ (indoff off:integer (~optional size-expr:expr) (~optional op-expr:expr) (~optional disp-expr:expr)))
+     #'(indoff (+ name-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
+    ;; indirect relative offset
+    [(_ (indoff (reloffset off:integer) (~optional size-expr:expr) (~optional op-expr:expr) (~optional disp-expr:expr)))
+     #'(indoff (reloffset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
+    ;; relative offset
+    [(_ (reloffset off:integer))
+     #'(reloffset off)]
+    ;; relative indirect offset
+    [(_ (relindoff off:expr))
+     ; where does the name-offset go here?
+     #'(reloffset off)]))
 
 (define-syntax-rule (reloffset off)
   (+ last-level-offset off))
@@ -167,12 +175,12 @@
            (define magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 ;(eprintf "~a offset = ~a~n" magic-name name-offset)
+                 ;(eprintf "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
                  (query . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
-               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 ;(eprintf "~a offset = ~a~n" magic-name name-offset)
+               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)])
+                 ;(eprintf "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
                  (query #,@(reverse-endianness #'modified-rst)))))))]))
                
   ;#'(query #,stx))
