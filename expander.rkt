@@ -26,26 +26,9 @@
   (lambda (stx)
     #'0))
 
-#|
-(define-syntax (level stx)
-  (syntax-parse stx
-    #:datum-literals (level)
-    [(_ (line:expr (level ...))) #'(when line (level ...))]
-    [(_ (line:expr ...)) #']))
-|#
 ;; todo: switch to `syntax-parse` and use its `#:datum-literals` option or its `~datum` pattern form 
 ;; to match raw datums without bindings. when i do this i should consider replacing type and compare
 ;; with macros.
-#;(define-syntax line
-  (syntax-rules (offset type test message)
-    [(line (offset 0) (type (_ "use")) (test (_ name)))
-     (name)]
-    [(line (offset off) (type type-expr) (test test-expr)) 
-     (magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)))]
-    [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
-     (magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr)) msg)]
-    [(_) "no clause found in line"]))
-
 (define-syntax (line stx)
   (syntax-case stx (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
@@ -65,11 +48,8 @@
 
 ;; in named queries, absolute offsets are relative to the argument of the query.
 ;; so add that offset here, which will be zero for regular queries.
-;; because of this, relative offsets in named queries can't use this macro, since the last-level-offset
-;; will have already taken the name-offset into account.
-#;(define-syntax-rule (offset off)
-  (+ name-offset off))
-
+;; for relative offsets in named queries, the last-level-offset will have already taken
+;; the name-offset into account(still need to verify relative offsets in named queries).
 (define-syntax (offset stx)
   (syntax-parse stx
     [(_ off:integer)
@@ -118,19 +98,6 @@
 
 (define-syntax-rule (disp arg)
   arg)
-
-;(define-syntax-rule (type expr)
-
-#;(define-syntax (query stx)
-  ; investigate syntax->list so that i don't loose src location and other syntax info here
-  (let ([lines (cdr (syntax->datum stx))])
-    ;(display lines) (printf "~n")
-    ;(define lines-syntax-tree (parse-levels lines 0))
-    (define lines-syntax-tree (transform-levels 
-                               (parse-levels lines 0)))
-    (display lines-syntax-tree)
-    (printf "~n")
-    (datum->syntax stx lines-syntax-tree)))
 
 (define-syntax (query stx)
   (printf "~a~n" stx)
@@ -182,34 +149,6 @@
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)])
                  ;(eprintf "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
                  (query #,@(reverse-endianness #'modified-rst)))))))]))
-               
-  ;#'(query #,stx))
-  ;#'(void))
-
-#;(define-syntax-rule (magic-module-begin (magic QUERY ...))
-  (#%module-begin 
-   (define (magic-query) 
-     (or QUERY ...))
-   (provide magic-query)))
-
-#;(define-syntax (magic-module-begin stx)
-  (define (query? expr)
-    (if (and (pair? expr) 
-             (equal? (car expr) 'query))
-        #t
-        #f))
-  (define (named-query? expr)
-    (if (and (pair? expr)
-             (equal? (car expr) 'named-query))
-        #t
-        #f))
-  (syntax-parse stx
-    #:datum-literals (magic)
-    [(_ (magic expr ...))
-        #'(#%module-begin
-           (define (magic-query) 
-             (or expr ...))
-           (provide magic-query))]))
 
 (define-syntax (magic-module-begin stx)
   (define (query? expr)

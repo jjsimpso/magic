@@ -15,7 +15,6 @@
 ;;   limitations under the License.
 
 (provide magic-test)
-;(provide offset)
 (provide type)
 (provide compare)
 (provide indoff)
@@ -197,9 +196,6 @@
     (when (eof-object? data) (error "eof"))
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data #t)))
-
-(define (offset off)
-  off)
 
 (define (indoff initial-offset [read-func read-lelong] [operation #f] [arg #f])
   (with-handlers ([exn:fail? (lambda (exn) #f)])
