@@ -273,6 +273,11 @@
       (set! current-lexer magic-lexer)
       (printf "running string helper, lexeme = ~a~n" lexeme)
       (token 'STRING (raw-string-to-racket (string-append lexeme (magic-lexer-string-helper input-port)))))]
+   ;; treat "x" as a truetest
+   [(from/stop-before "x" (:or " " "\t" "\n"))
+    (begin
+      (set! current-lexer magic-lexer)
+      (token lexeme lexeme))]
    ;; the simple case with no escaped space characters
    [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
     (begin
