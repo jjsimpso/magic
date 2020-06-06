@@ -181,31 +181,36 @@
     [(expr ...)
      #'(expr ...)]))
 
+(define-for-syntax (reverse-type stx)
+  (syntax-parse stx
+    ["leshort"   #'"beshort"]
+    ["lelong"    #'"belong"]
+    ["lequad"    #'"bequad"]
+    ["lefloat"   #'"befloat"]
+    ["ledouble"  #'"bedouble"]
+    ["beshort"   #'"leshort"]
+    ["belong"    #'"lelong"]
+    ["bequad"    #'"lequad"]
+    ["befloat"   #'"lefloat"]
+    ["bedouble"  #'"ledouble"]
+    [type-string:string
+     (printf "non-reversable numeric type!!!~n")
+     #'type-string]
+    [_ (error "reverse-type: invalid syntax")]))
+
+(define-for-syntax (reverse-numeric stx)
+  (syntax-parse stx
+    [((~optional u:string) type-string:string)
+     (printf "reversing numeric!!!~n")
+     #`(numeric (~? u) #,(reverse-type #'type-string))]
+    [(_) (error "reverse-numeric: invalid syntax")]))
+
 ;; TODO: add support for all type parameters
 (define-for-syntax (reverse-line-endianness stx)
   (syntax-parse stx
-    ;; little endian
-    [(ln off-expr (type (numeric (~optional u:string) "leshort")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "beshort")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "lelong")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "belong")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "lequad")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "bequad")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "lefloat")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "befloat")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "ledouble")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "bedouble")) test-expr . msg-expr)]
-    ;; big endian
-    [(ln off-expr (type (numeric (~optional u:string) "beshort")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "leshort")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "belong")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "lelong")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "bequad")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "lequad")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "befloat")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "lefloat")) test-expr . msg-expr)]
-    [(ln off-expr (type (numeric (~optional u:string) "bedouble")) test-expr ~rest msg-expr)
-     #`(ln off-expr (type (numeric (~? u) "ledouble")) test-expr . msg-expr)]
+    ;; Reverse endianness of numeric types
+    [(ln off-expr (type ({~datum numeric} str-arg:string ...+)) test-expr ~rest msg-expr)
+     #`(ln off-expr (type #,(reverse-numeric #'(str-arg ...))) test-expr . msg-expr)]
     ;; Reverse endianness of used names
     [(ln off-expr (type (use "use")) (test (use-name magic-name)))
      (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
@@ -213,7 +218,8 @@
     ;; catch everything else
     [(expr ...)
      ;(printf "no endianness conversion~n")
-     #'(expr ...)]))
+     #'(expr ...)]
+    [(_) (error "reverse-line-endianness: invalid syntax")]))
 
 (define-for-syntax (reverse-endianness stx)
   ;(printf "reverse-endiannes: ") (display stx) (printf "~n")
