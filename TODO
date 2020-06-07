@@ -1,5 +1,4 @@
 - relative offsets within names are probably broken
-- update reverse endianness to handle all numeric type parameters
 - update reverse endianness to reverse indirect offset types(this will
   fix big endian TIFF magic).
 - implement regex

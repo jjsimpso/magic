@@ -142,44 +142,30 @@
     ;(pattern ((~between ({~datum level}) 2 +inf.0) ln:mag-line)))
     ;(pattern (lvl:mag-level lvlx:mag-level ...+ ln:mag-line)))
     (pattern (lvl:mag-lvl ...+ ln:mag-line)))
-
-  (define-syntax-class endian-numeric
-    (pattern (~or "leshort" "lelong" "lequad" "lefloat" "ledouble" "beshort" "belong" "bequad" "befloat" "bedouble")))
 )
 
-;; TODO: catch error when val is greater than size of int as indicated by blen
-;; (would be nice to get a syntax error in this case)
-(define-for-syntax (reverse-bytes val blen signed? big-endian?)
-  (if (inexact? val)
-      (floating-point-bytes->real
-       ; only support signed floats
-       (real->floating-point-bytes val blen #t (not big-endian?))
-       #t
-       big-endian?)
-      (integer-bytes->integer 
-       (integer->integer-bytes val blen signed? (not big-endian?))
-       signed?
-       big-endian?)))
+(define-for-syntax (reverse-bytes val)
+  (define (unsigned-integer->shortest-byte-string x)
+    (cond
+      [(< x 256)         (integer->integer-bytes x 1 #f)]
+      [(< x 65536)       (integer->integer-bytes x 2 #f)]
+      [(< x (expt 2 32)) (integer->integer-bytes x 4 #f)]
+      [(< x (expt 2 64)) (integer->integer-bytes x 8 #f)]))
+  
+  (define bstring (unsigned-integer->shortest-byte-string val))
+  (define blen (bytes-length bstring))
+  
+  ; actual endianness doesn't matter just reverse it
+  (integer-bytes->integer 
+   bstring
+   #f
+   #t))
 
-(define-for-syntax (reverse-test-value-endianness blen big-endian? stx)
-  (syntax-parse stx #:datum-literals (test numtest)
-    [(test (numtest op:string val)) 
-     #:when (or (string=? (syntax-e #'op) ">") (string=? (syntax-e #'op) "<"))
-     ; should we always treat as signed or treat as unsigned unless val is a negative number?
-     #`(test (numtest op #,(reverse-bytes (syntax->datum #'val) blen (< (syntax->datum #'val) 0) big-endian?)))]
-    [(test (numtest (~optional op:string) val)) 
-     ; treat as unsigned unless val is a negative number
-     #`(test (numtest (~? op) #,(reverse-bytes (syntax->datum #'val) blen (< (syntax->datum #'val) 0) big-endian?)))]
-    [(expr ...)
-     #'(expr ...)]))
-
-(define-for-syntax (reverse-mask-value-endianness blen stx)
-  (syntax-parse stx #:datum-literals (nummask op)
+(define-for-syntax (reverse-mask stx)
+  (syntax-parse stx
     [(nummask (op operator:string) val)
-     #`(nummask (op operator) #,(reverse-bytes (syntax->datum #'val) blen #f #f))]
-    [#f #'()]
-    [(expr ...)
-     #'(expr ...)]))
+     #`(nummask (op operator) #,(reverse-bytes (syntax->datum #'val)))]
+    [_ (error "reverse-mask: invalid syntax")]))
 
 (define-for-syntax (reverse-type stx)
   (syntax-parse stx
@@ -194,12 +180,15 @@
     ["befloat"   #'"lefloat"]
     ["bedouble"  #'"ledouble"]
     [type-string:string
-     (printf "non-reversable numeric type!!!~n")
+     (printf "non-reversable numeric type ~a~n" (syntax-e #'type-string))
      #'type-string]
     [_ (error "reverse-type: invalid syntax")]))
 
 (define-for-syntax (reverse-numeric stx)
   (syntax-parse stx
+    [((~optional u:string) type-string:string ({~datum nummask} expr ...))
+     (printf "reversing numeric with mask!!!~n")
+     #`(numeric (~? u) #,(reverse-type #'type-string) #,(reverse-mask #'(nummask expr ...)))]
     [((~optional u:string) type-string:string)
      (printf "reversing numeric!!!~n")
      #`(numeric (~? u) #,(reverse-type #'type-string))]
@@ -209,8 +198,8 @@
 (define-for-syntax (reverse-line-endianness stx)
   (syntax-parse stx
     ;; Reverse endianness of numeric types
-    [(ln off-expr (type ({~datum numeric} str-arg:string ...+)) test-expr ~rest msg-expr)
-     #`(ln off-expr (type #,(reverse-numeric #'(str-arg ...))) test-expr . msg-expr)]
+    [(ln off-expr (type ({~datum numeric} arg ...+)) test-expr ~rest msg-expr)
+     #`(ln off-expr (type #,(reverse-numeric #'(arg ...))) test-expr . msg-expr)]
     ;; Reverse endianness of used names
     [(ln off-expr (type (use "use")) (test (use-name magic-name)))
      (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
