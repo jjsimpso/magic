@@ -180,21 +180,38 @@
     ["befloat"   #'"lefloat"]
     ["bedouble"  #'"ledouble"]
     [type-string:string
-     (printf "non-reversable numeric type ~a~n" (syntax-e #'type-string))
+     ;(printf "non-reversable numeric type ~a~n" (syntax-e #'type-string))
      #'type-string]
     [_ (error "reverse-type: invalid syntax")]))
 
 (define-for-syntax (reverse-numeric stx)
   (syntax-parse stx
     [((~optional u:string) type-string:string ({~datum nummask} expr ...))
-     (printf "reversing numeric with mask!!!~n")
-     #`(numeric (~? u) #,(reverse-type #'type-string) #,(reverse-mask #'(nummask expr ...)))]
+     ;(printf "reversing numeric with mask!!!~n")
+     #`(numeric (~? u) #,(reverse-type #'type-string) (nummask expr ...))]
     [((~optional u:string) type-string:string)
-     (printf "reversing numeric!!!~n")
+     ;(printf "reversing numeric!!!~n")
      #`(numeric (~? u) #,(reverse-type #'type-string))]
     [(_) (error "reverse-numeric: invalid syntax")]))
 
-;; TODO: add support for all type parameters
+(define-for-syntax (reverse-size stx)
+  (syntax-parse stx
+    [(leshort ".s") #'(beshort ".S")]
+    [(lelong ".l")  #'(belong ".L")]
+    [(beshort ".S") #'(leshort ".s")]
+    [(belong ".L")  #'(lelong ".l")]
+    ; catch non-reversable types
+    [(sym sz:string) #'(sym sz)]
+    [_ (error "reverse-size: invalid syntax")]))
+
+(define-for-syntax (reverse-offset stx)
+  (syntax-parse stx
+    [(indoff off:integer (size size-expr) (~optional op-expr:expr) (~optional disp-expr:expr))
+     #`(indoff off (size #,(reverse-size #'size-expr)) (~? op-expr) (~? disp-expr))]
+    [expr
+     #'expr]
+    [_ (error "reverse-offset: invalid syntax: ~a~n" stx)]))
+
 (define-for-syntax (reverse-line-endianness stx)
   (syntax-parse stx
     ;; Reverse endianness of numeric types
@@ -205,9 +222,8 @@
      (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
        #`(ln off-expr (type (use "use")) (test (use-name ^magic-name))))]
     ;; catch everything else
-    [(expr ...)
-     ;(printf "no endianness conversion~n")
-     #'(expr ...)]
+    [(ln (offset off-expr) type-expr test-expr ~rest msg-expr)
+     #`(ln (offset #,(reverse-offset #'off-expr)) type-expr test-expr . msg-expr)]
     [(_) (error "reverse-line-endianness: invalid syntax")]))
 
 (define-for-syntax (reverse-endianness stx)

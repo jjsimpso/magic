@@ -108,7 +108,7 @@
 (with-input-from-file "be.tif" image-query)
 (check-equal? 
  (with-input-from-file "be.tif" (build-string-output-thunk image-query))
- "TIFF image data, big-endian \b, direntries=21 \b, height=223 \b, bps=1 \b, compression= \bnone \b, PhotometricIntepretation= \bRGB \b, width=164 ")
+ "TIFF image data, big-endian \b, direntries=21 \b, height=223 \b, bps=1 \b, compression= \bnone \b, PhotometricIntepretation= \bRGB \b, name=be.tiff \b, orientation= \bupper-left \b, width=164 ")
 
 
 ;; debug tests
@@ -147,7 +147,7 @@
 (with-input-from-file "mm3.exe" name-query)
 (check-equal? 
 (with-input-from-file "mm3.exe" (build-string-output-thunk name-query))
- "MZ match, leshort match, uleshort match, beshort match, beshort neg. match ")
+ "MZ match, leshort match, nummask match ")
 
 (with-input-from-file "FAQ-by--odino.txt" image-query)
 
