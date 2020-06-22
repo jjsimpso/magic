@@ -155,3 +155,8 @@
 (check-equal? 
 (with-input-from-file "iexplore.exe" (build-string-output-thunk exe-query-all))
  "PE executable (MS-Windows) for AMD64 *** *** ")
+
+(with-input-from-file "DOOM.EXE" exe-query)
+(check-equal? 
+(with-input-from-file "DOOM.EXE" (build-string-output-thunk exe-query))
+ "MZ executable (MS-DOS) \b, LE for MS-DOS, DOS4GW DOS extender (embedded) ")

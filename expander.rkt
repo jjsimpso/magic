@@ -55,18 +55,18 @@
     [(_ off:integer)
      #'(+ name-offset off)]
     ;; indirect offset
-    [(_ (indoff off:integer (~optional size-expr:expr) (~optional op-expr:expr) (~optional disp-expr:expr)))
+    [(_ (indoff off:integer (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(indoff (+ name-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
     ;; indirect relative offset
-    [(_ (indoff (reloffset off:integer) (~optional size-expr:expr) (~optional op-expr:expr) (~optional disp-expr:expr)))
+    [(_ (indoff (reloffset off:integer) (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(indoff (reloffset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
     ;; relative offset
     [(_ (reloffset off:integer))
      #'(reloffset off)]
     ;; relative indirect offset
     [(_ (relindoff off:expr))
-     ; where does the name-offset go here?
-     #'(reloffset off)]))
+     ; still need to test this in a named query
+     #'(reloffset (offset off))]))
 
 (define-syntax-rule (reloffset off)
   (+ last-level-offset off))

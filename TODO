@@ -1,12 +1,17 @@
-- relative offsets within names are probably broken
+- relative offsets within names need to be tested
 - implement regex
 - implement independent case insensitive string flags
-- add support for relative indirect offsets
 - implement full printf substitution in message
 - fix macro stepper problems with certain lines
 - implement mime and strength lines
 - check parsing of minus as negative number when nummask is expected
+- bug parsing with hexadecimal count, i.e. 'search/0x100'
+- allow blank lines within query
+- add support for date types
+- add support for middle endian numeric types
+- add support for pascal string type
+- add support for UCS16 string types
+- add support for ID3, GUID, and DER types
+- add support for indirect type
 
 - rewrite macros in expander.rkt with syntax-parse
-- test file's handling of relative offsets in named query (i made
-  assumptions)

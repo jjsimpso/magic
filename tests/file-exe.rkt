@@ -5,6 +5,8 @@
 >0x18       leshort <0x40
 >>(4.s*512) leshort 0x014c  COFF executable (MS-DOS, DJGPP)
 >>(4.s*512) leshort !0x014c MZ executable (MS-DOS)
+>>>&(2.s-514)	string	BW
+>>>>0x240	search/256	DOS/4G	\b, LE for MS-DOS, DOS4GW DOS extender (embedded)
 # skip the whole block below if it is not an extended executable
 >0x18       leshort >0x3f
 >>(0x3c.l)  string  PE\0\0  PE executable (MS-Windows)

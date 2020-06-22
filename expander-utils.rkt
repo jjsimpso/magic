@@ -206,7 +206,7 @@
 
 (define-for-syntax (reverse-offset stx)
   (syntax-parse stx
-    [(indoff off:integer (size size-expr) (~optional op-expr:expr) (~optional disp-expr:expr))
+    [(indoff off:integer (size size-expr) (~optional (~seq op-expr:expr disp-expr:expr)))
      #`(indoff off (size #,(reverse-size #'size-expr)) (~? op-expr) (~? disp-expr))]
     [expr
      #'expr]
