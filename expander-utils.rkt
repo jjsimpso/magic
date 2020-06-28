@@ -14,8 +14,6 @@
 ;;   See the License for the specific language governing permissions and
 ;;   limitations under the License.
 
-(provide parse-levels)
-(provide transform-levels)
 (provide last-level-offset any-true? begin-level test-passed-at-level when*)
 (provide (for-syntax reverse-endianness) level parse-level0)
 
@@ -81,53 +79,6 @@
            #f
            "bad syntax"
            x)))))
-
-(define (eat-lines-with-greater-level lines level)
-  (define next-line-level
-    (for/fold ([level 0])
-              ([line lines])
-      #:break (not (and (pair? line)
-                        (equal? (car line) 'level)))         
-          (add1 level)))
-
-  ;; drop any level lines from the lines list
-  (define next-lines (list-tail lines next-line-level))
-
-  ;(printf "nll = ~a, next lines = ~a~n" next-line-level next-lines)
-
-  (cond 
-    [(> next-line-level level)
-     (eat-lines-with-greater-level (cdr next-lines) level)]
-    [else
-     lines]))
-
-;; ex: (parse-levels '((line1) (level) (line2) (level) (level) (line3) (level) (line4) (level) (level) (line5)) 0)  
-(define (parse-levels lines level)
-  ;; count level of next line
-  (define next-line-level
-    (for/fold ([level 0])
-              ([line lines])
-      #:break (not (and (pair? line)
-                        (equal? (car line) 'level)))         
-          (add1 level)))
-  
-  ;; drop any level lines from the lines list
-  (define next-lines (list-tail lines next-line-level))
-  
-  (cond
-    [(null? lines) '()]
-    [(= next-line-level level)
-     (cons (car next-lines)
-           (parse-levels (cdr next-lines) level))]
-    [(= next-line-level (add1 level))
-     (cons (cons 'level 
-                 (cons (car next-lines) 
-                       (parse-levels (cdr next-lines) (add1 level))))
-           (parse-levels (eat-lines-with-greater-level lines level) level))]
-    [(< next-line-level level) '()]))
-
-(define (level-tree-to-code tree)
-  #f)
 
 (begin-for-syntax 
   (define-syntax-class mag-lvl
@@ -374,48 +325,3 @@
   (display stx)
   (error "Exceeded max nesting level of 9")
   #'())
-
-#;(define-for-syntax (parse-level2 stx)
-  (printf "parse-level2 input: ")
-  (display stx)
-  (syntax-parse stx
-    [()
-     (printf "parse-level2 4~n") 
-     #'()]))
-    
-  
-;; transforms code from something like this:
-;; ((line1)
-;;  (level (line2)
-;;         (line3)
-;;         (level (line4)
-;;                (line5))))
-;;
-;; to this:
-;; (when (line1)
-;;   (begin
-;;     (line2)
-;;     (when (line3)
-;;       (begin
-;;         (line4)
-;;         (line5)))))
-;;
-;; test: (transform-levels '((line1) (level (line2) (line3) (level (line4) (line5)))))
-;; test: (transform-levels '((line1) (level (line2))))
-(define (transform-levels tree)
-  (define (transform-levels-helper tree)
-    (cond 
-      [(null? tree) '()]
-      [(and (list? (cdr tree))
-            (not (empty? (cdr tree)))
-            (eq? (caadr tree) 'level))
-       (cons (append `(when* ,(car tree))
-                     (list (cons 'begin-level (transform-levels-helper (cdadr tree)))))
-                     ;`((begin ,(transform-levels-helper (cdadr tree)))))
-             (transform-levels-helper (cddr tree)))]
-      [else 
-       (cons (car tree)
-             (transform-levels-helper (cdr tree)))]))
-  
-  ;; remove one level of list
-  (car (transform-levels-helper tree)))
