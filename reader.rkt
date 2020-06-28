@@ -234,6 +234,7 @@
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [search-flag (token lexeme lexeme)]
    [hws
     (begin 
