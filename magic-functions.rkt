@@ -237,8 +237,10 @@
 ;; i.e. where the search began. then the compare function will update the 
 ;; file offset to either the beginning or end of the match, depending on the
 ;; flags.
+;; cnt specifies the number of search attempts, not bytes. just assume a worst
+;; case number of bytes to search.
 (define (build-search-read-func cnt flags needle)
-  (let ([len (+ cnt (string-length needle))]
+  (let ([len (* cnt (string-length needle))]
         [binary? (member "b" flags)]
         [text? (member "t" flags)]
         [trim? (member "T" flags)]
@@ -307,10 +309,10 @@
     [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
      (build-search-read-func cnt flag (last compare-expr))]
     [(list 'search (list 'strflag flag) ...)
-     ; default count to 4096 for now, but need to read the entire file if necessary
+     ; default count to 1024 for now, but need to read the entire file if necessary
      ; after the match is found, should the file offset be set to the end of the match?
-     (build-search-read-func 4096 flag (last compare-expr))]
-    [(list 'search) (build-search-read-func 4096 '() (last compare-expr))]
+     (build-search-read-func 1024 flag (last compare-expr))]
+    [(list 'search) (build-search-read-func 1024 '() (last compare-expr))]
     [(list 'numeric "byte")        (build-numeric-read-func signed-compare mask-expr read-byt)]
     [(list 'numeric "u" "byte")    (build-numeric-read-func #f mask-expr read-byt)]
     [(list 'numeric "short")       (build-numeric-read-func signed-compare mask-expr read-short)]
