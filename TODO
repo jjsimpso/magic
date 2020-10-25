@@ -1,5 +1,7 @@
 - relative offsets within names need to be tested
-- implement regex
+- implement regex flags
+- handle compare operators for search and regex?
+- search returns input instead of matched string
 - implement independent case insensitive string flags
 - implement full printf substitution in message
 - fix macro stepper problems with certain lines

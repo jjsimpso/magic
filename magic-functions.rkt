@@ -257,6 +257,23 @@
         (when compact-whitespace? (set! str (string-normalize-spaces str #:trim? #f)))
         str))))
 
+(define (build-regex-read-func cnt flags)
+  (define (read-lines cnt)
+    (define data #"")
+    (for ([i (in-range 0 cnt)])
+      0))
+  
+  (if (member "l" flags)
+      (lambda ()
+        (read-lines cnt))
+      (lambda () 
+        (define start-offset (file-position (current-input-port)))
+        (let ([data (read-bytes cnt)])
+          (file-position (current-input-port) start-offset)
+          (when (eof-object? data) (error "eof"))
+          (define str (bytes->string/latin-1 data))
+          str))))
+
 (define (build-numeric-read-func signed? mask-expr func)
   ; numeric read functions default to unsigned reads
   (if mask-expr
@@ -312,7 +329,19 @@
      ; default count to 1024 for now, but need to read the entire file if necessary
      ; after the match is found, should the file offset be set to the end of the match?
      (build-search-read-func 1024 flag (last compare-expr))]
-    [(list 'search) (build-search-read-func 1024 '() (last compare-expr))]
+    [(list 'search)
+     (build-search-read-func 1024 '() (last compare-expr))]
+    [(list 'regex (list 'regcnt cnt) (list 'regflag flag) ...)
+     (build-regex-read-func cnt flag)]
+    [(list 'regex (list 'regflag flag) ... (list 'regcnt cnt))
+     (build-regex-read-func cnt flag)]
+    [(list 'regex (list 'regcnt cnt))
+     (build-regex-read-func cnt '())]
+    ; default count is 8KB for regex searches
+    [(list 'regex (list 'regflag flag) ...)
+     (build-regex-read-func 8096 flag)]
+    [(list 'regex)
+     (build-regex-read-func 8096 '())]    
     [(list 'numeric "byte")        (build-numeric-read-func signed-compare mask-expr read-byt)]
     [(list 'numeric "u" "byte")    (build-numeric-read-func #f mask-expr read-byt)]
     [(list 'numeric "short")       (build-numeric-read-func signed-compare mask-expr read-short)]
@@ -426,6 +455,17 @@
          (lambda (s) 
            (if (string>? s compare-str) s #f)))])]))
 
+(define (build-regex-compare-func compare-regex ci-flag? start-flag?)
+  (define re (regexp compare-regex))
+  
+  (build-compare-func
+   (lambda (s)
+     ;(eprintf "matching regex ~a~n" compare-regex)
+     (define re-match (regexp-match re s))
+     (if re-match
+         (car re-match)
+         #f))))
+
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
   (define strflags 
@@ -438,21 +478,36 @@
        (cons 'search flag)]
       [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
        (cons 'search flag)]
+      [(list 'regex (list 'regcnt cnt) (list 'regflag flag) ...)
+       (cons 'regex flag)]
+      [(list 'regex (list 'regflag flag) ... (list 'regcnt cnt))
+       (cons 'regex flag)]
+      [(list 'regex (list 'regflag flag) ...)
+       (cons 'regex flag)]
+      [(list 'regex (list 'regcnt cnt))
+       (cons 'regex empty)]
+      [(list 'regex)
+       (cons 'regex empty)]
       [_ '()]))
   (define lci-flag? (member "c" strflags))
   (define uci-flag? (member "C" strflags))
   (define start-flag? (member "s" strflags))
   (define search? (member 'search strflags))
-
+  (define regex? (member 'regex strflags))
+  
   (match compare-expr
     [(list 'strtest x)
-     (if search?
-         (build-compare-func
-          (lambda (s) 
-            (if (search-case-contains? s x lci-flag? uci-flag? start-flag?)
-                s
-                #f)))
-         (build-string-compare-func x "=" lci-flag? uci-flag?))]
+     (cond
+       [search?
+        (build-compare-func
+         (lambda (s) 
+           (if (search-case-contains? s x lci-flag? uci-flag? start-flag?)
+               s
+               #f)))]
+       [regex?
+        (build-regex-compare-func x #f #f)]
+       [else
+        (build-string-compare-func x "=" lci-flag? uci-flag?)])]
     [(list 'strtest "<" x) 
      (build-string-compare-func x "<" lci-flag? uci-flag?)]
     [(list 'strtest ">" x) 

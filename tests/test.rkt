@@ -22,6 +22,7 @@
 (require (only-in "string-test.rkt" (magic-query string-query)))
 (require (only-in "tgaext.rkt" (magic-query tgaext-query)))
 (require (only-in "name-test.rkt" (magic-query name-query)))
+(require (only-in "regex-test.rkt" (magic-query regex-query)))
 
 (define (build-string-output-thunk thnk)
   (lambda ()
@@ -160,3 +161,10 @@
 (check-equal? 
 (with-input-from-file "DOOM.EXE" (build-string-output-thunk exe-query))
  "MZ executable (MS-DOS) \b, LE for MS-DOS, DOS4GW DOS extender (embedded) ")
+
+;; regex tests
+;; ------------------------------------------------------------------
+(with-input-from-file "ansi" regex-query)
+(check-equal? 
+ (with-input-from-file "ansi" (build-string-output-thunk regex-query)) 
+ "Compiled terminfo entry \"ansi\" ")
