@@ -578,7 +578,7 @@
   ;; a negative width indicates left justification. positive is right justification.
   ;; precision must be positive
   (define (get-format-modifiers s)
-    (define format-mod-list (regexp-match #px"%(-?\\d*)\\.(\\d*)[dxs]" s))
+    (define format-mod-list (regexp-match #px"%(-?\\d*)\\.?(\\d*)[dxs]" s))
     (if format-mod-list
         (values (first format-mod-list)
                 ;; if the width specifier is just '-' then return negative precision as the width
@@ -600,7 +600,7 @@
       (cond
         [(not (integer? width)) str]
         [(>= str-len (abs width)) str]
-        [(> width 0)  
+        [(> width 0)
          ; right justify
          (string-append (make-string (- width str-len) #\space) str)]
         [else 
@@ -613,16 +613,21 @@
 
     (cond 
       [(char=? specifier-type #\d)
-       (define sub-length (string-length (number->string substitution)))
-       (define sub-string 
+       (define substitution-str (if (number? substitution)
+                                    (number->string substitution)
+                                    substitution))
+       (define sub-length (string-length substitution-str))
+       (define sub-string
+         ;; the precision calcs for sub-string are wrong
          (if (<= precision sub-length) 
-             substitution 
-             (string-append (make-string (- precision sub-length) #\0) (number->string substitution)))) 
+             substitution-str
+             (string-append (make-string (- precision sub-length) #\0) substitution-str))) 
        (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
       [(char=? specifier-type #\s)
        (define sub-length (string-length substitution))
        (define sub-string 
-         (if (<= precision sub-length) 
+         (if (and (integer? precision)
+                  (<= precision sub-length)) 
              (substring substitution 0 precision)
              substitution))
        (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
@@ -638,7 +643,7 @@
      (format (string-replace str "%x" "~x" #:all? #f) val)]
     [else
      (define-values (format-specifier width precision) (get-format-modifiers str))
-     (if (or width precision)
+     (if format-specifier
          (format-mod str val format-specifier width precision)
          str)]))
 
