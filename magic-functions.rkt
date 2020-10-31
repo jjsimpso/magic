@@ -456,14 +456,29 @@
            (if (string>? s compare-str) s #f)))])]))
 
 (define (build-regex-compare-func compare-regex ci-flag? start-flag?)
-  (define re (regexp compare-regex))
+  (define re (if ci-flag?
+                 (pregexp (string-append "(?i:" compare-regex ")")
+                          (lambda (emsg) #f))
+                 (pregexp compare-regex
+                          (lambda (emsg) #f))))
+
+  (when (not re)
+    ;; fallback to unix regular expression syntax
+    (set! re (if ci-flag?
+                 (regexp (string-append "(?i:" compare-regex ")"))
+                 (regexp compare-regex))))
   
   (build-compare-func
    (lambda (s)
      ;(eprintf "matching regex ~a~n" compare-regex)
-     (define re-match (regexp-match re s))
-     (if re-match
-         (car re-match)
+     (define re-match-pos (regexp-match-positions re s))
+     (if re-match-pos
+         (let ([start-pos (caar re-match-pos)]
+               [end-pos (cdar re-match-pos)])
+           (if start-flag?
+               (increment-file-position! start-pos)
+               (increment-file-position! end-pos))
+           (substring s start-pos end-pos))
          #f))))
 
 ;; returns a function to check the value read from the file
@@ -505,7 +520,7 @@
                s
                #f)))]
        [regex?
-        (build-regex-compare-func x #f #f)]
+        (build-regex-compare-func x lci-flag? start-flag?)]
        [else
         (build-string-compare-func x "=" lci-flag? uci-flag?)])]
     [(list 'strtest "<" x) 

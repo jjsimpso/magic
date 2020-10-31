@@ -168,3 +168,13 @@
 (check-equal? 
  (with-input-from-file "ansi" (build-string-output-thunk regex-query)) 
  "Compiled terminfo entry \"ansi\" ")
+
+(with-input-from-file "wizardry.pnm" regex-query)
+(check-equal? 
+ (with-input-from-file "wizardry.pnm" (build-string-output-thunk regex-query)) 
+ "Netpbm image data \b, size = 320 x \b 200 \b, rawbits, pixmap ")
+
+(with-input-from-file "winehid.inf" regex-query)
+(check-equal? 
+ (with-input-from-file "winehid.inf" (build-string-output-thunk regex-query)) 
+ "Windows setup INFormation ")

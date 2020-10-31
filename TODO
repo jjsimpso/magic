@@ -1,5 +1,4 @@
 - relative offsets within names need to be tested
-- implement regex flags
 - handle compare operators for search and regex?
 - search returns input instead of matched string
 - implement independent case insensitive string flags
