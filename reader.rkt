@@ -237,8 +237,10 @@
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [search-flag (token lexeme lexeme)]
    [hws
-    (begin 
+    (let ([next-char (peek-char input-port)])
       (set! hws-count (add1 hws-count))
+      ;; discard the initial '=' character in search or regex test values
+      (when (char=? next-char #\=) (read-char input-port))
       (set! current-lexer magic-lexer-string)
       (token 'HWS #:skip? #f))]))
 
