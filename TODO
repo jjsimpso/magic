@@ -1,5 +1,4 @@
 - relative offsets within names need to be tested
-- search returns input instead of matched string
 - implement independent case insensitive string flags
 - implement full printf substitution in message
 - fix macro stepper problems with certain lines

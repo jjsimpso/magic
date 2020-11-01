@@ -8,6 +8,9 @@
 0       search/s          bc                    bc
 >&0     string            bcdef                 \bdef
 
+# test that search returns matched value for printf substitution (even though this seems pointless)
+0       search            odino                 Found FAQ by %s
+
 # test indirect relative offsets
 0          ubelong           0x502319ae            test.bin
 # the following line tests that an end of file error doesn't print anything that is treatead as part

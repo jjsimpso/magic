@@ -119,6 +119,11 @@
 (with-input-from-file "gs3armor.htm" (build-string-output-thunk debugtest-query))
  "HTML document text gs3armor.htm ")
 
+(with-input-from-file "FAQ-by--odino.txt" debugtest-query)
+(check-equal? 
+(with-input-from-file "FAQ-by--odino.txt" (build-string-output-thunk debugtest-query))
+ "Found FAQ by odino ")
+
 (with-input-from-file "../file-tests/abcdef" debugtest-query)
 (check-equal? 
 (with-input-from-file "../file-tests/abcdef" (build-string-output-thunk debugtest-query))

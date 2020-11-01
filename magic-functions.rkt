@@ -396,8 +396,7 @@
     (if start-flag?
         (increment-file-position! i)
         (increment-file-position! (+ i len)))
-    #t))
-    ;(list i c)))
+    (substring s i (+ i len))))
 
 (define (build-compare-func f)
   (lambda (s)
@@ -516,9 +515,7 @@
        [search?
         (build-compare-func
          (lambda (s) 
-           (if (search-case-contains? s x lci-flag? uci-flag? start-flag?)
-               s
-               #f)))]
+           (search-case-contains? s x lci-flag? uci-flag? start-flag?)))]
        [regex?
         (build-regex-compare-func x lci-flag? start-flag?)]
        [else
