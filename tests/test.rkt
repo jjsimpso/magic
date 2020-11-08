@@ -183,3 +183,8 @@
 (check-equal? 
  (with-input-from-file "winehid.inf" (build-string-output-thunk regex-query)) 
  "Windows setup INFormation ")
+
+(with-input-from-file "Makefile" regex-query)
+(check-equal? 
+ (with-input-from-file "Makefile" (build-string-output-thunk regex-query)) 
+ "makefile script text ")

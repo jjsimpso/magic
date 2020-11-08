@@ -24,3 +24,5 @@
 >0	regex/4		P6[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, rawbits, pixmap
+
+0	regex/100l	^CFLAGS	makefile script text

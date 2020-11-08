@@ -259,20 +259,28 @@
 
 (define (build-regex-read-func cnt flags)
   (define (read-lines cnt)
-    (define data #"")
-    (for ([i (in-range 0 cnt)])
-      0))
+    (let loop ([i 0]
+               [data #""])
+      (cond
+        [(eof-object? (peek-byte))
+         data]
+        [(< i cnt)
+         (loop (add1 i) (bytes-append data (read-bytes-line)))]
+        [else
+         data])))
   
   (if (member "l" flags)
       (lambda ()
-        (read-lines cnt))
+        (define start-offset (file-position (current-input-port)))
+        (let ([data (read-lines cnt)])
+          (file-position (current-input-port) start-offset)
+          (bytes->string/latin-1 data)))
       (lambda () 
         (define start-offset (file-position (current-input-port)))
         (let ([data (read-bytes cnt)])
           (file-position (current-input-port) start-offset)
           (when (eof-object? data) (error "eof"))
-          (define str (bytes->string/latin-1 data))
-          str))))
+          (bytes->string/latin-1 data)))))
 
 (define (build-numeric-read-func signed? mask-expr func)
   ; numeric read functions default to unsigned reads

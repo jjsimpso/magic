@@ -81,9 +81,9 @@ nummask : op INTEGER
 
 @strtype : regex | search | string8 | string16
 
-regex : /"regex" [ /"/" regflag2 ] [ /"/" regflag2 ]
+regex : /"regex" [ /"/" regflag2 ]
 regflag : "c" | "s" | "l"
-@regflag2 : regflag+ | regcnt
+@regflag2 : regflag+ | ( regcnt [ /"/" ] regflag* )
 regcnt : INTEGER     ; The number of lines or bytes to search.  If this missing or zero, the rest of the file is searched.
 
 search : /"search" [ /"/" srchflag ] [ /"/" srchflag ]
