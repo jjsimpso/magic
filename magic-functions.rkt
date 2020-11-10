@@ -265,7 +265,7 @@
         [(eof-object? (peek-byte))
          data]
         [(< i cnt)
-         (loop (add1 i) (bytes-append data (read-bytes-line)))]
+         (loop (add1 i) (bytes-append data (read-bytes-line) #"\n"))]
         [else
          data])))
   
@@ -462,22 +462,27 @@
          (lambda (s) 
            (if (string>? s compare-str) s #f)))])]))
 
-(define (build-regex-compare-func compare-regex ci-flag? start-flag?)
-  (define re (if ci-flag?
-                 (pregexp (string-append "(?i:" compare-regex ")")
-                          (lambda (emsg) #f))
-                 (pregexp compare-regex
-                          (lambda (emsg) #f))))
-
-  (when (not re)
-    ;; fallback to unix regular expression syntax
-    (set! re (if ci-flag?
-                 (regexp (string-append "(?i:" compare-regex ")"))
-                 (regexp compare-regex))))
+(define (build-regex-compare-func compare-regex ci-flag? start-flag? line-flag?)
+  (define re-str
+    (cond
+      [(and line-flag? ci-flag?)
+       (string-append "(?m:" "(?i:" compare-regex ")" ")")]
+      [line-flag?
+       (string-append "(?m:" compare-regex ")")]
+      [ci-flag?
+       (string-append "(?i:" compare-regex ")")]
+      [else
+       compare-regex]))
   
+  (define re (pregexp re-str (lambda (emsg) #f)))
+
+  ;; fallback to unix regular expression syntax
+  (when (not re)
+    (set! re (regexp re-str)))
+
   (build-compare-func
    (lambda (s)
-     ;(eprintf "matching regex ~a~n" compare-regex)
+     ;(eprintf "matching regex ~a~n" re-str)
      (define re-match-pos (regexp-match-positions re s))
      (if re-match-pos
          (let ([start-pos (caar re-match-pos)]
@@ -514,6 +519,7 @@
   (define lci-flag? (member "c" strflags))
   (define uci-flag? (member "C" strflags))
   (define start-flag? (member "s" strflags))
+  (define line-flag? (member "l" strflags))
   (define search? (member 'search strflags))
   (define regex? (member 'regex strflags))
   
@@ -525,7 +531,7 @@
          (lambda (s) 
            (search-case-contains? s x lci-flag? uci-flag? start-flag?)))]
        [regex?
-        (build-regex-compare-func x lci-flag? start-flag?)]
+        (build-regex-compare-func x lci-flag? start-flag? line-flag?)]
        [else
         (build-string-compare-func x "=" lci-flag? uci-flag?)])]
     [(list 'strtest "<" x) 
