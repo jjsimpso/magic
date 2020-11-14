@@ -25,6 +25,8 @@
 ;; only need the parameter test-passed-at-level
 (require (only-in "expander-utils.rkt" test-passed-at-level))
 
+(require racket/date)
+
 (define (increment-file-position! amt)
   (file-position 
    (current-input-port)
@@ -376,6 +378,21 @@
     [(list 'numeric "u" "bequad")  (build-numeric-read-func #f mask-expr read-bequad)]
     [(list 'numeric "befloat")     read-befloat]
     [(list 'numeric "bedouble")    read-bedouble]
+    [(list 'numeric "date")        (build-numeric-read-func #t mask-expr read-long)]
+    [(list 'numeric "ledate")      (build-numeric-read-func #t mask-expr read-lelong)]
+    [(list 'numeric "bedate")      (build-numeric-read-func #t mask-expr read-belong)]
+    [(list 'numeric "ldate")       (build-numeric-read-func #t mask-expr read-long)]
+    [(list 'numeric "leldate")     (build-numeric-read-func #t mask-expr read-lelong)]
+    [(list 'numeric "beldate")     (build-numeric-read-func #t mask-expr read-belong)]
+    [(list 'numeric "qdate")       (build-numeric-read-func #t mask-expr read-quad)]
+    [(list 'numeric "leqdate")     (build-numeric-read-func #t mask-expr read-lequad)]
+    [(list 'numeric "beqdate")     (build-numeric-read-func #t mask-expr read-bequad)]
+    [(list 'numeric "qldate")      (build-numeric-read-func #t mask-expr read-quad)]
+    [(list 'numeric "leqldate")    (build-numeric-read-func #t mask-expr read-lequad)]
+    [(list 'numeric "beqldate")    (build-numeric-read-func #t mask-expr read-bequad)]    
+    [(list 'numeric "qwdate")      (build-numeric-read-func #t mask-expr read-quad)]
+    [(list 'numeric "leqwdate")    (build-numeric-read-func #t mask-expr read-lequad)]
+    [(list 'numeric "beqwdate")    (build-numeric-read-func #t mask-expr read-bequad)]
     [(list 'default "default")     (lambda () (not (test-passed-at-level)))]
     [_ (error (string-append "type expression doesn't match: " (~a type-expr)))]
     ))
@@ -663,8 +680,13 @@
   (cond 
     [(string-contains? str "%d") 
      (format (string-replace str "%d" "~a" #:all? #f) val)]
-    [(string-contains? str "%s") 
-     (format (string-replace str "%s" "~a" #:all? #f) val)]
+    [(string-contains? str "%s")
+     ;; small hack: if integer is printed as a string, assume the integer is a date type
+     ;; this is really the only case I've seen in file where this would be done intentionally
+     (if (integer? val)
+         (format (string-replace str "%s" "~a" #:all? #f)
+                 (date->string (seconds->date val)))
+         (format (string-replace str "%s" "~a" #:all? #f) val))]
     [(string-contains? str "%x") 
      (format (string-replace str "%x" "~x" #:all? #f) val)]
     [else

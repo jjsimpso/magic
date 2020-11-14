@@ -71,11 +71,12 @@ numeric : [ unsigned ] ( numtype | datetype ) [ nummask ]
 @long : "long" | "lelong" | "belong" | "melong"
 @quad : "quad" | "lequad" | "bequad"
 
-datetype : udate32 | ldate32 | udate64 | ldate64
-udate32 : "date" | "bedate" | "ledate" | "medate"	;; UTC dates
-ldate32 : "ldate" | "beldate" | "leldate" | "meldate"	;; local dates
-udate64 : "qdate" | "leqdate" | "beqdate"		;; UTC dates
-ldate64 : "qldate" | "leqldate" | "beqldate"		;; local dates
+@datetype : udate32 | ldate32 | udate64 | ldate64 | wdate64
+@udate32 : "date" | "bedate" | "ledate" | "medate"	;; UTC dates
+@ldate32 : "ldate" | "beldate" | "leldate" | "meldate"	;; local dates
+@udate64 : "qdate" | "leqdate" | "beqdate"		;; UTC dates
+@ldate64 : "qldate" | "leqldate" | "beqldate"		;; local dates
+@wdate64 : "qwdate" | "leqwdate" | "beqwdate"		;; windows dates
 
 nummask : op INTEGER
 
