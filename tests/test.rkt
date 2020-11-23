@@ -23,6 +23,7 @@
 (require (only-in "tgaext.rkt" (magic-query tgaext-query)))
 (require (only-in "name-test.rkt" (magic-query name-query)))
 (require (only-in "regex-test.rkt" (magic-query regex-query)))
+(require (only-in "date-test.rkt" (magic-query date-query)))
 
 (define (build-string-output-thunk thnk)
   (lambda ()
@@ -188,3 +189,9 @@
 (check-equal? 
  (with-input-from-file "Makefile" (build-string-output-thunk regex-query)) 
  "makefile script text ")
+
+(with-input-from-file "wizwar.lnk" date-query)
+(check-equal? 
+ (with-input-from-file "wizwar.lnk" (build-string-output-thunk date-query)) 
+ "MS Windows shortcut \b, Item id list present \b, Points to a file or directory \b, Has Working directory \b, Has command line arguments \b, Icon \b number=0 \b, ctime=Monday, January 1st, 1601 12:00:00am \b, mtime=Monday, January 1st, 1601 12:00:00am \b, atime=Monday, January 1st, 1601 12:00:00am \b, length=0, window= \bhide ")
+

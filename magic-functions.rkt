@@ -27,6 +27,8 @@
 
 (require racket/date)
 
+(define windows-secs-to-epoch 11644473600)
+
 (define (increment-file-position! amt)
   (file-position 
    (current-input-port)
@@ -305,7 +307,9 @@
 
   (define mask-expr
     (match type-expr
-      [(list 'numeric _ _ (list 'nummask (list 'op op) x)) (list op x)]
+      [(or (list 'numeric "u" _ (list 'nummask (list 'op op) x))
+           (list 'numeric _ (list 'nummask (list 'op op) x)))
+       (list op x)]
       [_ #f]))
   
   (define trimmed-type-expr
@@ -396,6 +400,13 @@
     [(list 'default "default")     (lambda () (not (test-passed-at-level)))]
     [_ (error (string-append "type expression doesn't match: " (~a type-expr)))]
     ))
+
+(define (date-type-expr? expr)
+  (if (and (list? expr)
+           (>= (length expr) 2))
+      (let ([type (second expr)])
+        (and (string? type) (string-contains? type "date")))
+      #f))
 
 (define (char-case=? c match-char lci? uci?)
   (cond 
@@ -510,6 +521,36 @@
            (substring s start-pos end-pos))
          #f))))
 
+(define (build-date-compare-func type-expr numeric-compare-func)
+  (match type-expr
+    [(or (list 'numeric "date")
+         (list 'numeric "ledate")
+         (list 'numeric "bedate")
+         (list 'numeric "qdate")
+         (list 'numeric "leqdate")
+         (list 'numeric "beqdate"))
+     (lambda (n)
+       (seconds->date
+        (numeric-compare-func n) #f))]
+    [(or (list 'numeric "ldate")
+         (list 'numeric "leldate")
+         (list 'numeric "beldate")
+         (list 'numeric "qldate")
+         (list 'numeric "leqldate")
+         (list 'numeric "beqldate"))
+     (lambda (n)
+       (seconds->date
+        (numeric-compare-func n) #t))]
+    [(or (list 'numeric "qwdate")
+         (list 'numeric "leqwdate")
+         (list 'numeric "beqwdate"))
+     (lambda (n)
+       (seconds->date
+        ;; windows datetime unit is 100s of nanoseconds
+        (- (/ (numeric-compare-func n) 10000000)
+           windows-secs-to-epoch)
+        #f))]))
+
 ;; returns a function to check the value read from the file
 (define (compare compare-expr type-expr)
   (define strflags 
@@ -539,81 +580,82 @@
   (define line-flag? (member "l" strflags))
   (define search? (member 'search strflags))
   (define regex? (member 'regex strflags))
-  
-  (match compare-expr
-    [(list 'strtest x)
-     (cond
-       [search?
-        (build-compare-func
-         (lambda (s) 
-           (search-case-contains? s x lci-flag? uci-flag? start-flag?)))]
-       [regex?
-        (build-regex-compare-func x lci-flag? start-flag? line-flag?)]
-       [else
-        (build-string-compare-func x "=" lci-flag? uci-flag?)])]
-    [(list 'strtest "<" x) 
-     (build-string-compare-func x "<" lci-flag? uci-flag?)]
-    [(list 'strtest ">" x) 
-     (build-string-compare-func x ">" lci-flag? uci-flag?)]
-    [(list 'strtest "=" x) 
-     (build-string-compare-func x "=" lci-flag? uci-flag?)]
-    [(list 'numtest x)
-     (build-compare-func
-      (lambda (n) 
-        (if (= n x)
-            n
-            #f)))]
-    [(list 'numtest "<" x)
-     (build-compare-func
-      (lambda (n) 
-        (if (< n x)
-            n
-            #f)))]
-    [(list 'numtest ">" x)
-     (build-compare-func
-      (lambda (n) 
-        (if (> n x)
-            n
-            #f)))]
-    [(list 'numtest "!" x) 
-     (build-compare-func
-      (lambda (n) 
-        (if (not (= n x))
-            n
-            #f)))]
-    ; the next three haven't been fully tested
-    [(list 'numtest "&" x) 
-     (build-compare-func
-      (lambda (n) 
-        (if (not (= (bitwise-and n x) 0))
-            n
-            #f)))]
-    [(list 'numtest "^" x) 
-     (build-compare-func
-      (lambda (n)
-        (if (not (bitwise-ior 
-                  n 
-                  (bitwise-and n x)))
-            n
-            #f)))]
-    [(list 'numtest "~" x) 
-     (build-compare-func
-      (lambda (n) 
-        (if (= n (bitwise-not x))
-            n
-            #f)))]
-    [(list 'numtest "=" x)
-     (build-compare-func
-      (lambda (n) 
-        (if (= n x)
-            n
-            #f)))]
-    [(list 'truetest "x") 
-     ;; this test is designed to always return true for everything but the default type
-     ;; the default type will read false if a test has already passed at the current level and true otherwise
-     ;; truetest will pass a false value along, allowing the default test to fail
-     (build-compare-func (lambda (n) n))]
-    [_ (error (string-append "test expression doesn't match: " (~a compare-expr)))]))
+
+  (define compare-func
+    (match compare-expr
+      [(list 'strtest x)
+       (cond
+         [search?
+          (build-compare-func
+           (lambda (s) 
+             (search-case-contains? s x lci-flag? uci-flag? start-flag?)))]
+         [regex?
+          (build-regex-compare-func x lci-flag? start-flag? line-flag?)]
+         [else
+          (build-string-compare-func x "=" lci-flag? uci-flag?)])]
+      [(list 'strtest "<" x) 
+       (build-string-compare-func x "<" lci-flag? uci-flag?)]
+      [(list 'strtest ">" x) 
+       (build-string-compare-func x ">" lci-flag? uci-flag?)]
+      [(list 'strtest "=" x) 
+       (build-string-compare-func x "=" lci-flag? uci-flag?)]
+      [(or (list 'numtest x)
+           (list 'numtest "=" x))         
+       (build-compare-func
+        (lambda (n) 
+          (if (= n x)
+              n
+              #f)))]
+      [(list 'numtest "<" x)
+       (build-compare-func
+        (lambda (n) 
+          (if (< n x)
+              n
+              #f)))]
+      [(list 'numtest ">" x)
+       (build-compare-func
+        (lambda (n) 
+          (if (> n x)
+              n
+              #f)))]
+      [(list 'numtest "!" x) 
+       (build-compare-func
+        (lambda (n) 
+          (if (not (= n x))
+              n
+              #f)))]
+      ; the next three haven't been fully tested
+      [(list 'numtest "&" x) 
+       (build-compare-func
+        (lambda (n) 
+          (if (not (= (bitwise-and n x) 0))
+              n
+              #f)))]
+      [(list 'numtest "^" x) 
+       (build-compare-func
+        (lambda (n)
+          (if (not (bitwise-ior 
+                    n 
+                    (bitwise-and n x)))
+              n
+              #f)))]
+      [(list 'numtest "~" x) 
+       (build-compare-func
+        (lambda (n) 
+          (if (= n (bitwise-not x))
+              n
+              #f)))]
+      [(list 'truetest "x") 
+       ;; this test is designed to always return true for everything but the default type
+       ;; the default type will read false if a test has already passed at the current level and true otherwise
+       ;; truetest will pass a false value along, allowing the default test to fail
+       (build-compare-func (lambda (n) n))]
+      [_ (error (string-append "test expression doesn't match: " (~a compare-expr)))]))
+
+  ;; date types use the normal numeric compare functions but will return a date
+  (if (date-type-expr? type-expr)
+      (build-date-compare-func type-expr compare-func)
+      compare-func))
 
 (define (single-cprintf-sub str val)
   ;; returns three values: the matched format specifier string, width, and precision
@@ -681,11 +723,9 @@
     [(string-contains? str "%d") 
      (format (string-replace str "%d" "~a" #:all? #f) val)]
     [(string-contains? str "%s")
-     ;; small hack: if integer is printed as a string, assume the integer is a date type
-     ;; this is really the only case I've seen in file where this would be done intentionally
-     (if (integer? val)
+     (if (date*? val)
          (format (string-replace str "%s" "~a" #:all? #f)
-                 (date->string (seconds->date val)))
+                 (date->string val #t))
          (format (string-replace str "%s" "~a" #:all? #f) val))]
     [(string-contains? str "%x") 
      (format (string-replace str "%x" "~x" #:all? #f) val)]
