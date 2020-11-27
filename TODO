@@ -4,7 +4,6 @@
 - fix macro stepper problems with certain lines
 - implement mime and strength lines
 - check parsing of minus as negative number when nummask is expected
-- add support for date types
 - add support for middle endian numeric types
 - add support for pascal string type
 - add support for UCS16 string types

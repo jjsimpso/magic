@@ -27,7 +27,11 @@
 
 (require racket/date)
 
+;; doesn't include any leap seconds. are they needed?
 (define windows-secs-to-epoch 11644473600)
+
+;; can modify to change cprintf date formatting
+;(date-display-format 'iso-8601)
 
 (define (increment-file-position! amt)
   (file-position 
@@ -469,6 +473,22 @@
            (if (string=? truncated-str compare-str)
                truncated-str
                #f)))])]
+    [(string=? op "!")
+     (cond 
+       [(and lci-flag? uci-flag?)
+        (build-compare-func
+         (lambda (s) 
+           (define truncated-str (string-truncate s len))
+           (if (not (string-ci=? truncated-str compare-str))
+               truncated-str
+               #f)))]
+       [else
+        (build-compare-func
+         (lambda (s) 
+           (define truncated-str (string-truncate s len))
+           (if (not (string=? truncated-str compare-str))
+               truncated-str
+               #f)))])]
     [(string=? op "<")
      (cond 
        [(and lci-flag? uci-flag?)
@@ -599,6 +619,8 @@
        (build-string-compare-func x ">" lci-flag? uci-flag?)]
       [(list 'strtest "=" x) 
        (build-string-compare-func x "=" lci-flag? uci-flag?)]
+      [(list 'strtest "!" x) 
+       (build-string-compare-func x "!" lci-flag? uci-flag?)]
       [(or (list 'numtest x)
            (list 'numtest "=" x))         
        (build-compare-func
@@ -720,8 +742,13 @@
        (format (string-replace str specifier "~a" #:all? #f) substitution)]))
 
   (cond 
-    [(string-contains? str "%d") 
-     (format (string-replace str "%d" "~a" #:all? #f) val)]
+    [(string-contains? str "%d")
+     (if (date*? val)
+         (format (string-replace str "%d" "~a" #:all? #f)
+                 (date->seconds val #t))
+         (format (string-replace str "%d" "~a" #:all? #f) val))]
+    [(string-contains? str "%u")
+     (format (string-replace str "%u" "~a" #:all? #f) val)]    
     [(string-contains? str "%s")
      (if (date*? val)
          (format (string-replace str "%s" "~a" #:all? #f)

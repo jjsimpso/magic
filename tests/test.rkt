@@ -195,3 +195,7 @@
  (with-input-from-file "wizwar.lnk" (build-string-output-thunk date-query)) 
  "MS Windows shortcut \b, Item id list present \b, Points to a file or directory \b, Has Working directory \b, Has command line arguments \b, Icon \b number=0 \b, ctime=Monday, January 1st, 1601 12:00:00am \b, mtime=Monday, January 1st, 1601 12:00:00am \b, atime=Monday, January 1st, 1601 12:00:00am \b, length=0, window= \bhide ")
 
+(with-input-from-file "CLIPBRD.HLP" date-query)
+(check-equal? 
+ (with-input-from-file "CLIPBRD.HLP" (build-string-output-thunk date-query)) 
+ "MS Windows 3.0 help \b, Mon Mar  2 05:31:38 1992 ")

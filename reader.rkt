@@ -35,7 +35,7 @@
 (define-lex-abbrev paren (:= 1 (char-set "()")))
 ;(define-lex-abbrev string-chars (complement (:+ " " "\t" "\n")))
 (define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.") "\\"))
-(define-lex-abbrev string-compare (:= 1 (char-set "<>=")))
+(define-lex-abbrev string-compare (:= 1 (char-set "<>=!")))
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTsl")))
 (define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "search" "regex" "default" "clear" "x"))
@@ -225,7 +225,7 @@
     (let ([next-char (peek-char input-port)])
       (set! hws-count (add1 hws-count))
       ;; check for optional comparison operator
-      (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=))
+      (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=) (char=? next-char #\!))
           (set! current-lexer magic-lexer-string-compare)
           (set! current-lexer magic-lexer-string))
       (token 'HWS #:skip? #f))]))
