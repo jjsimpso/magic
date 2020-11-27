@@ -508,7 +508,8 @@
        [else
         (build-compare-func
          (lambda (s) 
-           (if (string>? s compare-str) s #f)))])]))
+           (if (string>? s compare-str) s #f)))])]
+    [else (error (string-append "invalid string compare operator: " op))]))
 
 (define (build-regex-compare-func compare-regex ci-flag? start-flag? line-flag?)
   (define re-str
@@ -613,14 +614,8 @@
           (build-regex-compare-func x lci-flag? start-flag? line-flag?)]
          [else
           (build-string-compare-func x "=" lci-flag? uci-flag?)])]
-      [(list 'strtest "<" x) 
-       (build-string-compare-func x "<" lci-flag? uci-flag?)]
-      [(list 'strtest ">" x) 
-       (build-string-compare-func x ">" lci-flag? uci-flag?)]
-      [(list 'strtest "=" x) 
-       (build-string-compare-func x "=" lci-flag? uci-flag?)]
-      [(list 'strtest "!" x) 
-       (build-string-compare-func x "!" lci-flag? uci-flag?)]
+      [(list 'strtest op x) 
+       (build-string-compare-func x op lci-flag? uci-flag?)]
       [(or (list 'numtest x)
            (list 'numtest "=" x))         
        (build-compare-func
