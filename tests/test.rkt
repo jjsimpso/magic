@@ -25,6 +25,9 @@
 (require (only-in "regex-test.rkt" (magic-query regex-query)))
 (require (only-in "date-test.rkt" (magic-query date-query)))
 
+(require magic/output)
+(set-magic-verbosity! 'error)
+
 (define (build-string-output-thunk thnk)
   (lambda ()
     (let ([retval (with-output-to-string thnk)])

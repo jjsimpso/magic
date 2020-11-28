@@ -17,8 +17,9 @@
 (require brag/support)
 (require syntax/strip-context)
 (require racket/string)
+
 (require "parser.rkt")
-;(require "magic-functions.rkt")
+(require "output.rkt")
 
 (provide read-syntax)
 (provide make-tokenizer)
@@ -118,7 +119,7 @@
       (token 'MIME #:skip? #t))]
    ["\n" 
     (begin
-      (displayln "newline found1") 
+      (print-debug "newline found1~n") 
       (set! hws-count 0)
       (token 'EOL))]
    [hws 
@@ -208,7 +209,7 @@
   (lexer-srcloc
    ["\n" 
     (begin
-      (displayln "newline found2") 
+      (print-debug "newline found2~n") 
       (set! hws-count 0)
       (token 'EOL))]
    [(from/stop-before (:~ "\n") "\n") 
@@ -274,7 +275,7 @@
    [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
     (begin
       (set! current-lexer magic-lexer)
-      (printf "running string helper, lexeme = ~a~n" lexeme)
+      (print-debug "running string helper, lexeme = ~a~n" lexeme)
       (token 'STRING (raw-string-to-racket (string-append lexeme (magic-lexer-string-helper input-port)))))]
    ;; treat "x" as a truetest
    [(from/stop-before "x" (:or " " "\t" "\n"))
@@ -285,7 +286,7 @@
    [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
     (begin
       (set! current-lexer magic-lexer)
-      (printf "lexeme read as: ~a, converted to: ~a~n" lexeme (raw-string-to-racket lexeme))
+      (print-info "lexeme read as: ~a, converted to: ~a~n" lexeme (raw-string-to-racket lexeme))
       (token 'STRING (raw-string-to-racket lexeme)))]))
 
 (define magic-lexer-name
@@ -294,7 +295,7 @@
     (token 'HWS #:skip? #f)]
    [(from/stop-before (:~ " " "\t" "\n") "\n") 
     (begin
-      ;(printf "running magic-lexer-name, lexeme = ~a~n" lexeme)
+      (print-debug "running magic-lexer-name, lexeme = ~a~n" lexeme)
       (set! current-lexer magic-lexer)
       ;; use trim-ends to take the leading backslash off the lexeme if it exists.
       ;; some magic backslash escapes the leading '^' for reverse names. we don't require
@@ -305,18 +306,18 @@
 (define current-lexer magic-lexer)
 
 (define (make-tokenizer port [path #f])
-  (port-count-lines! port)
-  (lexer-file-path path)
   (define (next-token)
     (cond [(= hws-count 3)
            (begin
-             (displayln "calling message lexer")
+             (print-debug "calling message lexer~n")
              (magic-lexer-message port))]
           [else 
            (current-lexer port)]))
+  
+  (port-count-lines! port)
+  (lexer-file-path path)
   next-token)
 
 ;; test function
 (define (lex str)
   (apply-lexer magic-lexer str))
-  ;(magic-lexer (open-input-string str)))

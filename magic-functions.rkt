@@ -22,10 +22,12 @@
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
 
+(require racket/date)
+
+(require "output.rkt")
+         
 ;; only need the parameter test-passed-at-level
 (require (only-in "expander-utils.rkt" test-passed-at-level))
-
-(require racket/date)
 
 ;; doesn't include any leap seconds. are they needed?
 (define windows-secs-to-epoch 11644473600)
@@ -208,9 +210,9 @@
 (define (indoff initial-offset [read-func read-lelong] [operation #f] [arg #f])
   (with-handlers ([exn:fail? (lambda (exn) #f)])
     (file-position (current-input-port) initial-offset)
-    ;(eprintf "indoff: read offset from 0x~a = " (number->string initial-offset 16))
+    (print-debug "indoff: read offset from 0x~a = " (number->string initial-offset 16))
     (let ([off (read-func)])
-      ;(eprintf "0x~a~n" (number->string off 16))
+      (print-debug "0x~a~n" (number->string off 16))
       (if (and operation arg)
           (operation off arg)
           off))))
@@ -761,16 +763,12 @@
 ;; ex: (with-input-from-file "/tmp/iexplore.exe" (lambda () (magic-test (indoff 60 (size '(lelong ".l"))) (type '(string8 "string") '(strtest "PE\u0000\u0000")) (compare '(strtest "PE\u0000\u0000")) "PE executable (MS-Windows)")))
 (define (magic-test off read-func compare-func [message ""])
   (with-handlers ([exn:fail? (lambda (exn) 
-                               (eprintf "magic error: ~a~n" (exn-message exn))
+                               (print-warning "magic error: ~a~n" (exn-message exn))
                                #f)])
-    ;(printf "running magic-test: ~a,~a,~a~n" off read-func compare-func)
-    ;(display off)
-    ;(display read-func)
-    ;(display compare-func)
+    (print-info "running magic-test: ~a,~a,~a~n" off read-func compare-func)
     (file-position (current-input-port) off)
     (let* ([data (read-func)]
            [result (compare-func data)])
-      ;(eprintf "data=~a, result=~a~n" data result)
       ;; if the test is successful, print the message with any printf substitutions
       (when (and result (non-empty-string? message))
         (printf "~a " (single-cprintf-sub message result)))
