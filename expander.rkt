@@ -19,8 +19,9 @@
 (require "magic-functions.rkt")
 (require racket/stxparam)
 (require (for-syntax racket/base syntax/stx syntax/parse racket/syntax))
-(require (for-syntax "expander-utils.rkt" "magic-functions.rkt"))
+(require (for-syntax "expander-utils.rkt" "magic-functions.rkt" "output.rkt"))
 (require "expander-utils.rkt")
+(require "output.rkt")
 
 (define-syntax-parameter name-offset 
   (lambda (stx)
@@ -100,7 +101,6 @@
   arg)
 
 (define-syntax (query stx)
-  (printf "~a~n" stx)
   (syntax-parse stx
     [(_ expr ...)
      #'(parse-level0 expr ...)]))
@@ -123,12 +123,12 @@
            (define magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 ;(eprintf "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
+                 (print-debug "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
                  (query . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)])
-                 ;(eprintf "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
+                 (print-debug "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
                  (query #,@(reverse-endianness #'modified-rst)))))))]))
 
 (define-syntax (magic-module-begin stx)

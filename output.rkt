@@ -15,25 +15,20 @@
     [(eq? value 'info) (set! verbosity 5)]
     [(eq? value 'debug) (set! verbosity 6)]))
 
-(define (print-fatal form . v)
-  (when (>= verbosity 1) (print-msg form v)))
+(define-syntax-rule (print-fatal form v ...)
+  (when (>= verbosity 1) (eprintf form v ...)))
 
-(define (print-error form . v)
-  (when (>= verbosity 2) (print-msg form v)))
+(define-syntax-rule (print-error form v ...)
+  (when (>= verbosity 2) (eprintf form v ...)))
 
-(define (print-warning form . v)
-  (when (>= verbosity 3) (print-msg form v)))
+(define-syntax-rule (print-warning form v ...)
+  (when (>= verbosity 3) (eprintf form v ...)))
 
-(define (print-notice form . v)
-  (when (>= verbosity 4) (print-msg form v)))
+(define-syntax-rule (print-notice form v ...)
+  (when (>= verbosity 4) (eprintf form v ...)))
 
-(define (print-info form . v)
-  (when (>= verbosity 5) (print-msg form v)))
+(define-syntax-rule (print-info form v ...)
+  (when (>= verbosity 5) (eprintf form v ...)))
 
-(define (print-debug form . v)
-  (when (>= verbosity 6) (print-msg form v)))
-
-(define (print-msg form v)
-  (if (null? v)
-      (printf form)
-      (apply eprintf (cons form v))))
+(define-syntax-rule (print-debug form v ...)
+  (when (>= verbosity 6) (eprintf form v ...)))
