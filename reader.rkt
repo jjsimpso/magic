@@ -39,9 +39,10 @@
 (define-lex-abbrev string-compare (:= 1 (char-set "<>=!")))
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTsl")))
-(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "search" "regex" "default" "clear" "x"))
+(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "search" "regex" "default" "clear" "x"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev string-type (:or "string" "search" "regex"))
+(define-lex-abbrev unsupported-type (:or "bestring16" "pstring" "leid3" "beid3" "der" "indirect"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
 (define (raw-string-to-racket s)
@@ -162,6 +163,10 @@
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [unsupported-type
+    (begin
+      (error (format "Unsupported type \"~a\" on line ~a in ~a" lexeme (line lexeme-start) (lexer-file-path))))]
+
    ;[string-chars (token 'STRING (raw-string-to-racket lexeme))]
    ;[any-char (token 'CHAR lexeme)]))
 ))
@@ -306,16 +311,15 @@
 (define current-lexer magic-lexer)
 
 (define (make-tokenizer port [path #f])
+  (port-count-lines! port)
+  (lexer-file-path path)
   (define (next-token)
     (cond [(= hws-count 3)
            (begin
              (print-debug "calling message lexer~n")
              (magic-lexer-message port))]
           [else 
-           (current-lexer port)]))
-  
-  (port-count-lines! port)
-  (lexer-file-path path)
+           (current-lexer port)]))  
   next-token)
 
 ;; test function

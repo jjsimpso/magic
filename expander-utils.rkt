@@ -20,6 +20,8 @@
 (require syntax/parse racket/stxparam)
 (require (for-syntax syntax/stx syntax/parse racket/syntax racket/list))
 
+(require (for-syntax "output.rkt"))
+
 (define-syntax-parameter last-level-offset
   (lambda (stx)
     (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-level")))
@@ -80,7 +82,7 @@
            "bad syntax"
            x)))))
 
-(begin-for-syntax 
+(begin-for-syntax
   (define-syntax-class mag-lvl
     (pattern ({~datum level})))
   
@@ -204,16 +206,16 @@
     ))
 
 (define-for-syntax (splice-to-level stx)
-  (display stx)
+  (print-debug "~a~n" stx)
   (syntax-parse stx
     [(ln1:mag-line)
-     (printf "splice to level 1~n")
+     (print-debug "splice to level 1~n")
      #'(ln1)]
     [(ln1:mag-line ln2:mag-line expr ...)
-     (printf "splice to level 2~n")
+     (print-debug "splice to level 2~n")
      #`(ln1 #,@(splice-to-level #'(ln2 expr ...)))]
     [(ln:mag-line ({~literal level} lexpr ...) expr ...)
-     (printf "splice to level 3~n")
+     (print-debug "splice to level 3~n")
      #`((when* ln (level lexpr ...))
         #,@(splice-to-level #'(expr ...)))]
     [() #'()]))
@@ -277,7 +279,7 @@
      #'()]))
 
 (define-syntax (define-parse-level-func stx)
-  (display stx)
+  ;(display stx)
   (syntax-parse stx
     [(_ plevel:integer)
      #:with name (format-id stx "parse-level~a" (syntax-e #'plevel))
@@ -304,8 +306,7 @@
             ;(printf "~a 3~n" name)
             #'()]
            [_
-            (printf "~a error on input: " name)
-            (display stx) (printf "~n")  
+            (print-debug "~a error on input: ~a~n" name stx)
             #'(error "syntax error at level x")]))]
      [(_) (error "invalid argument")]))
 
@@ -331,7 +332,6 @@
 
 ;; stub out the deepest level possible to resolve unbound reference and stop the recursion
 (define-for-syntax (parse-level20 stx)
-  (printf "parse-level20 input: ")
-  (display stx)
+  (print-debug "parse-level20 input: ~a" stx)
   (error "Exceeded max nesting level of 19")
   #'())

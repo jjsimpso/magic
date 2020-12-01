@@ -17,4 +17,17 @@
 
 (module reader racket/base
   (provide read-syntax)
-  (require magic/reader))
+  (require magic/reader)
+
+  ;; stub out for DrRacket features (see jsonic example in Beautiful Racket)
+  (define (get-info port src-mod src-line src-col src-pos)
+    (define (handle-query key default)
+      (case key
+        #;[(color-lexer)
+           (dynamic-require 'magic/colorer 'color-magic)]
+        #;[(drracket:indentation)
+           (dynamic-require 'magic/indenter 'indent-magic)]
+        #;[(drracket:toolbar-buttons)
+           (dynamic-require 'magic/buttons 'button-list)]
+        [else default]))
+    handle-query))
