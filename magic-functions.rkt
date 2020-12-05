@@ -147,6 +147,54 @@
                  (loop (add1 num-read) 
                        (bytes-append data (bytes next-char)))])))))
 
+;; reads until a null byte is found or the max number of bytes are read
+;; returns a byte string
+(define (read-cstring16 max-to-read)
+  (define result (make-bytes (* max-to-read 2) 0))
+  (let loop ((num-read 0))
+    (let ((next-char (read-bytes 2)))
+      (if (or (eof-object? next-char)
+              (bytes=? next-char #"\0\0")
+              (= (bytes-length next-char) 1)
+              (= num-read max-to-read))
+          (subbytes result 0 (* num-read 2))
+          (begin
+            (bytes-copy! result (* num-read 2) next-char)
+            (loop (add1 num-read)))))))
+
+(define (read-string16 len [big-endian? #f])
+  (define converter
+    (if big-endian?
+        (bytes-open-converter "UTF-16BE" "UTF-8")
+        (bytes-open-converter "UTF-16LE" "UTF-8")))
+
+  ;; discard the Byte Order Mark if it exists since we specifyi the endianness
+  (define maybe-bom (peek-bytes 2 0))
+  (when (or (equal? maybe-bom #"\377\376")
+            (equal? maybe-bom #"\376\377"))
+    (read-bytes 2))
+
+  (define utf16-len (* len 2))
+  
+  (if converter
+      (let ([data (read-bytes utf16-len)])
+        (if (eof-object? data)
+            (error (string-append "read-string16: eof, read len = " (~a len)))
+            (let-values ([(conv-data num-bytes status) (bytes-convert converter data)])
+              (define datalen (bytes-length conv-data))
+              (cond 
+                [(< datalen len)
+                 (bytes->string/latin-1 conv-data)]
+                [(= (bytes-ref conv-data (sub1 datalen)) 0)
+                 (print-debug "string16 null string~n")
+                 (bytes->string/latin-1 conv-data)]
+                [else
+                 (print-debug "reading cstring16~n")
+                 (define-values (c16-data c16-num c16-status) (bytes-convert converter (read-cstring16 255)))
+                 (string-append (bytes->string/latin-1 conv-data)
+                                (bytes->string/latin-1 c16-data))]))))
+      (error "UTF-16 conversion not supported!")))
+
 (define (read-leshort [signed? #f])
   (let ([data (read-bytes 2)])
     (when (eof-object? data) (error "eof"))
@@ -361,7 +409,13 @@
     [(list 'regex (list 'regflag flag) ...)
      (build-regex-read-func 8096 flag)]
     [(list 'regex)
-     (build-regex-read-func 8096 '())]    
+     (build-regex-read-func 8096 '())]
+    [(list 'string16 "lestring16")
+     (lambda ()
+       (read-string16 (string-length (last compare-expr))))]
+    [(list 'string16 "bestring16")
+     (lambda ()
+       (read-string16 (string-length (last compare-expr)) #t))]
     [(list 'numeric "byte")        (build-numeric-read-func signed-compare mask-expr read-byt)]
     [(list 'numeric "u" "byte")    (build-numeric-read-func #f mask-expr read-byt)]
     [(list 'numeric "short")       (build-numeric-read-func signed-compare mask-expr read-short)]

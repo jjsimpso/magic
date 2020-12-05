@@ -26,7 +26,7 @@
 (require (only-in "date-test.rkt" (magic-query date-query)))
 
 (require magic/output)
-(set-magic-verbosity! 'error)
+(set-magic-verbosity! 'warning)
 
 (define (build-string-output-thunk thnk)
   (lambda ()
@@ -201,4 +201,9 @@
 (with-input-from-file "CLIPBRD.HLP" date-query)
 (check-equal? 
  (with-input-from-file "CLIPBRD.HLP" (build-string-output-thunk date-query)) 
- "MS Windows 3.0 help \b, Mon Mar  2 05:31:38 1992 ")
+ "MS Windows 3.0 help \b, Monday, March 2nd, 1992 5:31:38am ")
+
+(with-input-from-file "3dsfetch.smdh" string-query)
+(check-equal? 
+ (with-input-from-file "3dsfetch.smdh" (build-string-output-thunk string-query))
+ "Nintendo 3DS SMDH file \b: \"3dsfetch\" by VideahGams ")
