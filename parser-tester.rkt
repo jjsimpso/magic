@@ -51,7 +51,7 @@
   ;"3	ubyte		x	%d-bit\n>68    clear\n>>0    clear    x\n")
   ;"3	ubyte		x	%d-bit\n")
   ;"0xD4		string	!\\x62\\x6D\\x66\\x01\\x00	Windows help annotation\n")
-  "0x208		lestring16	x		\b: \"%.128s\"\n")
+  "0x208		lestring16	DOCUMENT	\b: \"%.128s\"\n")
   ;"16			search/0x49AF/s	\\x6c\\x03\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")

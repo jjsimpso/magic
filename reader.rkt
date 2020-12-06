@@ -39,10 +39,10 @@
 (define-lex-abbrev string-compare (:= 1 (char-set "<>=!")))
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTsl")))
-(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "search" "regex" "default" "clear" "x"))
+(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "bestring16" "search" "regex" "default" "clear" "x"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
-(define-lex-abbrev string-type (:or "string" "search" "regex"))
-(define-lex-abbrev unsupported-type (:or "bestring16" "pstring" "leid3" "beid3" "der" "indirect"))
+(define-lex-abbrev string-type (:or "string" "lestring16" "bestring16"))
+(define-lex-abbrev unsupported-type (:or "pstring" "leid3" "beid3" "der" "indirect"))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
 (define (raw-string-to-racket s)
@@ -134,7 +134,7 @@
       (set! current-lexer magic-lexer-indirect-offset)
       (token lexeme lexeme))]
    ;[(:seq "." size-specifier) (token lexeme lexeme)]
-   ["string"
+   [string-type
     (begin
       (set! current-lexer magic-lexer-string-flags)
       (token lexeme lexeme))]

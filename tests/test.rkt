@@ -207,3 +207,8 @@
 (check-equal? 
  (with-input-from-file "3dsfetch.smdh" (build-string-output-thunk string-query))
  "Nintendo 3DS SMDH file \b: \"3dsfetch\" by VideahGams ")
+
+(with-input-from-file "sym.sis" string-query)
+(check-equal? 
+ (with-input-from-file "sym.sis" (build-string-output-thunk string-query))
+ "Symbian .sis file ")

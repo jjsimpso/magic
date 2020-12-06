@@ -17,3 +17,5 @@
 >>>0x008	lestring16	x		\b: "%.128s"
 >>>0x188	leshort		!0
 >>>>0x188	lestring16	x		by %.128s
+
+0x442	lestring16	C:\\DOCUME      Symbian .sis file
