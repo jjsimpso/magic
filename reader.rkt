@@ -24,6 +24,8 @@
 (provide read-syntax)
 (provide make-tokenizer)
 
+;(set-magic-verbosity! 'info)
+
 (define (read-syntax path port)
   (define parse-tree (parse path (make-tokenizer port)))
   (strip-context #`(module magic-mod magic/expander
@@ -38,6 +40,7 @@
 (define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.") "\\"))
 (define-lex-abbrev string-compare (:= 1 (char-set "<>=!")))
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
+(define-lex-abbrev pstring-flag (:= 1 (char-set "BHhLlJ")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTsl")))
 (define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "bestring16" "search" "regex" "default" "clear" "x"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
@@ -138,6 +141,10 @@
     (begin
       (set! current-lexer magic-lexer-string-flags)
       (token lexeme lexeme))]
+   ["pstring"
+    (begin
+      (set! current-lexer magic-lexer-pstring-flags)
+      (token lexeme lexeme))]
    ["search"
     (begin
       (set! current-lexer magic-lexer-search-flags)
@@ -236,6 +243,19 @@
           (set! current-lexer magic-lexer-string))
       (token 'HWS #:skip? #f))]))
 
+(define magic-lexer-pstring-flags
+  (lexer-srcloc
+   ["/" (token lexeme lexeme)]
+   [pstring-flag (token lexeme lexeme)]
+   [hws
+    (let ([next-char (peek-char input-port)])
+      (set! hws-count (add1 hws-count))
+      ;; check for optional comparison operator
+      (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=) (char=? next-char #\!))
+          (set! current-lexer magic-lexer-string-compare)
+          (set! current-lexer magic-lexer-string))
+      (token 'HWS #:skip? #f))]))
+
 (define magic-lexer-search-flags
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
@@ -283,10 +303,12 @@
       (print-debug "running string helper, lexeme = ~a~n" lexeme)
       (token 'STRING (raw-string-to-racket (string-append lexeme (magic-lexer-string-helper input-port)))))]
    ;; treat "x" as a truetest
-   [(from/stop-before "x" (:or " " "\t" "\n"))
+   [(:seq "x" (:or " " "\t" "\n"))
     (begin
+      ;; set position to before the HWS character
+      (file-position input-port (sub1 (file-position input-port)))
       (set! current-lexer magic-lexer)
-      (token lexeme lexeme))]
+      (token "x" "x"))]
    ;; the simple case with no escaped space characters
    [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
     (begin

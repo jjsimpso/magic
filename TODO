@@ -6,7 +6,6 @@
 - check parsing of minus as negative number when nummask is expected
 - add support for middle endian numeric types
 - add support for pascal string type
-- add support for UCS16 string types
 - add support for ID3, GUID, and DER types
 - add support for indirect type
 

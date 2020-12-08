@@ -80,7 +80,7 @@ numeric : [ unsigned ] ( numtype | datetype ) [ nummask ]
 
 nummask : op INTEGER
 
-@strtype : regex | search | string8 | string16
+@strtype : regex | search | string8 | string16 | pstring
 
 regex : /"regex" [ /"/" regflag2 ]
 regflag : "c" | "s" | "l"
@@ -91,9 +91,12 @@ search : /"search" [ /"/" srchflag ] [ /"/" srchflag ]
 @srchflag : strflag+ | srchcnt
 srchcnt : INTEGER     ; The number of search tries.  If this is missing or zero, the rest of the file is searched.
 
-string8 : ( "string" | "pstring" ) [ /"/" strflag+ ]
+string8 : "string" [ /"/" strflag+ ]
 strflag : "b" | "c" | "C" | "t" | "T" | "w" | "W" | "s"
 string16 : "bestring16" | "lestring16"
+pstring : "pstring" [ /"/" ( ( pstrflag [ pstrjflag ] ) | pstrjflag ) ]
+pstrflag : "B" | "H" | "h" | "L" | "l"
+pstrjflag : "J"
 use : "use"
 default : "default"
 ;; This is intended to be used with the
