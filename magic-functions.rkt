@@ -147,6 +147,28 @@
                  (loop (add1 num-read) 
                        (bytes-append data (bytes next-char)))])))))
 
+(define (pstring-flag-bytes flag)
+  (cond
+    [(or (string=? flag "H") (string=? flag "h")) 2]
+    [(or (string=? flag "L") (string=? flag "l")) 4]
+    [else 1]))
+
+(define (pstring-flag-big-endian? flag)
+  (cond
+    [(or (string=? flag "H") (string=? flag "L")) #t]
+    [else #f]))
+
+(define (read-pstring len-bytes big-endian? jpeg?)
+  (define rawlen (integer-bytes->integer (read-bytes len-bytes) #f big-endian?))
+  (define len (if jpeg?
+                  (- rawlen len-bytes)
+                  rawlen))
+  
+  (let ([data (read-bytes len)])
+    (if (eof-object? data)
+        (error "eof")
+        (bytes->string/latin-1 data))))
+
 ;; reads until a null byte is found or the max number of bytes are read
 ;; returns a byte string
 (define (read-cstring16 max-to-read)
@@ -389,6 +411,22 @@
     [(list 'string8 "string")
      (let ([len (string-length (last compare-expr))])
        (lambda () (read-string8-till-null len)))]
+    [(list 'pstring "pstring" (list 'pstrflag flag) (list 'pstrjflag jflag))
+     (lambda ()
+       (read-pstring (pstring-flag-bytes flag)
+                     (pstring-flag-big-endian? flag)
+                     #t))]
+    [(list 'pstring "pstring" (list 'pstrflag flag))
+     (lambda ()
+       (read-pstring (pstring-flag-bytes flag)
+                     (pstring-flag-big-endian? flag)
+                     #f))]
+    [(list 'pstring "pstring" (list 'pstrjflag jflag))
+     (lambda ()
+       (read-pstring 1 #t))]
+    [(list 'pstring "pstring")
+     (lambda ()
+       (read-pstring 1 #f))]
     [(list 'search (list 'srchcnt cnt) (list 'strflag flag) ...)
      (build-search-read-func cnt flag (last compare-expr))]
     [(list 'search (list 'strflag flag) ... (list 'srchcnt cnt))
@@ -777,7 +815,8 @@
        (define sub-length (string-length substitution-str))
        (define sub-string
          ;; the precision calcs for sub-string are wrong
-         (if (<= precision sub-length) 
+         (if (or (not precision)
+                 (<= precision sub-length))
              substitution-str
              (string-append (make-string (- precision sub-length) #\0) substitution-str))) 
        (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
