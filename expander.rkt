@@ -33,7 +33,7 @@
 (define-syntax (line stx)
   (syntax-case stx (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
-     #'(magic-name (offset off))]
+     #'(magic-name (use-offset off))]
     [(line (offset off) (type type-expr) (test test-expr)) 
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
     [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
@@ -58,6 +58,36 @@
     ;; indirect offset
     [(_ (indoff off:integer (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(indoff (+ name-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
+    ;; indirect relative offset
+    [(_ (indoff (reloffset off:integer) (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
+     #'(indoff (reloffset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
+    ;; relative offset
+    [(_ (reloffset off:integer))
+     #'(reloffset off)]
+    ;; relative indirect offset
+    [(_ (relindoff off:expr))
+     ; still need to test this in a named query
+     #'(reloffset (offset off))]))
+
+;; this macro is used as a replacement for the standard offset macro in 'use' lines
+;; file is either doing something subtle with indirect offsets or it treats use differently
+;; than the other tests. in the case of indirect offsets we need to add the name-offset to
+;; both the location to read from and the resulting offset. but only for use lines. this
+;; change breaks other types of tests. this problem was found when i incorporated the
+;; jpeg magic from file.
+;; btw, according to the man page, indirect offsets in names are always relative to
+;; the start of the file and ignore the name's offset, unlike absolute offsets which are
+;; adjusted by the name's offset. the wording isn't precise but this appears to be wrong.
+;; indirect offsets are definitely read from a location relative to the name's offset. and
+;; in the case of use the name's offset is also applied to the result.
+(define-syntax (use-offset stx)
+  (syntax-parse stx
+    [(_ off:integer)
+     #'(+ name-offset off)]
+    ;; indirect offset
+    [(_ (indoff off:integer (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
+     #'(+ (indoff (+ name-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))
+          name-offset)]
     ;; indirect relative offset
     [(_ (indoff (reloffset off:integer) (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(indoff (reloffset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
@@ -123,12 +153,12 @@
            (define magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
-                 (print-debug "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
+                 (print-info "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
                  (query . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)])
-                 (print-debug "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
+                 (print-info "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
                  (query #,@(reverse-endianness #'modified-rst)))))))]))
 
 (define-syntax (magic-module-begin stx)

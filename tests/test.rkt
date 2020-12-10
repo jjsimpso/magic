@@ -24,6 +24,7 @@
 (require (only-in "name-test.rkt" (magic-query name-query)))
 (require (only-in "regex-test.rkt" (magic-query regex-query)))
 (require (only-in "date-test.rkt" (magic-query date-query)))
+(require (only-in "jpeg.rkt" (magic-query jpeg-query)))
 
 (require magic/output)
 (set-magic-verbosity! 'warning)
@@ -212,3 +213,8 @@
 (check-equal? 
  (with-input-from-file "sym.sis" (build-string-output-thunk string-query))
  "Symbian .sis file ")
+
+(with-input-from-file "enl_tr.jpg" jpeg-query)
+(check-equal? 
+ (with-input-from-file "enl_tr.jpg" (build-string-output-thunk jpeg-query))
+ "JPEG image data \b, JFIF standard \b 1. \b01 \b, aspect ratio \b, density 1x \b1 \b, segment length 16 \b, comment: \"CREATOR: XV Version 3.10-PCD-Magic2  Rev: 2/Dec/96  Quality = 95, Smoothing = 0\n\" \b, baseline, precision 8 \b, 1152x \b900 \b, frames 3 ")
