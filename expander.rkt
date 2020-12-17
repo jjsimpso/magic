@@ -16,12 +16,15 @@
 
 (provide #%top #%top-interaction #%datum #%app)
 
-(require "magic-functions.rkt")
+(require racket/port)
+(require racket/string)
 (require racket/stxparam)
-(require (for-syntax racket/base syntax/stx syntax/parse racket/syntax))
-(require (for-syntax "expander-utils.rkt" "magic-functions.rkt" "output.rkt"))
+(require "magic-functions.rkt")
 (require "expander-utils.rkt")
 (require "output.rkt")
+
+(require (for-syntax racket/base syntax/stx syntax/parse racket/syntax))
+(require (for-syntax "expander-utils.rkt" "magic-functions.rkt" "output.rkt"))
 
 (define-syntax-parameter name-offset 
   (lambda (stx)
@@ -161,6 +164,32 @@
                  (print-info "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
                  (query #,@(reverse-endianness #'modified-rst)))))))]))
 
+(struct magic-result
+  (output-text
+   strength
+   mime-type
+   ext)
+  #:prefab)
+
+(define (replace-query-failed-w-false result)
+  (if (equal? result #s(magic-result "" 0 "" ""))
+      #f
+      result))
+
+;; 
+(define-syntax (wrap-queries-for-run-all stx)
+  (syntax-parse stx
+    [(_ (qry ...))
+     #'(filter struct?
+               (list (replace-query-failed-w-false
+                      (magic-result
+                       (with-output-to-string
+                         (lambda () qry))
+                       0
+                       ""
+                       "")) ...))]
+    [_ (error "wrap-queries format error")]))
+
 (define-syntax (magic-module-begin stx)
   (define (query? expr)
     (if (and (pair? expr) 
@@ -172,25 +201,29 @@
              (equal? (car expr) 'named-query))
         #t
         #f))
-  (define (wrap-with-delimiter-print expr)
-    (list 'when* expr '(printf "*** ")))
-
+  
   (let ([exprs (cdadr (syntax->datum stx))])
     ;(display queries)
     (let ([queries (filter query? exprs)]
           [named-queries (filter named-query? exprs)])
-      #`(#%module-begin 
+      #`(#%module-begin
          #,@named-queries
-         (define (magic-query)
+         (define (magic-query-thunk)
            (or #,@queries))
+         
+         (define (magic-query)
+           (let ([result (with-output-to-string magic-query-thunk)])
+             (if (non-empty-string? result)
+                 (magic-result result 0 "" "")
+                 #f)))
+
          (define (magic-query-run-all)
-           ; any-true? creates a binding for last-level-offset which we probably don't want here. investigate.
-           (any-true? #,@(map wrap-with-delimiter-print queries)))
-         (provide magic-query magic-query-run-all)))))
+           (wrap-queries-for-run-all #,queries))
+         
+         (provide (struct-out magic-result) magic-query magic-query-run-all)))))
 
 (provide
  (except-out (all-from-out racket/base) #%module-begin) 
  (rename-out [magic-module-begin #%module-begin])
- (all-from-out "magic-functions.rkt")
- query line clear-line offset reloffset size op disp any-true? begin-level when*)
-
+ (all-from-out "magic-functions.rkt" racket/port)
+ (struct-out magic-result) query line clear-line offset reloffset size op disp any-true? begin-level when*)
