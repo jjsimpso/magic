@@ -52,6 +52,8 @@
   ;(string-replace s "\\0" "\u0000"))
   ; convert raw string bytes to racket unicode representation
   ;(regexp-replace* #px"\\\\(\\d{1,2})" s "\u00\\2"))
+  ;(eprintf "converting string ~a~n" s)
+  
   (define (escapable-char? c)
     (and (not (eof-object? c))
          (or (char=? c #\a) (char=? c #\b) (char=? c #\f) (char=? c #\n) (char=? c #\r) (char=? c #\t) (char=? c #\v) 

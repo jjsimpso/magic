@@ -130,8 +130,14 @@
     [(_ "^") #'bitwise-xor]
     ))
 
-(define-syntax-rule (disp arg)
-  arg)
+(define-syntax (disp stx)
+  (syntax-parse stx
+    [(_ val:integer) #'val]
+    [(_ (memvalue val:integer))
+     #'(lambda (read-func base-offset)
+         (file-position (current-input-port) (+ base-offset val))
+         (read-func))]))
+     ;(error (format "line ~a: memvalue not implemented" (syntax-line stx)))]))
 
 (define-syntax (query stx)
   (syntax-parse stx

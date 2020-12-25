@@ -14,6 +14,11 @@
 >>>&0       leshort 0x14c   for Intel 80386
 >>>&0       leshort 0x184   for DEC Alpha
 >>>&0       leshort 0x8664  for AMD64
+# search for the PE section called ".idata"...
+>>>&0xf4    search/0x140 .idata
+# ...and go to the end of it, calculated from start+length;
+# these are located 14 and 10 bytes after the section name
+>>>>(&0xe.l+(-4)) string       PK\3\4 \b, ZIP self-extracting archive
 >>(0x3c.l)  string  LX\0\0  LX executable (OS/2)
 
 0                string  MZ

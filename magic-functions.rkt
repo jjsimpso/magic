@@ -277,6 +277,8 @@
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data #t)))
 
+;; the operation argument arg can be either an integer or a function to read a second indirect offset
+;; to use as the arg (see disp macro in expander.rkt).
 (define (indoff initial-offset [read-func read-lelong] [operation #f] [arg #f])
   (with-handlers ([exn:fail? (lambda (exn) #f)])
     (file-position (current-input-port) initial-offset)
@@ -284,7 +286,9 @@
     (let ([off (read-func)])
       (print-debug "0x~a~n" (number->string off 16))
       (if (and operation arg)
-          (operation off arg)
+          (if (procedure? arg)
+              (operation off (arg read-func initial-offset))
+              (operation off arg))
           off))))
 
 (define (message text)

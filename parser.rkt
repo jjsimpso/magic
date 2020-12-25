@@ -48,7 +48,7 @@ invert : "~"		; Flip the bits on result of the <op>.
 
 disp :  INTEGER | memvalue
 
-memvalue : "(" INTEGER ")" 
+memvalue : /"(" INTEGER /")" 
 ;; INTEGER is interpreted as an absolute or
 ;; relative offset matching that of <offset1>.
 ;; Read the file at the resulting offset with
