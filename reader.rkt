@@ -46,6 +46,7 @@
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev string-type (:or "string" "lestring16" "bestring16"))
 (define-lex-abbrev unsupported-type (:or "leid3" "beid3" "der" "indirect"))
+(define-lex-abbrev sign-specifier (:= 1 (char-set ".,")))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
 (define (raw-string-to-racket s)
@@ -187,7 +188,7 @@
       (set! current-lexer magic-lexer)
       (token lexeme lexeme))]
    ["&" (token lexeme lexeme)]
-   [(:seq "." size-specifier)
+   [(:seq sign-specifier size-specifier)
     (begin
       (set! current-lexer magic-lexer-indirect-offset-op)
       (token lexeme lexeme))]

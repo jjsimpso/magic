@@ -33,7 +33,7 @@ indoff : /"(" offset1 [ size ] [ op disp ] /")" ;; Read the file at <offset1> of
 ;; If <op> is given, then preform that
 ;; operation on the result and the <disp>.
 @offset1 : absoffset | reloffset
-size : byte | leshort | beshort | lelong | belong | melong
+size : byte | leshort | beshort | lelong | belong | melong | ubyte | uleshort | ubeshort | ulelong | ubelong | umelong
 
 byte : ".B" | ".b" | ".C" | ".c"	; A one-byte value.
 leshort : ".s" | ".h"		; A two-byte little-endian value.
@@ -41,6 +41,13 @@ beshort : ".S" | ".H"		; A two-byte big-endian value.
 lelong : ".l"			; A four-byte little-endian value.
 belong : ".L"			; A four-byte big-endian value.
 melong : ".m"			; A four-byte middle-endian value.
+
+ubyte : ",B" | ",b" | ",C" | ",c"	; A one-byte value.
+uleshort : ",s" | ",h"		; A two-byte little-endian value.
+ubeshort : ",S" | ",H"		; A two-byte big-endian value.
+ulelong : ",l"			; A four-byte little-endian value.
+ubelong : ",L"			; A four-byte big-endian value.
+umelong : ",m"			; A four-byte middle-endian value.
 
 op : [ invert ] ( "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" )
 

@@ -108,14 +108,22 @@
 (define-syntax (size stx)
   (syntax-parse stx
     #:datum-literals (byte leshort lelong beshort belong)
-    [(_ (byte ".b")) #'read-byt]
-    [(_ (byte ".B")) #'read-byt]
-    [(_ (byte ".c")) #'read-byt]
-    [(_ (byte ".C")) #'read-byt]
-    [(_ (leshort ".s")) #'read-leshort]
-    [(_ (beshort ".S")) #'read-beshort]
-    [(_ (lelong  ".l")) #'read-lelong]
-    [(_ (belong  ".L")) #'read-belong]
+    [(_ (byte ".b")) #'(lambda () (read-byt #t))]
+    [(_ (byte ".B")) #'(lambda () (read-byt #t))]
+    [(_ (byte ".c")) #'(lambda () (read-byt #t))]
+    [(_ (byte ".C")) #'(lambda () (read-byt #t))]
+    [(_ (leshort ".s")) #'(lambda () (read-leshort #t))]
+    [(_ (beshort ".S")) #'(lambda () (read-beshort #t))]
+    [(_ (lelong  ".l")) #'(lambda () (read-lelong #t))]
+    [(_ (belong  ".L")) #'(lambda () (read-belong #t))]
+    [(_ (ubyte ",b")) #'read-byt]
+    [(_ (ubyte ",B")) #'read-byt]
+    [(_ (ubyte ",c")) #'read-byt]
+    [(_ (ubyte ",C")) #'read-byt]
+    [(_ (uleshort ",s")) #'read-leshort]
+    [(_ (ubeshort ",S")) #'read-beshort]
+    [(_ (ulelong  ",l")) #'read-lelong]
+    [(_ (ubelong  ",L")) #'read-belong]
     ))
 
 (define-syntax (op stx)
