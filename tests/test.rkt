@@ -139,7 +139,7 @@
 (with-input-from-file "../file-tests/test.bin" debugtest-query)
 (check-equal? 
  (magic-result-output-text (with-input-from-file "../file-tests/test.bin" debugtest-query))
- "test.bin determined with indirect relative offset test ")
+ "test.bin indirect relative offset test passed, indirect operator test passed ")
 
 (with-input-from-file "../file-tests/octal-test.txt" debugtest-query)
 (check-equal? 
