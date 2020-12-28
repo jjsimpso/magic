@@ -1,12 +1,13 @@
 - relative offsets within names need to be tested
 - implement independent case insensitive string flags
 - implement full printf substitution in message
-  - fix 0 padding (ex: %02d in jpeg.rkt)
 - fix macro stepper problems with certain lines
 - implement mime and strength lines
 - check parsing of minus as negative number when nummask is expected
 - add support for middle endian numeric types
 - add support for ID3, GUID, and DER types
 - add support for indirect type
+- add optional message field to name
+- file allows for one digit hex string escapes (ex: '\x1' or '\x0')
 
 - rewrite macros in expander.rkt with syntax-parse

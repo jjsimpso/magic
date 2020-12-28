@@ -795,22 +795,26 @@
   
   (define (format-mod str substitution specifier width precision)
     ;; return justified/padded string (need to check for width of #f)
-    (define (justify str width)
+    (define (justify str width pad-char)
       (define str-len (string-length str))
       (cond
         [(not (integer? width)) str]
         [(>= str-len (abs width)) str]
         [(> width 0)
          ; right justify
-         (string-append (make-string (- width str-len) #\space) str)]
+         (string-append (make-string (- width str-len) pad-char) str)]
         [else 
          ; left justify
-         (string-append str (make-string (- (abs width) str-len) #\space))]))
+         (string-append str (make-string (- (abs width) str-len) pad-char))]))
 
     ;(eprintf "specifier=~a substitution=~a width=~a, precision=~a~n" specifier substitution width precision) 
     ;; get the last character of the format specifier string 
-    (define specifier-type (string-ref specifier (sub1 (string-length specifier))))
-
+    (define specifier-type
+      (string-ref specifier (sub1 (string-length specifier))))
+    (define pad-char
+      (if (and (char=? specifier-type #\d) (string-contains? specifier "0"))
+          #\0
+          #\space))
     (cond 
       [(char=? specifier-type #\d)
        (define substitution-str (if (number? substitution)
@@ -823,7 +827,8 @@
                  (<= precision sub-length))
              substitution-str
              (string-append (make-string (- precision sub-length) #\0) substitution-str))) 
-       (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
+       (format (string-replace str specifier "~a" #:all? #f)
+               (justify sub-string width pad-char))]
       [(char=? specifier-type #\s)
        (define sub-length (string-length substitution))
        (define sub-string 
@@ -831,7 +836,7 @@
                   (<= precision sub-length)) 
              (substring substitution 0 precision)
              substitution))
-       (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width))]
+       (format (string-replace str specifier "~a" #:all? #f) (justify sub-string width pad-char))]
       [else  ;; fallback case
        (format (string-replace str specifier "~a" #:all? #f) substitution)]))
 
