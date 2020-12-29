@@ -160,7 +160,7 @@
 (with-input-from-file "mm3.exe" name-query)
 (check-equal? 
  (magic-result-output-text (with-input-from-file "mm3.exe" name-query))
- "MZ match, leshort match, nummask match ")
+ "MZ match, leshort match, nummask match, name message passed ")
 
 (with-input-from-file "FAQ-by--odino.txt" image-query)
 

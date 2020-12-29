@@ -155,7 +155,7 @@
 (define-for-syntax always-true-line '(line (offset 0) (type (numeric "byte")) (test (truetest "x"))))
 
 (define-syntax (named-query stx)
-  (syntax-case stx (name-line)
+  (syntax-parse stx
     [(_ (name-line (_ 0) (_ "name") magic-name))
      (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))])
        #'(begin
@@ -163,9 +163,10 @@
              (lambda (new-offset) (void)))
            (define ^magic-name
              (lambda (new-offset) (void)))))]
-    [(_ (name-line (_ 0) (_ "name") magic-name) . rst)
+    [(_ (name-line (_ 0) (_ "name") magic-name (~optional msg-expr)) . rst)
+     #:with first-line #`(#,@always-true-line (~? msg-expr))
      (with-syntax ([^magic-name (format-id stx "^~a" (syntax-e #'magic-name))]
-                   [modified-rst (cons (datum->syntax #'rst always-true-line) #'rst)])
+                   [modified-rst (cons #'first-line #'rst)])
        #`(begin 
            (define magic-name
              (lambda (new-offset)

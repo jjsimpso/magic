@@ -321,9 +321,11 @@
 
 (define magic-lexer-name
   (lexer-srcloc
-   [hws 
-    (token 'HWS #:skip? #f)]
-   [(from/stop-before (:~ " " "\t" "\n") "\n") 
+   [hws
+    (begin
+      (set! hws-count (add1 hws-count))
+      (token 'HWS #:skip? #f))]
+   [(from/stop-before (:~ " " "\t") (:or " " "\t" "\n")) 
     (begin
       (print-debug "running magic-lexer-name, lexeme = ~a~n" lexeme)
       (set! current-lexer magic-lexer)

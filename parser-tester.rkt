@@ -19,6 +19,9 @@
 (require "reader.rkt")
 (require "parser.rkt")
 
+(require magic/output)
+(set-magic-verbosity! 'debug)
+
 (parse-to-datum
  (apply-tokenizer 
   make-tokenizer 
@@ -56,7 +59,8 @@
   ;"2	pstring/HJ	x		\b, comment: \"%s\"\n")
   ;"(2.S+2)	use	jpeg_segment\n")
   ;"(&0x10,l+(-4)) 	string		PK\3\4 \b, ZIP self-extracting archive (Info-Zip)\n")
-  "4	uleshort&0x4842			>0			support\n")
+  ;"4	uleshort&0x4842			>0			support\n")
+  "0       name   	msdos-driver	DOS executable\n")
   ;"16			search/0x49AF/s	\\x6c\\x03\n")
 )
 ;(parse-to-datum "2	short	<10	version 2.6%d")

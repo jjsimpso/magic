@@ -21,7 +21,10 @@
 >2      beshort =-16384                  beshort neg. match,
 
 0       name                            nummask-test
->2      ubelong&0xff000000  0xc0000000  nummask match
+>2      ubelong&0xff000000  0xc0000000  nummask match,
+
+0       name                            msg-test        name message passed
+>0      string  NOMATCH                 should not print
 
 # it appears that using a name from the top-level doesn't work properly (it never matches)
 # file appears to behave the same way, but I don't remember doing this intentionaly in #lang magic
@@ -34,3 +37,4 @@
 >0      use             ^uleshort-test
 >0      use             ^beshort-test
 >0      use             nummask-test
+>0      use             msg-test
