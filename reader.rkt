@@ -16,20 +16,38 @@
 
 (require brag/support)
 (require syntax/strip-context)
+(require syntax/stx)
 (require racket/string)
 
 (require "parser.rkt")
 (require "output.rkt")
 
-(provide read-syntax)
+(provide magic-read-syntax)
+(provide magic-read-syntax-raw)
 (provide make-tokenizer)
 
 ;(set-magic-verbosity! 'info)
 
-(define (read-syntax path port)
+(define (magic-read-syntax path port)
   (define parse-tree (parse path (make-tokenizer port)))
   (strip-context #`(module magic-mod magic/expander
                           #,parse-tree)))
+
+;; experimental function to be called when using include/reader
+;; never got this to work
+(define (magic-read-syntax-raw path port)
+  (define parse-tree (parse path (make-tokenizer port)))
+  (stx-car (strip-context #`(#,parse-tree))))
+
+;; old version that is probably not what we want
+#;(define (magic-read-syntax-raw path port)
+  (define parse-tree
+    (stx-cdr
+     (stx-cdr
+      (parse path (make-tokenizer port)))))
+  (eprintf "calling magic-read-syntax-raw~n")
+  ;(eprintf "parse tree = ~a~n" parse-tree)
+  (datum->syntax #'here (strip-context parse-tree)))
 
 (define-lex-abbrev hws (:+ " " "\t"))
 (define-lex-abbrev digits (:+ (char-set "0123456789")))

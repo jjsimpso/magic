@@ -16,7 +16,7 @@
 
 
 (module reader racket/base
-  (provide read-syntax)
+  (provide (rename-out (magic-read-syntax read-syntax)))
   (require magic/reader)
 
   ;; stub out for DrRacket features (see jsonic example in Beautiful Racket)

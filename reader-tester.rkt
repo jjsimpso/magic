@@ -1,4 +1,4 @@
-#lang reader "reader.rkt"
+#lang magic
 
 #Copyright 2019 Jonathan Simpson
 #
