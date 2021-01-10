@@ -62,7 +62,7 @@ memvalue : /"(" INTEGER /")"
 ;; the same size as <offset1>
 relindoff : /"&" indoff	; add <indoff> to the last match offset at one level up
 
-type : ( numeric | strtype | default | use)
+type : ( numeric | strtype | default | use | indirect )
 
 @unsigned : "u"
 ;; The value is unsigned.
@@ -105,6 +105,7 @@ pstring : "pstring" [ /"/" ( ( pstrflag [ pstrjflag ] ) | pstrjflag ) ]
 pstrflag : "B" | "H" | "h" | "L" | "l"
 pstrjflag : "J"
 use : "use"
+indirect : "indirect"
 default : "default"
 ;; This is intended to be used with the
 ;; <truetest> ("x" below).  It is matched if

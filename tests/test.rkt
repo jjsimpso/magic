@@ -25,6 +25,7 @@
 (require (only-in "regex-test.rkt" (magic-query regex-query)))
 (require (only-in "date-test.rkt" (magic-query date-query)))
 (require (only-in "jpeg.rkt" (magic-query jpeg-query)))
+(require (only-in "quake.rkt" (magic-query quake-query)))
 ;; just get the magic-result structure definitions once
 (require (except-in "jpeg.rkt" magic-query magic-query-run-all))
 
@@ -215,6 +216,9 @@
 (check-equal? 
  (magic-result-output-text (with-input-from-file "enl_tr.jpg" jpeg-query))
  "JPEG image data \b, JFIF standard \b 1. \b01 \b, aspect ratio \b, density 1x \b1 \b, segment length 16 \b, comment: \"CREATOR: XV Version 3.10-PCD-Magic2  Rev: 2/Dec/96  Quality = 95, Smoothing = 0\n\" \b, baseline, precision 8 \b, 1152x \b900 \b, frames 3 ")
+
+;; remove from tests since PAK0.PAK is 18MB in size
+;(with-input-from-file "PAK0.PAK" quake-query)
 
 (with-input-from-file "iexplore.exe" exe-query-all)
 #;(check-equal? 

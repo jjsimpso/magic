@@ -60,10 +60,10 @@
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev pstring-flag (:= 1 (char-set "BHhLlJ")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTsl")))
-(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "bestring16" "pstring" "search" "regex" "default" "clear" "x"))
+(define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "bestring16" "pstring" "search" "regex" "default" "clear" "x" "indirect"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev string-type (:or "string" "lestring16" "bestring16"))
-(define-lex-abbrev unsupported-type (:or "leid3" "beid3" "der" "indirect"))
+(define-lex-abbrev unsupported-type (:or "leid3" "beid3" "der"))
 (define-lex-abbrev sign-specifier (:= 1 (char-set ".,")))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 

@@ -30,13 +30,18 @@
   (lambda (stx)
     #'0))
 
-;; todo: switch to `syntax-parse` and use its `#:datum-literals` option or its `~datum` pattern form 
-;; to match raw datums without bindings. when i do this i should consider replacing type and compare
-;; with macros.
 (define-syntax (line stx)
-  (syntax-case stx (offset reloffset relindoff type test message)
+  (syntax-parse stx
+    #:datum-literals (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
      #'(magic-name (use-offset off))]
+    [(line (offset off) (type (_ "indirect")) (test test-expr) (~optional (message msg)))
+     #;(let ([expanded-offset (local-expand #'(offset off) 'expression '())])
+       (with-syntax ([base-offset (lambda (stx) #`#,expanded-offset)])
+       #'(syntax-parameterize ([name-offset base-offset]) 
+           (print-info "indirect with offset = 0x~a~n" (number->string name-offset 16))
+           (magic-query-thunk))))
+     #'(printf "(insert indirect results here) ")]
     [(line (offset off) (type type-expr) (test test-expr)) 
      (syntax-protect #'(magic-test (offset off) (type (quote type-expr) (quote test-expr)) (compare (quote test-expr) (quote type-expr))))]
     [(line (offset off) (type type-expr) (test test-expr) (message msg)) 
@@ -44,7 +49,8 @@
     [(_) #'"no clause found in line"]))
 
 (define-syntax (clear-line stx)
-  (syntax-case stx (offset)
+  (syntax-parse stx
+    #:datum-literals (offset)
     [(clear-line (offset off) "clear" (test test-expr))
      #'(test-passed-at-level #f)]
     [(clear-line (offset off) "clear")
