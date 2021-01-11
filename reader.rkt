@@ -60,6 +60,7 @@
 (define-lex-abbrev string-flag (:= 1 (char-set "WwcCtbT")))
 (define-lex-abbrev pstring-flag (:= 1 (char-set "BHhLlJ")))
 (define-lex-abbrev search-flag (:= 1 (char-set "WwcCtbTsl")))
+(define-lex-abbrev indirect-flag (:= 1 (char-set "r")))
 (define-lex-abbrev key-word (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad" "date" "bedate" "ledate" "medate" "ldate" "beldate" "leldate" "meldate" "qdate" "beqdate" "leqdate" "qldate" "beqldate" "leqldate" "qwdate" "beqwdate" "leqwdate" "string" "lestring16" "bestring16" "pstring" "search" "regex" "default" "clear" "x" "indirect"))
 (define-lex-abbrev integer-type (:or "byte" "short" "beshort" "leshort" "long" "belong" "lelong" "quad" "bequad" "lequad"))
 (define-lex-abbrev string-type (:or "string" "lestring16" "bestring16"))
@@ -182,6 +183,10 @@
     (begin
       (set! current-lexer magic-lexer-name)
       (token lexeme lexeme))]
+   ["indirect"
+    (begin
+      (set! current-lexer magic-lexer-indirect-flags)
+      (token lexeme lexeme))]
    [key-word (token lexeme lexeme)]
    [(:seq "u" integer-type) (let ([pos (file-position input-port)])
                               (file-position input-port (- pos 
@@ -289,6 +294,16 @@
       ;; discard the initial '=' character in search or regex test values
       (when (char=? next-char #\=) (read-char input-port))
       (set! current-lexer magic-lexer-string)
+      (token 'HWS #:skip? #f))]))
+
+(define magic-lexer-indirect-flags
+  (lexer-srcloc
+   ["/" (token lexeme lexeme)]
+   [indirect-flag (token lexeme lexeme)]
+   [hws
+    (begin
+      (set! hws-count (add1 hws-count))
+      (set! current-lexer magic-lexer)
       (token 'HWS #:skip? #f))]))
 
 ;; get comparison operator

@@ -105,7 +105,7 @@ pstring : "pstring" [ /"/" ( ( pstrflag [ pstrjflag ] ) | pstrjflag ) ]
 pstrflag : "B" | "H" | "h" | "L" | "l"
 pstrjflag : "J"
 use : "use"
-indirect : "indirect"
+indirect : "indirect" [ /"/" "r" ]
 default : "default"
 ;; This is intended to be used with the
 ;; <truetest> ("x" below).  It is matched if

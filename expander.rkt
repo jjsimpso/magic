@@ -35,7 +35,7 @@
     #:datum-literals (offset reloffset relindoff type test message)
     [(line (offset off) (type (_ "use")) (test (_ magic-name)))
      #'(magic-name (use-offset off))]
-    [(line (offset off) (type (_ "indirect")) (test test-expr) (~optional (message msg)))
+    [(line (offset off) (type (_ "indirect" (~optional flag:string))) (test test-expr) (~optional (message msg)))
      #;(let ([expanded-offset (local-expand #'(offset off) 'expression '())])
        (with-syntax ([base-offset (lambda (stx) #`#,expanded-offset)])
        #'(syntax-parameterize ([name-offset base-offset]) 
