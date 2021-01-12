@@ -17,12 +17,12 @@
 magic : EOL* (query | named-query)+
 query : line (level+ (line | clear-line))* /EOL*
 level : /">"
-line : offset /HWS type /HWS test (/HWS message?)? /EOL*
+line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
-clear-line : offset /HWS "clear" (/HWS test)? /EOL*
+clear-line : offset /HWS "clear" (/HWS test)? /EOL
 
 named-query : name-line (level+ (line | clear-line))* /EOL*
-name-line : offset /HWS name-type /HWS MAGIC-NAME (/HWS message?)? /EOL*
+name-line : offset /HWS name-type /HWS MAGIC-NAME (/HWS message?)? /EOL
 
 offset : absoffset | reloffset | indoffset
 @absoffset : INTEGER     ; An absolute offset from the start of the file.

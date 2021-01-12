@@ -50,6 +50,7 @@
   (datum->syntax #'here (strip-context parse-tree)))
 
 (define-lex-abbrev hws (:+ " " "\t"))
+(define-lex-abbrev eol (:+ "\n"))
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!+-*/%|")))
@@ -111,39 +112,39 @@
     (integer->char (string->number (read-string len in) 8)))
 
   (define sp (open-input-string s))
-  (let loop ([new-string ""]
+  (let loop ([new-string-rlist '()]
              [c (read-char sp)])
     (cond 
-      [(eof-object? c) new-string]
+      [(eof-object? c) (string-append* (reverse new-string-rlist))]
       [(and (char=? c #\\) (escapable-char? (peek-char sp)))
-       (loop (string-append new-string (escape (read-char sp)))
+       (loop (cons (escape (read-char sp)) new-string-rlist)
              (read-char sp))]
       [(and (char=? c #\\) (hex-start? (peek-char sp)))
        ; discard the 'x' character
        (read-char sp)
-       (loop (string-append new-string (string (read-hex-number sp)))
+       (loop (cons (string (read-hex-number sp)) new-string-rlist)
              (read-char sp))]
       [(and (char=? c #\\) (octal? (peek-char sp)))
-       (loop (string-append new-string (string (read-octal-number sp)))
+       (loop (cons (string (read-octal-number sp)) new-string-rlist)
              (read-char sp))]
       [(char=? c #\\)
        ; discard the '\' character
-       (loop new-string (read-char sp))]
-      [else (loop (string-append new-string (string c))
+       (loop new-string-rlist (read-char sp))]
+      [else (loop (cons (string c) new-string-rlist)
                   (read-char sp))])))
 
 (define magic-lexer
   (lexer-srcloc
    ;[(char-set "><-.,+[]") lexeme]
-   [(from/to "#" "\n")
+   [(from/to "#" eol)
     (begin
       (set! hws-count 0)
       (token 'COMMENT #:skip? #t))]
-   [(from/to "!:" "\n")
+   [(from/to "!:" eol)
     (begin
       (set! hws-count 0)
       (token 'MIME #:skip? #t))]
-   ["\n" 
+   [eol
     (begin
       (print-debug "newline found1~n") 
       (set! hws-count 0)
@@ -245,7 +246,7 @@
 
 (define magic-lexer-message
   (lexer-srcloc
-   ["\n" 
+   [eol 
     (begin
       (print-debug "newline found2~n") 
       (set! hws-count 0)
