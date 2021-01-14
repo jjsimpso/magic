@@ -25,7 +25,7 @@
 (parse-to-datum
  (apply-tokenizer 
   make-tokenizer 
-  ;"0	beshort	0x0206	ALAN game data\n>2	short	<10	version 2.6%d\n\n0	ubyte    >0	\n")
+  "0	beshort	0x0206	ALAN game data\n>2	short	<10	version 2.6%d\n\n0	ubyte    >0	\n")
   ;"0           string  MZ\n>0x18       leshort <0x40   MZ executable (MS-DOS)\n>0x18       leshort >0x3f\n>>(0x3c.l)  string  PE\\0\\0  PE executable (MS-Windows)\n0	beshort	0x0206	ALAN game data\n")
   ;"(4.s*512)    leshort 0x014c  COFF executable (MS-DOS, DJGPP)\n")
   ;"(4.s*512) leshort !0x014c MZ executable (MS-DOS)\n")
@@ -61,7 +61,8 @@
   ;"(&0x10,l+(-4)) 	string		PK\3\4 \b, ZIP self-extracting archive (Info-Zip)\n")
   ;"4	uleshort&0x4842			>0			support\n")
   ;"0       name   	msdos-driver	DOS executable\n")
-  "&-4	    indirect	x	\\b with\n")
+  ;"&-4	    indirect/r	x	\\b with\n")
+  ;"0x5	ubyte-1  <31\n")
   ;"8	ulelong/64 x	\b, %u files\n")
   ;"16			search/0x49AF/s	\\x6c\\x03\n")
 )

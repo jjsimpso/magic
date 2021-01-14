@@ -24,3 +24,6 @@
 
 # test string compare operator
 0       string          >mnww        string greater than passed
+
+# check that we don't parse subtract op as negative number
+0x5	leshort-1 <31

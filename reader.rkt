@@ -26,7 +26,7 @@
 (provide magic-read-syntax-raw)
 (provide make-tokenizer)
 
-;(set-magic-verbosity! 'info)
+;(set-magic-verbosity! 'debug)
 
 (define (magic-read-syntax path port)
   (define parse-tree (parse path (make-tokenizer port)))
@@ -133,157 +133,138 @@
       [else (loop (cons (string c) new-string-rlist)
                   (read-char sp))])))
 
-(define magic-lexer
+(define lexer-offset
   (lexer-srcloc
-   ;[(char-set "><-.,+[]") lexeme]
    [(from/to "#" eol)
     (begin
-      (set! hws-count 0)
       (token 'COMMENT #:skip? #t))]
    [(from/to "!:" eol)
     (begin
-      (set! hws-count 0)
       (token 'MIME #:skip? #t))]
    [eol
     (begin
-      (print-debug "newline found1~n") 
-      (set! hws-count 0)
+      (print-debug "lexer-offset newline found~n") 
       (token 'EOL))]
    [hws 
-    (begin 
-      (set! hws-count (add1 hws-count))
+    (begin
+      (set! current-lexer lexer-type)
       (token 'HWS #:skip? #f))]
-   ;[">" (token 'LEVEL)]
-   [op (token lexeme lexeme)]
-   [paren
+   [">" (token lexeme lexeme)]
+   ["&" (token lexeme lexeme)]
+   ["("
     (begin
-      (set! current-lexer magic-lexer-indirect-offset)
+      (set! current-lexer lexer-indirect-offset)
       (token lexeme lexeme))]
-   ;[(:seq "." size-specifier) (token lexeme lexeme)]
-   [string-type
-    (begin
-      (set! current-lexer magic-lexer-string-flags)
-      (token lexeme lexeme))]
-   ["pstring"
-    (begin
-      (set! current-lexer magic-lexer-pstring-flags)
-      (token lexeme lexeme))]
-   ["search"
-    (begin
-      (set! current-lexer magic-lexer-search-flags)
-      (token lexeme lexeme))]
-   ["regex"
-    (begin
-      (set! current-lexer magic-lexer-search-flags)
-      (token lexeme lexeme))]
-   ["name"
-    (begin
-      (set! current-lexer magic-lexer-name)
-      (token lexeme lexeme))]
-   ["use"
-    (begin
-      (set! current-lexer magic-lexer-name)
-      (token lexeme lexeme))]
-   ["indirect"
-    (begin
-      (set! current-lexer magic-lexer-indirect-flags)
-      (token lexeme lexeme))]
-   [key-word (token lexeme lexeme)]
-   [(:seq "u" integer-type) (let ([pos (file-position input-port)])
-                              (file-position input-port (- pos 
-                                                           (- (string-length lexeme) 
-                                                              1)))
-                              (token "u" "u"))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   [unsupported-type
-    (begin
-      (error (format "Unsupported type \"~a\" on line ~a in ~a" lexeme (line lexeme-start) (lexer-file-path))))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
 
-   ;[string-chars (token 'STRING (raw-string-to-racket lexeme))]
-   ;[any-char (token 'CHAR lexeme)]))
-))
-
-(define magic-lexer-indirect-offset
+(define lexer-indirect-offset
   (lexer-srcloc
    [")"
     (begin
-      (set! current-lexer magic-lexer)
+      (set! current-lexer lexer-offset)
       (token lexeme lexeme))]
    ["&" (token lexeme lexeme)]
    [(:seq sign-specifier size-specifier)
     (begin
-      (set! current-lexer magic-lexer-indirect-offset-op)
+      (set! current-lexer lexer-indirect-offset-op)
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
 
-(define magic-lexer-indirect-offset-op
+(define lexer-indirect-offset-op
   (lexer-srcloc
    ["("
     (begin
-      (set! current-lexer magic-lexer-nested-indirect-offset)
+      (set! current-lexer lexer-nested-indirect-offset)
       (token lexeme lexeme))]
    [")"
     (begin
-      (set! current-lexer magic-lexer)
+      (set! current-lexer lexer-offset)
       (token lexeme lexeme))]
    [op (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
 
-(define magic-lexer-nested-indirect-offset
+(define lexer-nested-indirect-offset
   (lexer-srcloc
    [")"
     (begin
-      (set! current-lexer magic-lexer-indirect-offset)
+      (set! current-lexer lexer-indirect-offset)
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
 
-(define magic-lexer-message
+(define lexer-type
   (lexer-srcloc
-   [eol 
+   [eol
     (begin
-      (print-debug "newline found2~n") 
-      (set! hws-count 0)
+      (print-debug "lexer-type newline found~n")
+      (set! current-lexer lexer-offset)
       (token 'EOL))]
-   [(from/stop-before (:~ "\n") "\n") 
+   [hws 
     (begin
-      (set! hws-count 0)
-      (token 'STRING (raw-string-to-racket lexeme)))]))
-   ;[any-string (token 'STRING lexeme)]))
+      (set! current-lexer lexer-test)
+      (token 'HWS #:skip? #f))]
+   [string-type
+    (begin
+      (set! current-lexer lexer-string-flags)
+      (token lexeme lexeme))]
+   ["pstring"
+    (begin
+      (set! current-lexer lexer-string-flags)
+      (token lexeme lexeme))]
+   ["search"
+    (begin
+      (set! current-lexer lexer-search-flags)
+      (token lexeme lexeme))]
+   ["regex"
+    (begin
+      (set! current-lexer lexer-search-flags)
+      (token lexeme lexeme))]
+   ["name"
+    (begin
+      (set! current-lexer lexer-pre-name)
+      (token lexeme lexeme))]
+   ["use"
+    (begin
+      (set! current-lexer lexer-pre-name)
+      (token lexeme lexeme))]
+   ["indirect"
+    (begin
+      (set! current-lexer lexer-indirect-flags)
+      (token lexeme lexeme))]
+   [key-word (token lexeme lexeme)]
+   [(:seq "u" integer-type)
+    (let ([pos (file-position input-port)])
+      (file-position input-port (- pos 
+                                   (- (string-length lexeme) 
+                                      1)))
+      (token "u" "u"))]
+   [op
+    (begin
+      (set! current-lexer lexer-op-argument)
+      (token lexeme lexeme))]
+   [unsupported-type
+    (begin
+      (error (format "Unsupported type \"~a\" on line ~a in ~a" lexeme (line lexeme-start) (lexer-file-path))))]))
 
-(define magic-lexer-string-flags
+(define lexer-string-flags
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
-   [string-flag (token lexeme lexeme)]
+   [(:or string-flag pstring-flag) (token lexeme lexeme)]
    [hws
     (let ([next-char (peek-char input-port)])
-      (set! hws-count (add1 hws-count))
       ;; check for optional comparison operator
       (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=) (char=? next-char #\!))
-          (set! current-lexer magic-lexer-string-compare)
-          (set! current-lexer magic-lexer-string))
+          (set! current-lexer lexer-test-string-compare)
+          (set! current-lexer lexer-test-string))
       (token 'HWS #:skip? #f))]))
 
-(define magic-lexer-pstring-flags
-  (lexer-srcloc
-   ["/" (token lexeme lexeme)]
-   [pstring-flag (token lexeme lexeme)]
-   [hws
-    (let ([next-char (peek-char input-port)])
-      (set! hws-count (add1 hws-count))
-      ;; check for optional comparison operator
-      (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=) (char=? next-char #\!))
-          (set! current-lexer magic-lexer-string-compare)
-          (set! current-lexer magic-lexer-string))
-      (token 'HWS #:skip? #f))]))
-
-(define magic-lexer-search-flags
+(define lexer-search-flags
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
@@ -291,98 +272,149 @@
    [search-flag (token lexeme lexeme)]
    [hws
     (let ([next-char (peek-char input-port)])
-      (set! hws-count (add1 hws-count))
       ;; discard the initial '=' character in search or regex test values
       (when (char=? next-char #\=) (read-char input-port))
-      (set! current-lexer magic-lexer-string)
+      (set! current-lexer lexer-test-string)
       (token 'HWS #:skip? #f))]))
 
-(define magic-lexer-indirect-flags
+(define lexer-pre-name
+  (lexer-srcloc
+   [hws
+    (begin
+      (set! current-lexer lexer-name)
+      (token 'HWS #:skip? #f))]))
+
+(define lexer-name
+  (lexer-srcloc
+   [eol
+    (begin
+      (print-debug "lexer-name newline found~n")
+      (set! current-lexer lexer-offset)
+      (token 'EOL))]
+   [hws
+    (begin
+      (set! current-lexer lexer-message)
+      (token 'HWS #:skip? #f))]
+   [(from/stop-before (:~ " " "\t" "\n") (:or " " "\t" "\n")) 
+    (begin
+      (print-debug "running lexer-name, lexeme = ~a~n" lexeme)
+      ;; use trim-ends to take the leading backslash off the lexeme if it exists.
+      ;; some magic backslash escapes the leading '^' for reverse names. we don't require
+      ;; this but trimming it here allows us to support it.
+      (token 'MAGIC-NAME (string->symbol (trim-ends "\\" lexeme ""))))]))
+
+(define lexer-indirect-flags
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
    [indirect-flag (token lexeme lexeme)]
    [hws
     (begin
-      (set! hws-count (add1 hws-count))
-      (set! current-lexer magic-lexer)
+      (set! current-lexer lexer-test)
+      (token 'HWS #:skip? #f))]))
+
+(define lexer-op-argument
+  (lexer-srcloc
+   [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [hws
+    (begin
+      (set! current-lexer lexer-test)
+      (print-debug "lexer-op-argument jumping to lexer-test~n")
+      (token 'HWS #:skip? #f))]))
+
+;; includes all the non string types
+(define lexer-test
+  (lexer-srcloc
+   [op (token lexeme lexeme)]
+   ["x" (token lexeme lexeme)]
+   [digits (token 'INTEGER (string->number lexeme))]
+   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [eol
+    (begin
+      (print-debug "lexer-test newline found~n")
+      (set! current-lexer lexer-offset)
+      (token 'EOL))]
+   [hws 
+    (begin
+      (set! current-lexer lexer-message)
       (token 'HWS #:skip? #f))]))
 
 ;; get comparison operator
-(define magic-lexer-string-compare
+(define lexer-test-string-compare
   (lexer-srcloc
    [string-compare
     (begin
-      (set! current-lexer magic-lexer-string)
+      (set! current-lexer lexer-test-string)
       (token lexeme lexeme))]
    [any-char
     (begin 
-      (set! current-lexer magic-lexer-string)
+      (set! current-lexer lexer-test-string)
       (error "Not a string comparison operator"))]))
 
-(define magic-lexer-string-helper
+(define lexer-string-helper
   (lexer
    [(:or " " "\t" "\n")
     (begin
       (file-position input-port (sub1 (file-position input-port)))
       "")]
    [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" any-char)) 
-    (string-append lexeme (magic-lexer-string-helper input-port))]
+    (string-append lexeme (lexer-string-helper input-port))]
    [(from/stop-before (:~ " " "\t" "\n" "\\") (:or " " "\t" "\n"))
     lexeme]))
 
-(define magic-lexer-string
+(define lexer-test-string
   (lexer-srcloc
+   [eol
+    (begin
+      (print-debug "lexer-test-string newline found~n")
+      (set! current-lexer lexer-offset)
+      (token 'EOL))]
    ;; include escaped space characters in the string
    ;; always longer than the case below because it includes the escaped space character in the match
    [(:seq (:* (:~ " " "\t" "\n")) (:seq "\\" " ")) 
     (begin
-      (set! current-lexer magic-lexer)
-      (print-debug "running string helper, lexeme = ~a~n" lexeme)
-      (token 'STRING (raw-string-to-racket (string-append lexeme (magic-lexer-string-helper input-port)))))]
+      (print-debug "lexer-test-string running string helper, lexeme = ~a~n" lexeme)
+      (token 'STRING (raw-string-to-racket (string-append lexeme (lexer-string-helper input-port)))))]
    ;; treat "x" as a truetest
    [(:seq "x" (:or " " "\t" "\n"))
     (begin
+      (print-debug "lexer-test-string x found~n")
       ;; set position to before the HWS character
       (file-position input-port (sub1 (file-position input-port)))
-      (set! current-lexer magic-lexer)
       (token "x" "x"))]
    ;; the simple case with no escaped space characters
-   [(from/stop-before (:~ " " "\t")  (:or " " "\t" "\n"))
+   [(from/stop-before (:~ " " "\t" "\n") (:or " " "\t" "\n"))
     (begin
-      (set! current-lexer magic-lexer)
-      (print-info "lexeme read as: ~a, converted to: ~a~n" lexeme (raw-string-to-racket lexeme))
-      (token 'STRING (raw-string-to-racket lexeme)))]))
-
-(define magic-lexer-name
-  (lexer-srcloc
+      (print-info "lexer-test-string lexeme read as: ~a, converted to: ~a~n" lexeme (raw-string-to-racket lexeme))
+      (print-info "                  lexeme length = ~a~n" (string-length lexeme))
+      (token 'STRING (raw-string-to-racket lexeme)))]
    [hws
     (begin
-      (set! hws-count (add1 hws-count))
-      (token 'HWS #:skip? #f))]
-   [(from/stop-before (:~ " " "\t") (:or " " "\t" "\n")) 
-    (begin
-      (print-debug "running magic-lexer-name, lexeme = ~a~n" lexeme)
-      (set! current-lexer magic-lexer)
-      ;; use trim-ends to take the leading backslash off the lexeme if it exists.
-      ;; some magic backslash escapes the leading '^' for reverse names. we don't require
-      ;; this but trimming it here allows us to support it.
-      (token 'MAGIC-NAME (string->symbol (trim-ends "\\" lexeme ""))))]))
+      (set! current-lexer lexer-message)
+      (token 'HWS #:skip? #f))]))
 
-(define hws-count 0)
-(define current-lexer magic-lexer)
+(define lexer-message
+  (lexer-srcloc
+   [eol 
+    (begin
+      (print-debug "lexer-message newline found~n")
+      (set! current-lexer lexer-offset)
+      (token 'EOL))]
+   [(from/stop-before (:~ "\n") "\n") 
+    (token 'STRING (raw-string-to-racket lexeme))]))
+
+
+(define current-lexer lexer-offset)
 
 (define (make-tokenizer port [path #f])
   (port-count-lines! port)
   (lexer-file-path path)
   (define (next-token)
-    (cond [(= hws-count 3)
-           (begin
-             (print-debug "calling message lexer~n")
-             (magic-lexer-message port))]
-          [else 
-           (current-lexer port)]))  
+    (current-lexer port))
   next-token)
 
 ;; test function
 (define (lex str)
-  (apply-lexer magic-lexer str))
+  (apply-lexer lexer-offset str))
