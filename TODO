@@ -6,4 +6,3 @@
 - add support for middle endian numeric types
 - add support for ID3, GUID, and DER types
 - add support for indirect type
-- file allows for one digit hex string escapes (ex: '\x1' or '\x0')

@@ -95,9 +95,17 @@
   (define (hex-start? c)
     (and (not (eof-object? c)) 
          (char=? c #\x)))
+  (define (hex? c)
+    (and (not (eof-object? c))
+         (or (and (char>=? c #\0) (char<=? c #\9))
+             (and (char>=? c #\a) (char<=? c #\f))
+             (and (char>=? c #\A) (char<=? c #\F)))))
   (define (read-hex-number in)
     ;; read the two characters after '\x' in a string and convert to character of the form #\u00xx
-    (integer->char (string->number (read-string 2 in) 16)))
+    ;; added option to read only one hex digit since file allows this
+    (if (hex? (peek-char in 1))
+        (integer->char (string->number (read-string 2 in) 16))
+        (integer->char (string->number (read-string 1 in) 16))))
 
   (define (octal? c)
     (and (not (eof-object? c)) 
