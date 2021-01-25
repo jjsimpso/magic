@@ -867,13 +867,15 @@
   (with-handlers ([exn:fail? (lambda (exn) 
                                (print-warning "magic error: ~a~n" (exn-message exn))
                                #f)])
-    (print-info "running magic-test: ~a,~a,~a~n" off read-func compare-func)
+    (print-debug "running magic-test: ~a,~a,~a~n" off read-func compare-func)
     (file-position (current-input-port) off)
     (let* ([data (read-func)]
            [result (compare-func data)])
       ;; if the test is successful, print the message with any printf substitutions
       (when (and result (non-empty-string? message))
         (printf "~a " (single-cprintf-sub message result)))
+      (when result
+        (print-info "passed: ~a,~a,~a~n" off read-func compare-func))
       ;; return true or false to indicate the status of the test
       (if result
           #t

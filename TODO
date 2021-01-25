@@ -1,3 +1,6 @@
+- consider what to do about white space after the operator in numeric tests, as in apple.
+- debug case where space isn't added after some message lines (ex: "PNG image data")
+
 - relative offsets within names need to be tested
 - implement independent case insensitive string flags
 - implement full printf substitution in message

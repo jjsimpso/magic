@@ -153,10 +153,18 @@
          (read-func))]))
      ;(error (format "line ~a: memvalue not implemented" (syntax-line stx)))]))
 
+;; a query will return either a magic-result struct or #f.
+;; #f indicates either no lines in the query matched or
+;; there was a match but it didn't result in any output.
 (define-syntax (query stx)
   (syntax-parse stx
     [(_ expr ...)
-     #'(parse-level0 expr ...)]))
+     #'(let ([result
+              (with-output-to-string
+                (lambda () (parse-level0 expr ...)))])
+         (if (non-empty-string? result)
+             (magic-result result 0 "" "")
+             #f))]))
 
 (define-for-syntax always-true-line '(line (offset 0) (type (numeric "byte")) (test (truetest "x"))))
 
@@ -178,12 +186,12 @@
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
                  (print-info "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
-                 (query . modified-rst))))
+                 (parse-level0 . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
                (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)])
                  (print-info "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
-                 (query #,@(reverse-endianness #'modified-rst)))))))]))
+                 (parse-level0 #,@(reverse-endianness #'modified-rst)))))))]))
 
 (struct magic-result
   (output-text
@@ -192,7 +200,7 @@
    ext)
   #:prefab)
 
-(define (replace-query-failed-w-false result)
+(define (replace-query-empty-string-w-false result)
   (if (equal? result #s(magic-result "" 0 "" ""))
       #f
       result))
@@ -202,15 +210,12 @@
   (syntax-parse stx
     [(_ (qry ...))
      #'(filter struct?
-               (list (replace-query-failed-w-false
-                      (magic-result
-                       (with-output-to-string
-                         (lambda () qry))
-                       0
-                       ""
-                       "")) ...))]
+               (list (replace-query-empty-string-w-false qry) ...))]
     [_ (error "wrap-queries format error")]))
 
+;; use this module-begin to measure parser performance
+#;(define-syntax (magic-module-begin stx)
+    #'42)
 (define-syntax (magic-module-begin stx)
   (define (query? expr)
     (if (and (pair? expr) 
@@ -229,15 +234,9 @@
           [named-queries (filter named-query? exprs)])
       #`(#%module-begin
          #,@named-queries
-         (define (magic-query-thunk)
+         (define (magic-query)
            (or #,@queries))
          
-         (define (magic-query)
-           (let ([result (with-output-to-string magic-query-thunk)])
-             (if (non-empty-string? result)
-                 (magic-result result 0 "" "")
-                 #f)))
-
          (define (magic-query-run-all)
            (wrap-queries-for-run-all #,queries))
          
