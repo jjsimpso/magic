@@ -3,4 +3,4 @@ Differences from Ian Darwin's File command
 
 - it is not required to backslash escape space characters
 
-Currently unsupported magic test types: indirect, lestring16, bestring16, pstring, der, all id3 types, all middle endian types.
+Currently unsupported magic test types: indirect, der, all id3 types, all middle endian types.

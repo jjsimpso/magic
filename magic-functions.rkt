@@ -18,6 +18,7 @@
 (provide type)
 (provide compare)
 (provide indoff)
+(provide offset-from-eof)
 (provide read-byt read-short read-long read-quad read-float read-double)
 (provide read-leshort read-lelong read-lequad read-lefloat read-ledouble)
 (provide read-beshort read-belong read-bequad read-befloat read-bedouble)
@@ -276,6 +277,12 @@
     (when (eof-object? data) (error "eof"))
     (when (< (bytes-length data) 8) (error "failure to read sufficient data"))
     (floating-point-bytes->real data #t)))
+
+;; return the file offset equal to 'off' bytes from the end of the file 
+(define (offset-from-eof off)
+  (file-position (current-input-port) eof)
+  (define file-size (file-position (current-input-port)))
+  (- file-size (abs off)))
 
 ;; the operation argument arg can be either an integer or a function to read a second indirect offset
 ;; to use as the arg (see disp macro in expander.rkt).

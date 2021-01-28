@@ -27,3 +27,6 @@
 
 # check that we don't parse subtract op as negative number
 0x5	leshort-1 <31
+
+# test for negative offset support (offset from the end of the file)
+-22	string		PK\005\006	Zip archive data

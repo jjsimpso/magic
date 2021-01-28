@@ -62,8 +62,12 @@
 ;; the name-offset into account(still need to verify relative offsets in named queries).
 (define-syntax (offset stx)
   (syntax-parse stx
-    [(_ off:integer)
+    [(_ off:exact-nonnegative-integer)
      #'(+ name-offset off)]
+    ;; negative absolute offsets are an offset from the end of the file
+    ;; assume we should ignore the name offset
+    [(_ off:integer)
+     #'(offset-from-eof off)]
     ;; indirect offset
     [(_ (indoff off:integer (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(indoff (+ name-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))]
@@ -91,8 +95,12 @@
 ;; in the case of use the name's offset is also applied to the result.
 (define-syntax (use-offset stx)
   (syntax-parse stx
-    [(_ off:integer)
+    [(_ off:exact-nonnegative-integer)
      #'(+ name-offset off)]
+    ;; negative absolute offsets are an offset from the end of the file
+    ;; assume we should ignore the name offset
+    [(_ off:integer)
+     #'(offset-from-eof off)]
     ;; indirect offset
     [(_ (indoff off:integer (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(+ (indoff (+ name-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))
