@@ -28,7 +28,9 @@
 (require "output.rkt")
          
 ;; only need the parameter test-passed-at-level
-(require (only-in "expander-utils.rkt" test-passed-at-level))
+(require (only-in "expander-utils.rkt"
+                  test-passed-at-level
+                  line-offset))
 
 ;; doesn't include any leap seconds. are they needed?
 (define windows-secs-to-epoch 11644473600)
@@ -875,6 +877,8 @@
                                (print-warning "magic error: ~a~n" (exn-message exn))
                                #f)])
     (print-debug "running magic-test: ~a,~a,~a~n" off read-func compare-func)
+    ;; save the offset for this line
+    (line-offset off)
     (file-position (current-input-port) off)
     (let* ([data (read-func)]
            [result (compare-func data)])

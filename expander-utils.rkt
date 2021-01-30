@@ -14,8 +14,15 @@
 ;;   See the License for the specific language governing permissions and
 ;;   limitations under the License.
 
-(provide last-level-offset any-true? begin-level test-passed-at-level when*)
-(provide (for-syntax reverse-endianness) level parse-level0)
+(provide last-level-offset
+         last-level-base-offset
+         begin-level
+         test-passed-at-level
+         line-offset
+         when*
+         (for-syntax reverse-endianness)
+         level
+         parse-level0)
 
 (require syntax/parse racket/stxparam)
 (require (for-syntax syntax/stx syntax/parse racket/syntax racket/list))
@@ -26,7 +33,12 @@
   (lambda (stx)
     (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-level")))
 
+(define-syntax-parameter last-level-base-offset
+  (lambda (stx)
+    (raise-syntax-error (syntax-e stx) "can only be used inside begin-level")))
+
 (define test-passed-at-level (make-parameter #f))
+(define line-offset (make-parameter 0))
 
 ;; run all top level tests and ...
 ;; initialize last-level-offset to 0
@@ -42,7 +54,7 @@
 ;; any-true? is like an or that doesn't short circuit
 ;; since any-true? indicates the start of a new level we save the current
 ;; file position to use for relative offsets at this level.
-(define-syntax-rule (any-true? body ...)
+#;(define-syntax-rule (any-true? body ...)
   (let ([result #f]
         [tmp-offset (file-position (current-input-port))])
     (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
@@ -53,8 +65,11 @@
 
 ;; like any-true? but always returns true
 (define-syntax-rule (begin-level body ...)
-  (let ([tmp-offset (file-position (current-input-port))])
-    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
+  (let ([tmp-offset (file-position (current-input-port))]
+        [tmp-base-offset (line-offset)])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)]
+                          [last-level-base-offset (make-rename-transformer #'tmp-base-offset)])
+      ;(eprintf "begin-level: ll=~a, llbase=~a~n" last-level-offset last-level-base-offset)
       (parameterize ([test-passed-at-level #f])
         body
         ...)

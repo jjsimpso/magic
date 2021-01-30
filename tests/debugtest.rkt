@@ -29,4 +29,10 @@
 0x5	leshort-1 <31
 
 # test for negative offset support (offset from the end of the file)
+# use line tests for use offset handling
 -22	string		PK\005\006	Zip archive data
+>(16.l)	use		zipcd
+
+# Zip Central Cirectory record
+0	name		zipcd
+>0	string		PK\001\002      correct use offset

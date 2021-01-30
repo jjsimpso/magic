@@ -19,3 +19,6 @@
 
 0	ubyte		>0	
 
+0	regex/s		\\`(\\r\\n|;|[[])
+
+(80.l)	string		>\0		SourcePath "%s"
