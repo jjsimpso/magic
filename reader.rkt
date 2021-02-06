@@ -54,6 +54,7 @@
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!+-*/%|")))
+(define-lex-abbrev num-compare-op (:= 1 (char-set "<>=&^!")))
 (define-lex-abbrev paren (:= 1 (char-set "()")))
 ;(define-lex-abbrev string-chars (complement (:+ " " "\t" "\n")))
 (define-lex-abbrev string-chars (:+ (char-set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.") "\\"))
@@ -334,7 +335,11 @@
 ;; includes all the non string types
 (define lexer-test
   (lexer-srcloc
-   [op (token lexeme lexeme)]
+   ;; check for test operators with spaces between the op and the value
+   ;; ideally need a guard here to check that the whitespace is followed by a number
+   [(:seq num-compare-op (:+ " "))
+    (token (substring lexeme 0 1) (substring lexeme 0 1))]
+   [num-compare-op (token lexeme lexeme)]
    ["x" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]

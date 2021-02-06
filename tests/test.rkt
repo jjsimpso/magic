@@ -26,6 +26,7 @@
 (require (only-in "date-test.rkt" (magic-query date-query)))
 (require (only-in "jpeg.rkt" (magic-query jpeg-query)))
 (require (only-in "quake.rkt" (magic-query quake-query)))
+(require (only-in "zip.rkt" (magic-query zip-query)))
 ;; just get the magic-result structure definitions once
 (require (except-in "jpeg.rkt" magic-query magic-query-run-all))
 
