@@ -14,14 +14,14 @@
 ;;   See the License for the specific language governing permissions and
 ;;   limitations under the License.
 
-magic : EOL* (query | named-query)+
-query : line (level+ (line | clear-line))* /EOL*
+magic : (query | named-query | EOL)+
+query : line (level+ (line | clear-line))*
 level : /">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
 
 clear-line : offset /HWS "clear" (/HWS test)? /EOL
 
-named-query : name-line (level+ (line | clear-line))* /EOL*
+named-query : name-line (level+ (line | clear-line))*
 name-line : offset /HWS name-type /HWS MAGIC-NAME (/HWS message?)? /EOL
 
 offset : absoffset | reloffset | indoffset
