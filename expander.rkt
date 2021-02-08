@@ -30,6 +30,10 @@
   (lambda (stx)
     #'0))
 
+(define-syntax-parameter top-level-base-offset
+  (lambda (stx)
+    #'0))
+
 
 (define-syntax (line stx)
   (syntax-parse stx
@@ -87,25 +91,24 @@
 ;; This macro is used as a replacement for the standard offset macro in 'use' lines.
 ;; file says that use will "recursively call the named magic starting from the current offset."
 ;; This is somewhat vague. Experimentation shows that indirect offsets(indoff) need to be
-;; handled diffently on 'use' lines. My current implementation saves each line's offset
-;; before any reads in the parameter 'line-offset'. This is used to save the base offset
-;; for the previous level when a new level is entered. This new syntax parameter,
-;; 'last-level-base-offset' is like 'last-level-offset' but before the file offset was
-;; modified by any reads. Adding 'last-level-base-offset' to each indoff's read
-;; offset seems to fix the zip magic(see debugtest.rkt). jpeg magic also requires that
-;; the name-offset be added to result of the read.
+;; handled diffently on 'use' lines. In named queries indirect offsets appear to be relative to
+;; the offset passed to the query by its use call. Outside of a name, indirect offsets seem
+;; to be relative to the base offset of the offset at the top level of the query(i.e. the
+;; first line of the query). This is my current implementation until I find magic that
+;; contradicts it.
 ;;
-;; There may be problems with this current implementation, but it works the jpeg magic
-;; as well as zip and windows help files(see date-test.rkt). The previous implementation
-;; using only name-offset did not work for the zip magic.
+;; Only saving this base offset for use calls at the top level fixes the RAR magic. The previous
+;; version fixed the zip magic(see debugtest.rkt). jpeg magic also requires that the name-offset
+;; be added to result of the read. This version is also much cleaner than the previous version
+;; using a parameter to save the offset at each level.
 ;;
-;; --- start description of previous implementation 
+;; --- start description of first implementation 
 ;; file is either doing something subtle with indirect offsets or it treats use differently
 ;; than the other tests. in the case of indirect offsets we need to add the name-offset to
 ;; both the location to read from and the resulting offset. but only for use lines. this
 ;; change breaks other types of tests. this problem was found when i incorporated the
 ;; jpeg magic from file.
-;; --- end description of previous implementation
+;; --- end description of first implementation
 ;;
 ;; btw, according to the man page, indirect offsets in names are always relative to
 ;; the start of the file and ignore the name's offset, unlike absolute offsets which are
@@ -118,7 +121,7 @@
     ;; indirect offset
     [(_ (indoff off:integer (~optional size-expr:expr) (~optional (~seq op-expr disp-expr))))
      #'(begin
-         (+ (indoff (+ last-level-base-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))
+         (+ (indoff (+ top-level-base-offset off) (~? size-expr) (~? op-expr) (~? disp-expr))
             name-offset))]
     [(_ expr ...)
      #'(offset expr ...)]))
@@ -173,10 +176,18 @@
 ;; there was a match but it didn't result in any output.
 (define-syntax (query stx)
   (syntax-parse stx
-    [(_ expr ...)
+    [(_ ln expr ...)
+     #:with off
+     (syntax-parse #'ln
+       #:datum-literals (line offset)
+       [(line (offset off) e ...) #'(offset off)])
+     
      #'(let ([result
               (with-output-to-string
-                (lambda () (parse-level0 expr ...)))])
+                (lambda ()
+                  (let ([tmp-offset off])
+                    (syntax-parameterize ([top-level-base-offset (make-rename-transformer #'tmp-offset)])
+                      (parse-level0 ln expr ...)))))])
          (if (non-empty-string? result)
              (magic-result result 0 "" "")
              #f))]))
@@ -199,12 +210,14 @@
        #`(begin 
            (define magic-name
              (lambda (new-offset)
-               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]) 
+               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]
+                                     [top-level-base-offset (make-rename-transformer #'new-offset)])
                  (print-info "~a offset = 0x~a~n" magic-name (number->string name-offset 16))
                  (parse-level0 . modified-rst))))
            (define ^magic-name
              (lambda (new-offset)
-               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)])
+               (syntax-parameterize ([name-offset (make-rename-transformer #'new-offset)]
+                                     [top-level-base-offset (make-rename-transformer #'new-offset)])
                  (print-info "~a offset = 0x~a~n" ^magic-name (number->string name-offset 16))
                  (parse-level0 #,@(reverse-endianness #'modified-rst)))))))]))
 

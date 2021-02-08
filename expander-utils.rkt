@@ -15,10 +15,8 @@
 ;;   limitations under the License.
 
 (provide last-level-offset
-         last-level-base-offset
          begin-level
          test-passed-at-level
-         line-offset
          when*
          (for-syntax reverse-endianness)
          level
@@ -33,12 +31,7 @@
   (lambda (stx)
     (raise-syntax-error (syntax-e stx) "can only be used inside any-true? or begin-level")))
 
-(define-syntax-parameter last-level-base-offset
-  (lambda (stx)
-    (raise-syntax-error (syntax-e stx) "can only be used inside begin-level")))
-
 (define test-passed-at-level (make-parameter #f))
-(define line-offset (make-parameter 0))
 
 ;; run all top level tests and ...
 ;; initialize last-level-offset to 0
@@ -65,11 +58,8 @@
 
 ;; like any-true? but always returns true
 (define-syntax-rule (begin-level body ...)
-  (let ([tmp-offset (file-position (current-input-port))]
-        [tmp-base-offset (line-offset)])
-    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)]
-                          [last-level-base-offset (make-rename-transformer #'tmp-base-offset)])
-      ;(eprintf "begin-level: ll=~a, llbase=~a~n" last-level-offset last-level-base-offset)
+  (let ([tmp-offset (file-position (current-input-port))])
+    (syntax-parameterize ([last-level-offset (make-rename-transformer #'tmp-offset)])
       (parameterize ([test-passed-at-level #f])
         body
         ...)
@@ -268,8 +258,9 @@
     [(_ ln:mag-line (~seq lvl:mag-lvl ...+ ln2:mag-line) ...+)
      #:with branch-lines #'((~@ lvl ... ln2) ...)
      ;(printf "parse-level0 1~n")
-     #`(when* ln (level 
-            #,@(parse-level1 #'branch-lines)))]
+     #`(when* ln
+              (level 
+               #,@(parse-level1 #'branch-lines)))]
     [(_ lvl:mag-lvl ...+ expr ...) 
      #'(error "no line at level 0")]
     [_
