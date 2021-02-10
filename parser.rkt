@@ -72,11 +72,13 @@ type : ( numeric | strtype | default | use | indirect )
 ;; all types.
 numeric : [ unsigned ] ( numtype | datetype ) [ nummask ]
 
-@numtype : byt | short | long | quad
+@numtype : byt | short | long | quad | float | double
 @byt : "byte"
 @short : "short" | "beshort" | "leshort"
 @long : "long" | "lelong" | "belong" | "melong"
 @quad : "quad" | "lequad" | "bequad"
+@float : "float" | "befloat" | "lefloat"
+@double : "double" | "bedouble" | "ledouble"
 
 @datetype : udate32 | ldate32 | udate64 | ldate64 | wdate64
 @udate32 : "date" | "bedate" | "ledate" | "medate"	;; UTC dates

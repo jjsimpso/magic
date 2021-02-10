@@ -1,12 +1,7 @@
-- consider what to do about white space after the operator in numeric tests, as in apple.
-- zip magic has interesting behavior that may shed light on how 'use' deals with its offset.
-  i first discovered this with the jpeg magic but this might explain more about the desired
-  behavior. need to fix the use-offset macro.
-
 - relative offsets within names need to be tested
 - implement independent case insensitive string flags
 - implement full printf substitution in message
-- fix macro stepper problems with certain lines
+- fix macro stepper problems with certain lines (may be an issue with brag)
 - implement mime and strength lines
 - add support for middle endian numeric types
 - add support for ID3, GUID, and DER types
