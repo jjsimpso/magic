@@ -14,7 +14,7 @@
 ;;   See the License for the specific language governing permissions and
 ;;   limitations under the License.
 
-magic : (query | named-query | EOL)+
+magic : (query | named-query | /EOL)+
 query : line (level+ (line | clear-line))*
 level : /">"
 line : offset /HWS type /HWS test (/HWS message?)? /EOL
