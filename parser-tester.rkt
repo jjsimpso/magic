@@ -22,13 +22,14 @@
 (require magic/output)
 (set-magic-verbosity! 'debug)
 
+
 (parse-to-datum
  (apply-tokenizer 
   make-tokenizer 
   ;"0	beshort	0x0206	ALAN game data\n>2	short	<10	version 2.6%d\n\n0	ubyte    >0	\n")
   ;"0           string  MZ\n>0x18       leshort <0x40   MZ executable (MS-DOS)\n>0x18       leshort >0x3f\n>>(0x3c.l)  string  PE\\0\\0  PE executable (MS-Windows)\n0	beshort	0x0206	ALAN game data\n")
-  ;"(4.s*512)    leshort 0x014c  COFF executable (MS-DOS, DJGPP)\n")
-  ;"(4.s*512) leshort !0x014c MZ executable (MS-DOS)\n")
+  ;"(4.s)    leshort 0x014c  COFF executable (MS-DOS, DJGPP)\n")
+  "(4.s*512) leshort !0x014c MZ executable (MS-DOS)\n")
   ;"&(0x3c.l)       leshort 0x14c   for Intel 80386\n")
   ;"3    regex/12/csl    =[0-9]{1,50}\\ [0-9]{1,50}	Netpbm image data\n")
   ;"0	regex/100l	\\^CFLAGS	makefile script text\n")
@@ -67,8 +68,12 @@
   ;"16			search/0x49AF/s	\\x6c\\x03\n")
   ;"0	string		Windows\\ Registry\\ Editor\\ \n")
   ;"1	regex/c		\\^([^\\xd>]*|.*\\.hlp)	MS Windows help file Content, based \"%s\"\n")
-  "88	belong	& 16			\b, readable\n")
+  ;"88	belong	& 16			\b, readable\n")
   ;"(16.l)	use		zipcd\n")
   ;"&0			use 		help-ver-date\n")
 )
-;(parse-to-datum "2	short	<10	version 2.6%d")
+#;
+(parse-to-datum
+ (make-tokenizer
+  (open-input-string "\n\n2	short	<10	version 2.6%d\n")))
+

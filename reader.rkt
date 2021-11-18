@@ -25,6 +25,7 @@
 (provide magic-read-syntax)
 (provide magic-read-syntax-raw)
 (provide make-tokenizer)
+(provide make-test-tokenizer)
 
 ;(set-magic-verbosity! 'debug)
 
@@ -424,10 +425,21 @@
 (define (make-tokenizer port [path #f])
   (port-count-lines! port)
   (lexer-file-path path)
+  ;; reset the lexer state
+  (set! current-lexer lexer-offset)
   (define (next-token)
     (current-lexer port))
   next-token)
 
+(define (make-test-tokenizer port [path #f])
+  (port-count-lines! port)
+  (lexer-file-path path)
+  (define (next-token)
+    (lexer-offset port))
+  next-token)
+
 ;; test function
 (define (lex str)
+  ;; reset the lexer state
+  (set! current-lexer lexer-offset)
   (apply-lexer lexer-offset str))
