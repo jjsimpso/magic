@@ -60,7 +60,8 @@
 
 (define (size-token? tkn)
   (case (token-type tkn)
-    [(.B .b .C .c .s .h .S .H .l .L .m ,B ,b ,C ,c ,s ,h ,S ,H ,l ,L ,m) #t]
+    [(.B .b .C .c .s .h .S .H .l .L .m) #t]
+    [(|,B| |,b| |,C| |,c| |,s| |,h| |,S| |,H| |,l| |,L| |,m|) #t]
     [else #f]))
 
 (define (size-op-token? tkn)
@@ -70,15 +71,16 @@
 
 (define (try-rule rule-func)
   (define saved-tokens-list list-of-tokens)
-  (define result (rule-func))
-  (unless (syntax? result)
-    (set! list-of-tokens saved-tokens-list))
-  result)
+  (with-handlers ([exn:fail? (lambda (exn)
+                               ;; on error, restore token list and return false
+                               (set! list-of-tokens saved-tokens-list)
+                               #f)])
+    (rule-func)))
 
 (define (parse-error str)
-  (eprintf str)
-  (eprintf "~n")
-  #f)
+  ;(eprintf str)
+  ;(eprintf "~n")
+  (error str))
 
 ;; read all the tokens from the function token-source and return a list of tokens
 (define (get-all-tokens token-source next-token tokens)
@@ -95,7 +97,10 @@
   (if (procedure? token-source)
       (set! list-of-tokens (get-all-tokens token-source (token-source) '()))
       (set! list-of-tokens token-source))
-  (magic))
+  (with-handlers ([exn:fail? (lambda (exn) 
+                               (eprintf "magic parse error: ~a~n" (exn-message exn))
+                               #f)])
+    (magic)))
 
 (define (parse-to-datum path token-source)
   (syntax->datum (parse path token-source)))
@@ -193,7 +198,10 @@
      #`(offset #,(token-val tkn))]
     [(token-eq? tkn '&)
      (push-token tkn)
-     #`(offset #,(reloffset))]
+     #`(offset #,(or (try-rule reloffset)
+                     (try-rule relindoff)
+                     (parse-error "offset: syntax error after '&'")))]
+
     [(token-eq? tkn '\()
      (push-token tkn)
      #`(offset #,(indoff))]
@@ -209,6 +217,11 @@
      #`(reloffset #,(token-val tkn))]
     [else
      (parse-error "reloffset: syntax error")]))
+
+(define (relindoff)
+  (unless (token-eq? (pop-token) '&)
+    (parse-error "reloffset: missing '&'"))
+  #`(relindoff #,(indoff)))
 
 (define (indoff)
   (unless (token-eq? (pop-token) '\()
@@ -254,6 +267,17 @@
   (define tkn (pop-token))
   (case (token-type tkn)
     [(.B .b .C .c) #`(size (byte #,(token-val tkn)))]
+    [(|,B| |,b| |,C| |,c|) #`(size (ubyte #,(token-val tkn)))]
+    [(.s .h) #`(size (leshort #,(token-val tkn)))]
+    [(|,s| |,h|) #`(size (uleshort #,(token-val tkn)))]
+    [(.S .H) #`(size (beshort #,(token-val tkn)))]
+    [(|,S| |,H|) #`(size (ubeshort #,(token-val tkn)))]
+    [(.l) #`(size (lelong #,(token-val tkn)))]
+    [(|,l|) #`(size (ulelong #,(token-val tkn)))]
+    [(.L) #`(size (belong #,(token-val tkn)))]
+    [(|,L|) #`(size (ubelong #,(token-val tkn)))]
+    [(.m) #`(size (melong #,(token-val tkn)))]
+    [(|,m|) #`(size (umelong #,(token-val tkn)))]
     [else
      (parse-error "size: syntax error")]))
 
