@@ -68,7 +68,7 @@
     [(|,B| |,b| |,C| |,c| |,s| |,h| |,S| |,H| |,l| |,L| |,m|) #t]
     [else #f]))
 
-(define (size-op-token? tkn)
+(define (op-token? tkn)
   (case (token-type tkn)
     [(~ + - * / % & || ^) #t]
     [else #f]))
@@ -247,7 +247,7 @@
         #f))
 
   (define operator
-    (if (size-op-token? (peek-token))
+    (if (op-token? (peek-token))
         (op)
         #f))
 
@@ -287,12 +287,14 @@
      (parse-error "size: syntax error")]))
 
 (define (op)
-  (define invert? (token-eq? (peek-token) '~))
+  (define invert? (next-token-eq? '~))
   (when invert? (pop-token))
-  (define op-tkn (pop-token))
-  (if invert?
-      #`(op (invert "~") #,(token-val op-tkn))
-      #`(op #,(token-val op-tkn))))
+  (if (op-token? (peek-token))
+      (let ([op-tkn (pop-token)])
+        (if invert?
+            #`(op (invert "~") #,(token-val op-tkn))
+            #`(op #,(token-val op-tkn))))
+      (parse-error "op: syntax error")))
 
 (define (disp)
   (if (token-eq? (peek-token) '\()
@@ -314,9 +316,49 @@
   #`#,value)
 
 (define (type)
-  (eprintf "type: ~n")
+  #`(type #,(or (try-rule numeric)
+                (try-rule strtype)
+                (try-rule default)
+                (try-rule use)
+                (try-rule indirect)
+                (parse-error "type: syntax error"))))
+
+(define (numeric)
+  (define unsigned? (next-token-eq? 'u))
+  (when unsigned? (pop-token))
   (define tkn (pop-token))
-  #`(type #,(token-val tkn)))
+  (define stx 
+    (case (token-type tkn)
+      [(byte short beshort leshort long lelong belong melong quad lequad bequad float befloat lefloat double bedouble ledouble
+             date bedate ledate medate ldate beldate leldate meldate qdate leqdate beqdate qldate leqldate beqldate qwdate leqwdate beqwdate)
+       (if unsigned?
+           #`(numeric "u" #,(token-val tkn))
+           #`(numeric #,(token-val tkn)))]
+      [else
+       (parse-error "numeric: syntax error")]))
+  (define nummask? (op-token? (peek-token)))
+  (if nummask?
+      #`(#,@stx #,(nummask))
+      stx))
+
+(define (nummask)
+  (define operator (op))
+  (if (and operator
+           (next-token-eq? 'INTEGER))
+      #`(nummask #,operator #,(token-val (pop-token)))
+      (parse-error "nummask: syntax error")))
+
+(define (strtype)
+  #f)
+
+(define (default)
+  #f)
+
+(define (use)
+  #f)
+
+(define (indirect)
+  #f)
 
 (define (test)
     (eprintf "test: ~n")
@@ -334,7 +376,7 @@
 ;; test helpers
 ;; ------------
 (define (test-parse rule str)
-  (define next-token (make-tokenizer (open-input-string str)))
+  (define next-token (make-test-tokenizer (open-input-string str)))
   (set! list-of-tokens (get-all-tokens next-token (next-token) '()))
   ;(display list-of-tokens)
   (rule))
