@@ -26,6 +26,10 @@
 
 (define list-of-tokens '())
 
+(struct exn:parse-error exn:fail ())
+
+(define (make-parse-error message)
+  (exn:parse-error message (current-continuation-marks)))
 
 ;; helper functions
 ;; ----------------
@@ -71,16 +75,17 @@
 
 (define (try-rule rule-func)
   (define saved-tokens-list list-of-tokens)
-  (with-handlers ([exn:fail? (lambda (exn)
-                               ;; on error, restore token list and return false
-                               (set! list-of-tokens saved-tokens-list)
-                               #f)])
+  (with-handlers ([exn:parse-error? (lambda (exn)
+                                      ;; on error, restore token list and return false
+                                      (eprintf "try-rule caught parse error~n")
+                                      (set! list-of-tokens saved-tokens-list)
+                                      #f)])
     (rule-func)))
 
 (define (parse-error str)
   ;(eprintf str)
   ;(eprintf "~n")
-  (error str))
+  (raise (make-parse-error str)))
 
 ;; read all the tokens from the function token-source and return a list of tokens
 (define (get-all-tokens token-source next-token tokens)
@@ -97,9 +102,9 @@
   (if (procedure? token-source)
       (set! list-of-tokens (get-all-tokens token-source (token-source) '()))
       (set! list-of-tokens token-source))
-  (with-handlers ([exn:fail? (lambda (exn) 
-                               (eprintf "magic parse error: ~a~n" (exn-message exn))
-                               #f)])
+  (with-handlers ([exn:parse-error? (lambda (exn) 
+                                      (eprintf "magic parse error: ~a~n" (exn-message exn))
+                                      #f)])
     (magic)))
 
 (define (parse-to-datum path token-source)
