@@ -352,13 +352,30 @@
   #f)
 
 (define (default)
-  #f)
+  (define tkn (pop-token))
+  (if (token-eq? tkn 'default)
+      #'(default "default")
+      (parse-error "default: syntax error")))
 
 (define (use)
-  #f)
+  (define tkn (pop-token))
+  (if (token-eq? tkn 'use)
+      #'(use "use")
+      (parse-error "use: syntax error")))
 
 (define (indirect)
-  #f)
+  (define tkn (pop-token))
+  (cond
+    [(and (token-eq? tkn 'indirect)
+          (next-token-eq? '/))
+     (pop-token)
+     (if (token-eq? (pop-token) 'r)
+         #'(indirect "indirect" "r")
+         (parse-error "indirect: expected 'r'"))]
+    [(token-eq? tkn 'indirect)
+     #'(indirect "indirect")]
+    [else
+      (parse-error "indirect: syntax error")]))
 
 (define (test)
     (eprintf "test: ~n")
