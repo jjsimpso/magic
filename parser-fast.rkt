@@ -73,11 +73,26 @@
     [(~ + - * / % & || ^) #t]
     [else #f]))
 
+(define (strflag-token? tkn)
+  (case (token-type tkn)
+    [(b c C t T w W) #t]
+    [else #f]))
+
+(define (regflag-token? tkn)
+  (case (token-type tkn)
+    [(c s l) #t]
+    [else #f]))
+
+(define (pstrflag-token? tkn)
+  (case (token-type tkn)
+    [(B H h L l) #t]
+    [else #f]))
+
 (define (try-rule rule-func)
   (define saved-tokens-list list-of-tokens)
   (with-handlers ([exn:parse-error? (lambda (exn)
                                       ;; on error, restore token list and return false
-                                      (eprintf "try-rule caught parse error~n")
+                                      (eprintf "try-rule caught parse error: ~a~n" (exn-message exn))
                                       (set! list-of-tokens saved-tokens-list)
                                       #f)])
     (rule-func)))
@@ -349,6 +364,54 @@
       (parse-error "nummask: syntax error")))
 
 (define (strtype)
+  (or (try-rule string8)
+      (try-rule search)
+      (try-rule regex)
+      (try-rule string16)
+      (try-rule pstring)
+      (parse-error "strtype: syntax error")))
+
+(define (string8)
+  (define tkn (pop-token))
+  (cond
+    [(and (token-eq? tkn 'string)
+          (next-token-eq? '/))
+     (pop-token)
+     #`(string8 "string" #,@(strflags))]
+    [(token-eq? tkn 'string)
+     #'(string8 "string")]
+    [else
+      (parse-error "string8: syntax error")]))
+
+(define (strflags)
+  (if (strflag-token? (peek-token))
+      (let loop ([tkn (pop-token)]
+                 [flags #'()])
+        (cond
+          [(token-eq? tkn 'HWS)
+           (push-token tkn)
+           flags]
+          [(strflag-token? tkn)
+           (loop (pop-token)
+                 #`(#,@flags (strflag #,(token-val tkn))))]
+          [else
+           (parse-error "strflags: bogus flag")]))
+      (parse-error "strflags: missing flag")))
+
+(define (search)
+  #f)
+
+(define (regex)
+  #f)
+
+(define (string16)
+  (define tkn (pop-token))
+  (if (or (token-eq? tkn 'bestring16)
+          (token-eq? tkn 'lestring16))
+      #`(string16 #,(token-val tkn))
+      (parse-error "string16: syntax error")))
+
+(define (pstring)
   #f)
 
 (define (default)
