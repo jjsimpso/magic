@@ -88,6 +88,11 @@
     [(B H h L l) #t]
     [else #f]))
 
+(define (compare-token? tkn)
+  (case (token-type tkn)
+    [(= ! < > & ^) #t]
+    [else #f]))
+
 (define (try-rule rule-func)
   (define saved-tokens-list list-of-tokens)
   (with-handlers ([exn:parse-error? (lambda (exn)
@@ -113,7 +118,7 @@
 ;; -------------------
 
 ;; token-source is a function that returns the next token or a list of tokens
-(define (parse path token-source)
+(define (parse source-path token-source)
   (if (procedure? token-source)
       (set! list-of-tokens (get-all-tokens token-source (token-source) '()))
       (set! list-of-tokens token-source))
@@ -122,8 +127,11 @@
                                       #f)])
     (magic)))
 
-(define (parse-to-datum path token-source)
-  (syntax->datum (parse path token-source)))
+(define parse-to-datum
+  (case-lambda
+    [(token-source) (parse-to-datum #f token-source)]
+    [(source-path token-source)
+     (syntax->datum (parse source-path token-source))]))
 
 
 ;; Grammar Rules
@@ -131,16 +139,18 @@
 
 ;; originating rule
 (define (magic)
-  (let loop ([tkn (pop-token)]
-             [magic-stx #'()])
+  (let loop ([magic-stx #'(magic)])
     (cond
-      [(not tkn) magic-stx]
-      [(eq? (token-type tkn) 'EOL)
-       (loop (pop-token) magic-stx)]
+      [(not (peek-token))
+       magic-stx]
+      [(next-token-eq? 'EOL)
+       (pop-token)
+       (loop magic-stx)]
       [else
-       (define q (or (try-rule query) (try-rule named-query)))
+       (define q (or (try-rule query)
+                     (try-rule named-query)))
        (if (syntax? q)
-           (loop (pop-token) #`(#,magic-stx #,q))
+           (loop #`(#,@magic-stx #,q))
            (parse-error "magic: syntax error"))])))
 
 (define (query)
@@ -184,9 +194,11 @@
 
 (define (line)
   (define o (offset))
-  (pop-token)
+  (unless (token-eq? (pop-token) 'HWS)
+    (parse-error "line: expected HWS after offset"))
   (define typ (type))
-  (pop-token)
+  (unless (token-eq? (pop-token) 'HWS)
+    (parse-error "line: expected HWS after type"))
   (define tst (test))
   (cond
     [(next-token-eq? 'HWS)
@@ -195,9 +207,17 @@
          (begin
            (pop-token)
            #`(line #,o #,typ #,tst))
-         #`(line #,o #,typ #,tst #,(message)))]
+         (let ([msg (message)])
+           (if (next-token-eq? 'EOL)
+               (begin
+                 (pop-token)
+                 #`(line #,o #,typ #,tst #,msg))
+               (parse-error "line: expected end-of-line"))))]
+    [(next-token-eq? 'EOL)
+     (pop-token)
+     #`(line #,o #,typ #,tst)]
     [else
-     #`(line #,o #,typ #,tst)]))
+     (parse-error "line: syntax error")]))
 
 (define (name-line)
   (define tkn (pop-token))
@@ -441,17 +461,54 @@
       (parse-error "indirect: syntax error")]))
 
 (define (test)
-    (eprintf "test: ~n")
-  (define tkn (pop-token))
-  #`(test #,(token-val tkn)))
+  #`(test #,(or (try-rule numtest)
+                (try-rule strtest)
+                (try-rule truetest)
+                (try-rule use-name)
+                (parse-error "test: syntax error"))))
 
-(define (message)
-  (eprintf "message: ~n")
+(define (numtest)
   (define tkn (pop-token))
   (cond
+    [(token-eq? tkn 'INTEGER)
+     #`(numtest #,(token-val tkn))]
+    [(and (compare-token? tkn)
+          (next-token-eq? 'INTEGER))
+     #`(numtest #,(token-val tkn) #,(token-val (pop-token)))]
+    [else
+     (parse-error "numtest: syntax error")]))
+
+(define (strtest)
+  (define tkn (pop-token))
+  (cond
+    [(token-eq? tkn 'STRING)
+     #`(strtest #,(token-val tkn))]
+    [(and (compare-token? tkn)
+          (next-token-eq? 'STRING))
+     #`(strtest #,(token-val tkn) #,(token-val (pop-token)))]
+    [else
+     (parse-error "strtest: syntax error")]))
+
+;; currently unused. rolled into numtest and strtest
+(define (compare)
+  (define tkn (pop-token))
+  (if (compare-token? tkn)
+      #`#,(token-val tkn)
+      (parse-error "compare: syntax error")))
+
+(define (truetest)
+  #f)
+
+(define (use-name)
+  #f)
+
+(define (message)
+  (define tkn (pop-token))
+  (cond
+    [(token-eq? tkn 'STRING)
+     #`(message #,(token-val tkn))]
     [else
      (parse-error "message: syntax error")]))
-
 
 ;; test helpers
 ;; ------------
