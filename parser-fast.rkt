@@ -422,7 +422,37 @@
   #f)
 
 (define (regex)
-  #f)
+  (if (token-eq? (pop-token) 'regex)
+      (let ([tkn (pop-token)])
+        (cond
+          [(and (token-eq? tkn '/)
+                (next-token-eq? 'INTEGER))
+           (let ([cnt (token-val (pop-token))])
+             (if (and (next-token-eq? '/)
+                      (pop-token))
+                 #`(regex (regcnt #,cnt) #,@(regflags))
+                 #`(regex (regcnt #,cnt))))]
+          [(token-eq? tkn '/)
+           #`(regex #,@(regflags))]
+          [else
+           (parse-error "regex: syntax error")]))
+      (parse-error "regex: expected 'regex'")))
+
+(define (regflags)
+  (if (regflag-token? (peek-token))
+      (let loop ([tkn (pop-token)]
+                 [flags #'()])
+        (cond
+          [(token-eq? tkn 'HWS)
+           (push-token tkn)
+           flags]
+          [(regflag-token? tkn)
+           (eprintf "regflags: got ~a~n" (token-val tkn))
+           (loop (pop-token)
+                 #`(#,@flags (regflag #,(token-val tkn))))]
+          [else
+           (parse-error "regflags: bogus flag")]))
+      (parse-error "regflags: missing flag")))
 
 (define (string16)
   (define tkn (pop-token))
