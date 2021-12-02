@@ -75,7 +75,7 @@
 
 (define (strflag-token? tkn)
   (case (token-type tkn)
-    [(b c C t T w W) #t]
+    [(b c C t T w W s) #t]
     [else #f]))
 
 (define (regflag-token? tkn)
@@ -408,7 +408,9 @@
       (let loop ([tkn (pop-token)]
                  [flags #'()])
         (cond
-          [(token-eq? tkn 'HWS)
+          [(or (token-eq? tkn 'HWS)
+               ; add check for / token for now, but only needed by search type and may lead to poor error messages
+               (token-eq? tkn '/))
            (push-token tkn)
            flags]
           [(strflag-token? tkn)
@@ -419,7 +421,30 @@
       (parse-error "strflags: missing flag")))
 
 (define (search)
-  #f)
+  (if (token-eq? (pop-token) 'search)
+      (if(and (next-token-eq? '/)
+              (pop-token))
+         (let ([tkn (pop-token)])
+           (cond
+             [(token-eq? tkn 'INTEGER)
+              (define cnt (token-val tkn))
+              (if (and (next-token-eq? '/)
+                       (pop-token))
+                  #`(search (srchcnt #,cnt) #,@(strflags))
+                  #`(search (srchcnt #,cnt)))]
+             [(strflag-token? tkn)
+              (push-token tkn)
+              (define flags (strflags))
+              (if (and (next-token-eq? '/)
+                       (pop-token))
+                  (if (next-token-eq? 'INTEGER)
+                      #`(search (srchcnt #,(token-val (pop-token))) #,@flags)
+                      (parse-error "search: expected integer"))
+                  #`(search #,@flags))]
+             [else
+              (parse-error "search: expected flag or count")]))
+         #'(search))
+      (parse-error "search: expected 'search'")))
 
 (define (regex)
   (if (token-eq? (pop-token) 'regex)
@@ -428,10 +453,14 @@
           [(and (token-eq? tkn '/)
                 (next-token-eq? 'INTEGER))
            (let ([cnt (token-val (pop-token))])
-             (if (and (next-token-eq? '/)
-                      (pop-token))
-                 #`(regex (regcnt #,cnt) #,@(regflags))
-                 #`(regex (regcnt #,cnt))))]
+             (cond
+               [(and (next-token-eq? '/)
+                     (pop-token))
+                #`(regex (regcnt #,cnt) #,@(regflags))]
+               [(regflag-token? (peek-token))
+                #`(regex (regcnt #,cnt) #,@(regflags))]
+               [else
+                #`(regex (regcnt #,cnt))]))]
           [(token-eq? tkn '/)
            #`(regex #,@(regflags))]
           [else
@@ -527,7 +556,10 @@
       (parse-error "compare: syntax error")))
 
 (define (truetest)
-  #f)
+  (define tkn (pop-token))
+  (if (token-eq? tkn 'x)
+      #'(truetest "x")
+      (parse-error "truetest: expected 'x'")))
 
 (define (use-name)
   #f)
