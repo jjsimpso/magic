@@ -180,10 +180,30 @@
       #`(query #,firstline)))
 
 (define (named-query)
-  (define tkn (pop-token))
-  (cond
-    [else
-     (parse-error "named-query: syntax error")]))
+  (define firstline (name-line))
+  (if (and (syntax? firstline)
+           (next-token-eq? '>))
+      ;; read 1 or more additional lines
+      (let loop ([lines #`(#,firstline)])
+        ;(eprintf "current lines: ~a~n" lines)
+        (define levels (let consume-level ([lvls (list (level))])
+                         ;(eprintf "current lvls: ~a~n" lvls)
+                         (if (next-token-eq? '>)
+                             (consume-level (cons (level) lvls))
+                             lvls)))
+        (define nextline (line))
+        (cond
+          [(and (syntax? nextline)
+                (next-token-eq? '>))
+           (loop #`(#,@lines #,@levels #,nextline))]
+          [(syntax? nextline)
+           #`(named-query #,@lines #,@levels #,nextline)]
+          [else
+           (parse-error "named-query: syntax error")
+           ;; return what we have so far anyway
+           #`(named-query #,@lines)]))
+      ;; else return just one line or an error
+      #`(named-query #,firstline)))
 
 (define (level)
   ;(eprintf "calling level~n")
@@ -220,16 +240,39 @@
      (parse-error "line: syntax error")]))
 
 (define (name-line)
-  (define tkn (pop-token))
+  (define o (offset))
+  (unless (token-eq? (pop-token) 'HWS)
+    (parse-error "name-line: expected HWS after offset"))
+  (define typ (name-type))
+  (unless (token-eq? (pop-token) 'HWS)
+    (parse-error "name-line: expected HWS after type"))
+  (define name-tkn (pop-token))
+  (unless (token-eq? name-tkn 'MAGIC-NAME)
+    (parse-error "name-line: expected MAGIC NAME"))
   (cond
+    [(next-token-eq? 'HWS)
+     (pop-token)
+     (if (next-token-eq? 'EOL)
+         (begin
+           (pop-token)
+           #`(name-line #,o #,typ #,(token-val name-tkn)))
+         (let ([msg (message)])
+           (if (next-token-eq? 'EOL)
+               (begin
+                 (pop-token)
+                 #`(name-line #,o #,typ #,(token-val name-tkn) #,msg))
+               (parse-error "name-line: expected end-of-line"))))]
+    [(next-token-eq? 'EOL)
+     (pop-token)
+     #`(name-line #,o #,typ #,(token-val name-tkn))]
     [else
      (parse-error "name-line: syntax error")]))
 
 (define (name-type)
   (define tkn (pop-token))
-  (cond
-    [else
-     (parse-error "name-type: syntax error")]))
+  (if (token-eq? tkn 'name)
+      #'(name-type "name")
+      (parse-error "name-type: syntax error")))
 
 (define (offset)
   (define tkn (pop-token))
@@ -562,7 +605,10 @@
       (parse-error "truetest: expected 'x'")))
 
 (define (use-name)
-  #f)
+  (define tkn (pop-token))
+  (if (token-eq? tkn 'MAGIC-NAME)
+      #`(use-name #,(token-val tkn))
+      (parse-error "use-name: expected MAGIC-NAME token")))
 
 (define (message)
   (define tkn (pop-token))
