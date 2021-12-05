@@ -312,10 +312,11 @@
   (define tkn (pop-token))
   (define offset1
     (cond
-      [(eq? (token-type tkn) 'INTEGER)
+      [(token-eq? tkn 'INTEGER)
        #`#,(token-val tkn)]
-      [(eq? (token-type tkn) '&)
-       #`(#,(reloffset))]
+      [(token-eq? tkn '&)
+       (push-token tkn)
+       #`#,(reloffset)]
       [else
        (parse-error "offset1: syntax error")]))
 
@@ -386,12 +387,14 @@
   (unless (token-eq? (pop-token) '\()
     (parse-error "memvalue: missing '('"))
 
-  (define value (pop-token))
+  (define value-tkn (pop-token))
+  (unless (token-eq? value-tkn 'INTEGER)
+    (parse-error "memvalue: expected integer"))
   
   (unless (token-eq? (pop-token) '\))
     (parse-error "memvalue: missing '('"))
 
-  #`#,value)
+  #`(memvalue #,(token-val value-tkn)))
 
 (define (type)
   #`(type #,(or (try-rule numeric)
