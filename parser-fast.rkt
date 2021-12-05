@@ -216,28 +216,44 @@
   (define o (offset))
   (unless (token-eq? (pop-token) 'HWS)
     (parse-error "line: expected HWS after offset"))
-  (define typ (type))
-  (unless (token-eq? (pop-token) 'HWS)
-    (parse-error "line: expected HWS after type"))
-  (define tst (test))
-  (cond
-    [(next-token-eq? 'HWS)
-     (pop-token)
-     (if (next-token-eq? 'EOL)
-         (begin
-           (pop-token)
-           #`(line #,o #,typ #,tst))
-         (let ([msg (message)])
-           (if (next-token-eq? 'EOL)
-               (begin
-                 (pop-token)
-                 #`(line #,o #,typ #,tst #,msg))
-               (parse-error "line: expected end-of-line"))))]
-    [(next-token-eq? 'EOL)
-     (pop-token)
-     #`(line #,o #,typ #,tst)]
-    [else
-     (parse-error "line: syntax error")]))
+
+  (if (next-token-eq? 'clear)
+      ;; clear line
+      (begin
+        (if (and (pop-token)
+                 (next-token-eq? 'HWS)
+                 (pop-token))
+            (let ([tst (test)])
+              (unless (token-eq? (pop-token) 'EOL)
+                (parse-error "clear-line: expected end-of-line"))
+              #`(clear-line #,o "clear" #,tst))
+            (begin
+              (unless (token-eq? (pop-token) 'EOL)
+                (parse-error "clear-line: expected end-of-line"))
+              #`(clear-line #,o "clear"))))
+      ;; standard line
+      (let ([typ (type)])
+        (unless (token-eq? (pop-token) 'HWS)
+          (parse-error "line: expected HWS after type"))
+        (let ([tst (test)])
+          (cond
+            [(next-token-eq? 'HWS)
+             (pop-token)
+             (if (next-token-eq? 'EOL)
+                 (begin
+                   (pop-token)
+                   #`(line #,o #,typ #,tst))
+                 (let ([msg (message)])
+                   (if (next-token-eq? 'EOL)
+                       (begin
+                         (pop-token)
+                         #`(line #,o #,typ #,tst #,msg))
+                       (parse-error "line: expected end-of-line"))))]
+            [(next-token-eq? 'EOL)
+             (pop-token)
+             #`(line #,o #,typ #,tst)]
+            [else
+             (parse-error "line: syntax error")])))))
 
 (define (name-line)
   (define o (offset))
