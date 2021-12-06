@@ -434,8 +434,10 @@
 (define (make-test-tokenizer port [path #f])
   (port-count-lines! port)
   (lexer-file-path path)
+  ;; modify next line to suit test
+  (set! current-lexer lexer-type)
   (define (next-token)
-    (lexer-offset port))
+    (current-lexer port))
   next-token)
 
 ;; test function
