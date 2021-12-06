@@ -103,7 +103,7 @@
   (define saved-tokens-list list-of-tokens)
   (with-handlers ([exn:parse-error? (lambda (exn)
                                       ;; on error, restore token list and return false
-                                      (eprintf "try-rule caught parse error: ~a~n" (exn-message exn))
+                                      ;(eprintf "try-rule caught parse error: ~a~n" (exn-message exn))
                                       (set! list-of-tokens saved-tokens-list)
                                       #f)])
     (rule-func)))
@@ -537,6 +537,9 @@
                 #`(regex (regcnt #,cnt))]))]
           [(token-eq? tkn '/)
            #`(regex #,@(regflags))]
+          [(token-eq? tkn 'HWS)
+           (push-token tkn)
+           #`(regex)]
           [else
            (parse-error "regex: syntax error")]))
       (parse-error "regex: expected 'regex'")))
@@ -550,7 +553,7 @@
            (push-token tkn)
            flags]
           [(regflag-token? tkn)
-           (eprintf "regflags: got ~a~n" (token-val tkn))
+           ;(eprintf "regflags: got ~a~n" (token-val tkn))
            (loop (pop-token)
                  #`(#,@flags (regflag #,(token-val tkn))))]
           [else
@@ -571,12 +574,12 @@
          (let ([tkn (pop-token)])
            (cond
              [(token-eq? tkn 'J)
-              #`(pstring "pstring" (pstrflag "J"))]
+              #`(pstring "pstring" (pstrjflag "J"))]
              [(pstrflag-token? tkn)
               (cond
                 [(next-token-eq? 'J)
                  (pop-token)
-                 #`(pstring "pstring" (pstrflag #,(token-val tkn)) (pstrflag "J"))]
+                 #`(pstring "pstring" (pstrflag #,(token-val tkn)) (pstrjflag "J"))]
                 [(next-token-eq? 'HWS)
                  #`(pstring "pstring" (pstrflag #,(token-val tkn)))]
                 [else
