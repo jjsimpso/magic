@@ -553,7 +553,26 @@
       (parse-error "string16: syntax error")))
 
 (define (pstring)
-  #f)
+  (if (token-eq? (pop-token) 'pstring)
+      (if (and (next-token-eq? '/)
+               (pop-token))
+         (let ([tkn (pop-token)])
+           (cond
+             [(token-eq? tkn 'J)
+              #`(pstring "pstring" (pstrflag "J"))]
+             [(pstrflag-token? tkn)
+              (cond
+                [(next-token-eq? 'J)
+                 (pop-token)
+                 #`(pstring "pstring" (pstrflag #,(token-val tkn)) (pstrflag "J"))]
+                [(next-token-eq? 'HWS)
+                 #`(pstring "pstring" (pstrflag #,(token-val tkn)))]
+                [else
+                 (parse-error "pstring: only 'J' is allowed for second flag")])]
+             [else
+              (parse-error "pstring: expected flag")]))
+         #'(pstring "pstring"))
+      (parse-error "pstring: expected 'pstring'")))
 
 (define (default)
   (define tkn (pop-token))
