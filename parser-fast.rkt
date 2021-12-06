@@ -15,9 +15,6 @@
 ;;   limitations under the License.
 
 (require brag/support)
-(require syntax/stx)
-
-(require "reader.rkt")
 
 (provide parse
          parse-to-datum)
@@ -93,6 +90,15 @@
     [(= ! < > & ^) #t]
     [else #f]))
 
+;; discards vertical white space: comments or blank lines
+(define (discard-vws)
+  (let loop ([tkn (peek-token)])
+    (when (or (token-eq? tkn 'COMMENT)
+              (token-eq? tkn 'MIME)
+              (token-eq? tkn 'EOL))
+      (pop-token)
+      (loop (peek-token)))))
+
 (define (try-rule rule-func)
   (define saved-tokens-list list-of-tokens)
   (with-handlers ([exn:parse-error? (lambda (exn)
@@ -143,7 +149,9 @@
     (cond
       [(not (peek-token))
        magic-stx]
-      [(next-token-eq? 'EOL)
+      [(or (next-token-eq? 'EOL)
+           (next-token-eq? 'COMMENT)
+           (next-token-eq? 'MIME))
        (pop-token)
        (loop magic-stx)]
       [else
@@ -155,6 +163,7 @@
 
 (define (query)
   (define firstline (line))
+  (discard-vws)
   (if (and (syntax? firstline)
            (next-token-eq? '>))
       ;; read 1 or more additional lines
@@ -166,6 +175,7 @@
                              (consume-level (cons (level) lvls))
                              lvls)))
         (define nextline (line))
+        (discard-vws)
         (cond
           [(and (syntax? nextline)
                 (next-token-eq? '>))
@@ -181,6 +191,7 @@
 
 (define (named-query)
   (define firstline (name-line))
+  (discard-vws)
   (if (and (syntax? firstline)
            (next-token-eq? '>))
       ;; read 1 or more additional lines
@@ -192,6 +203,7 @@
                              (consume-level (cons (level) lvls))
                              lvls)))
         (define nextline (line))
+        (discard-vws)
         (cond
           [(and (syntax? nextline)
                 (next-token-eq? '>))
@@ -658,7 +670,7 @@
 
 ;; test helpers
 ;; ------------
-(define (test-parse rule str)
+#;(define (test-parse rule str)
   (define next-token (make-test-tokenizer (open-input-string str)))
   (set! list-of-tokens (get-all-tokens next-token (next-token) '()))
   ;(display list-of-tokens)
