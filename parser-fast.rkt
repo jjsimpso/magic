@@ -15,6 +15,7 @@
 ;;   limitations under the License.
 
 (require brag/support)
+(require racket/match)
 
 (provide parse
          parse-to-datum)
@@ -23,10 +24,15 @@
 
 (define list-of-tokens '())
 
-(struct exn:parse-error exn:fail ())
+(struct exn:parse-error exn:fail (err-srcloc)
+  #:property prop:exn:srclocs
+  (lambda (a-struct)
+    (match a-struct
+      [(exn:parse-error msg marks err-srcloc)
+       (list err-srcloc)])))
 
-(define (make-parse-error message)
-  (exn:parse-error message (current-continuation-marks)))
+(define (make-parse-error message err-srcloc)
+  (exn:parse-error message (current-continuation-marks) err-srcloc))
 
 ;; helper functions
 ;; ----------------
@@ -34,6 +40,9 @@
 (define (peek-token)
   (and (not (null? list-of-tokens))
        (car list-of-tokens)))
+
+(define (token-ref index)
+  (list-ref list-of-tokens index))
 
 (define (pop-token)
   (define tkn (peek-token))
@@ -108,10 +117,10 @@
                                       #f)])
     (rule-func)))
 
-(define (parse-error str)
+(define (parse-error str [err-srcloc (srcloc #f #f #f #f #f)])
   ;(eprintf str)
   ;(eprintf "~n")
-  (raise (make-parse-error str)))
+  (raise (make-parse-error str err-srcloc)))
 
 ;; read all the tokens from the function token-source and return a list of tokens
 (define (get-all-tokens token-source next-token tokens)
@@ -128,10 +137,7 @@
   (if (procedure? token-source)
       (set! list-of-tokens (get-all-tokens token-source (token-source) '()))
       (set! list-of-tokens token-source))
-  (with-handlers ([exn:parse-error? (lambda (exn) 
-                                      (eprintf "magic parse error: ~a~n" (exn-message exn))
-                                      #f)])
-    (magic)))
+    (magic))
 
 (define parse-to-datum
   (case-lambda
@@ -154,9 +160,13 @@
            (next-token-eq? 'MIME))
        (pop-token)
        (loop magic-stx)]
+      [(token-eq? (token-ref 2) 'name)
+       (define q (named-query))
+       (if (syntax? q)
+           (loop #`(#,@magic-stx #,q))
+           (parse-error "magic: syntax error"))]
       [else
-       (define q (or (try-rule query)
-                     (try-rule named-query)))
+       (define q (query))
        (if (syntax? q)
            (loop #`(#,@magic-stx #,q))
            (parse-error "magic: syntax error"))])))
@@ -425,12 +435,21 @@
   #`(memvalue #,(token-val value-tkn)))
 
 (define (type)
-  #`(type #,(or (try-rule numeric)
-                (try-rule strtype)
-                (try-rule default)
-                (try-rule use)
-                (try-rule indirect)
-                (parse-error "type: syntax error"))))
+  (define (dispatch-type)
+    ;(eprintf "dispatching on token ~a~n" (peek-token))
+    (case (token-type (peek-token))
+      [(u byte short beshort leshort long lelong belong melong quad lequad bequad float befloat lefloat double bedouble ledouble
+          date bedate ledate medate ldate beldate leldate meldate qdate leqdate beqdate qldate leqldate beqldate qwdate leqwdate beqwdate)
+       (numeric)]
+      [(regex search string lestring16 bestring16 pstring)
+       (strtype)]
+      [(default) (default)]
+      [(use) (use)]
+      [(indirect) (indirect)]
+      [else
+       (parse-error "type: unknown type" (srcloc-token-srcloc (peek-token)))]))
+  
+  #`(type #,(dispatch-type)))
 
 (define (numeric)
   (define unsigned? (next-token-eq? 'u))
@@ -458,12 +477,19 @@
       (parse-error "nummask: syntax error")))
 
 (define (strtype)
-  (or (try-rule string8)
-      (try-rule search)
-      (try-rule regex)
-      (try-rule string16)
-      (try-rule pstring)
-      (parse-error "strtype: syntax error")))
+  (cond
+    [(next-token-eq? 'string)
+     (string8)]
+    [(next-token-eq? 'search)
+     (search)]
+    [(next-token-eq? 'regex) (regex)]
+    [(or (next-token-eq? 'lestring16)
+         (next-token-eq? 'bestring16))
+     (string16)]
+    [(next-token-eq? 'pstring)
+     (pstring)]
+    [else
+      (parse-error "strtype: syntax error")]))
 
 (define (string8)
   (define tkn (pop-token))
@@ -583,9 +609,9 @@
                 [(next-token-eq? 'HWS)
                  #`(pstring "pstring" (pstrflag #,(token-val tkn)))]
                 [else
-                 (parse-error "pstring: only 'J' is allowed for second flag")])]
+                 (parse-error "pstring: only 'J' is allowed for second flag" (srcloc-token-srcloc (peek-token)))])]
              [else
-              (parse-error "pstring: expected flag")]))
+              (parse-error "pstring: expected flag" (srcloc-token-srcloc tkn))]))
          #'(pstring "pstring"))
       (parse-error "pstring: expected 'pstring'")))
 
@@ -593,13 +619,13 @@
   (define tkn (pop-token))
   (if (token-eq? tkn 'default)
       #'(default "default")
-      (parse-error "default: syntax error")))
+      (parse-error "default: syntax error" (srcloc-token-srcloc tkn))))
 
 (define (use)
   (define tkn (pop-token))
   (if (token-eq? tkn 'use)
       #'(use "use")
-      (parse-error "use: syntax error")))
+      (parse-error "use: syntax error" (srcloc-token-srcloc tkn))))
 
 (define (indirect)
   (define tkn (pop-token))
@@ -609,11 +635,11 @@
      (pop-token)
      (if (token-eq? (pop-token) 'r)
          #'(indirect "indirect" "r")
-         (parse-error "indirect: expected 'r'"))]
+         (parse-error "indirect: expected 'r'" (srcloc-token-srcloc tkn)))]
     [(token-eq? tkn 'indirect)
      #'(indirect "indirect")]
     [else
-      (parse-error "indirect: syntax error")]))
+      (parse-error "indirect: syntax error" (srcloc-token-srcloc tkn))]))
 
 (define (test)
   #`(test #,(or (try-rule numtest)
