@@ -517,8 +517,8 @@
            (loop (pop-token)
                  #`(#,@flags (strflag #,(token-val tkn))))]
           [else
-           (parse-error "strflags: bogus flag")]))
-      (parse-error "strflags: missing flag")))
+           (parse-error "string: invalid flag" (srcloc-token-srcloc tkn))]))
+      (parse-error "string: missing or invalid flag" (srcloc-token-srcloc (peek-token)))))
 
 (define (search)
   (if (token-eq? (pop-token) 'search)
@@ -539,10 +539,10 @@
                        (pop-token))
                   (if (next-token-eq? 'INTEGER)
                       #`(search (srchcnt #,(token-val (pop-token))) #,@flags)
-                      (parse-error "search: expected integer"))
+                      (parse-error "search: expected integer" (srcloc-token-srcloc (peek-token))))
                   #`(search #,@flags))]
              [else
-              (parse-error "search: expected flag or count")]))
+              (parse-error "search: expected flag or count" (srcloc-token-srcloc tkn))]))
          #'(search))
       (parse-error "search: expected 'search'")))
 
@@ -567,7 +567,7 @@
            (push-token tkn)
            #`(regex)]
           [else
-           (parse-error "regex: syntax error")]))
+           (parse-error "regex: syntax error" (srcloc-token-srcloc tkn))]))
       (parse-error "regex: expected 'regex'")))
 
 (define (regflags)
@@ -583,15 +583,15 @@
            (loop (pop-token)
                  #`(#,@flags (regflag #,(token-val tkn))))]
           [else
-           (parse-error "regflags: bogus flag")]))
-      (parse-error "regflags: missing flag")))
+           (parse-error "regex: invalid flag" (srcloc-token-srcloc tkn))]))
+      (parse-error "regex: missing or invalid flag" (srcloc-token-srcloc (peek-token)))))
 
 (define (string16)
   (define tkn (pop-token))
   (if (or (token-eq? tkn 'bestring16)
           (token-eq? tkn 'lestring16))
       #`(string16 #,(token-val tkn))
-      (parse-error "string16: syntax error")))
+      (parse-error "string16: expected 'bestring16' or 'lestring16'" (srcloc-token-srcloc tkn))))
 
 (define (pstring)
   (if (token-eq? (pop-token) 'pstring)
