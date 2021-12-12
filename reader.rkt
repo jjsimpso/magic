@@ -72,6 +72,9 @@
 (define-lex-abbrev sign-specifier (:= 1 (char-set ".,")))
 (define-lex-abbrev size-specifier (:= 1 (char-set "bBcCshSHlLm")))
 
+(define (lexer-error)
+  (token 'lexer-error "lexer error"))
+
 (define (raw-string-to-racket s)
   ;(string-replace s "\\0" "\u0000"))
   ; convert raw string bytes to racket unicode representation
@@ -261,7 +264,8 @@
       (token lexeme lexeme))]
    [unsupported-type
     (begin
-      (error (format "Unsupported type \"~a\" on line ~a in ~a" lexeme (line lexeme-start) (lexer-file-path))))]))
+      (error (format "Unsupported type \"~a\" on line ~a in ~a" lexeme (line lexeme-start) (lexer-file-path))))]
+   [any-char (lexer-error)]))
 
 (define lexer-string-flags
   (lexer-srcloc
@@ -273,7 +277,8 @@
       (if (or (char=? next-char #\<) (char=? next-char #\>) (char=? next-char #\=) (char=? next-char #\!))
           (set! current-lexer lexer-test-string-compare)
           (set! current-lexer lexer-test-string))
-      (token 'HWS #:skip? #f))]))
+      (token 'HWS #:skip? #f))]
+   [any-char (lexer-error)]))
 
 (define lexer-search-flags
   (lexer-srcloc
@@ -286,7 +291,8 @@
       ;; discard the initial '=' character in search or regex test values
       (when (char=? next-char #\=) (read-char input-port))
       (set! current-lexer lexer-test-string)
-      (token 'HWS #:skip? #f))]))
+      (token 'HWS #:skip? #f))]
+   [any-char (lexer-error)]))
 
 (define lexer-pre-name
   (lexer-srcloc
@@ -321,7 +327,8 @@
    [hws
     (begin
       (set! current-lexer lexer-test)
-      (token 'HWS #:skip? #f))]))
+      (token 'HWS #:skip? #f))]
+   [any-char (lexer-error)]))
 
 (define lexer-op-argument
   (lexer-srcloc
@@ -332,7 +339,8 @@
     (begin
       (set! current-lexer lexer-test)
       (print-debug "lexer-op-argument jumping to lexer-test~n")
-      (token 'HWS #:skip? #f))]))
+      (token 'HWS #:skip? #f))]
+   [any-char (lexer-error)]))
 
 ;; includes all the non string types
 (define lexer-test
@@ -354,7 +362,8 @@
    [hws 
     (begin
       (set! current-lexer lexer-message)
-      (token 'HWS #:skip? #f))]))
+      (token 'HWS #:skip? #f))]
+   [any-char (lexer-error)]))
 
 ;; get comparison operator
 (define lexer-test-string-compare
