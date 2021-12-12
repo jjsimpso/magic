@@ -19,7 +19,8 @@
 (require syntax/stx)
 (require racket/string)
 
-(require "parser.rkt")
+(require "parser-fast.rkt")
+;(require "parser.rkt")
 (require "output.rkt")
 
 (provide magic-read-syntax)
