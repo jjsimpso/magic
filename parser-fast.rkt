@@ -401,7 +401,7 @@
     [(.m) #`(size (melong #,(token-val tkn)))]
     [(|,m|) #`(size (umelong #,(token-val tkn)))]
     [else
-     (parse-error "size: syntax error")]))
+     (parse-error "size: invalid size specifier" (srcloc-token-srcloc tkn))]))
 
 (define (op)
   (define invert? (next-token-eq? '~))
@@ -411,7 +411,7 @@
         (if invert?
             #`(op (invert "~") #,(token-val op-tkn))
             #`(op #,(token-val op-tkn))))
-      (parse-error "op: syntax error")))
+      (parse-error "op: invalid operator" (srcloc-token-srcloc (peek-token)))))
 
 (define (disp)
   (if (token-eq? (peek-token) '\()
@@ -419,7 +419,7 @@
       (let ([tkn (pop-token)])
         (if (token-eq? tkn 'INTEGER)
             #`(disp #,(token-val tkn))
-            (parse-error "disp: expected integer")))))
+            (parse-error "disp: expected integer" (srcloc-token-srcloc tkn))))))
 
 (define (memvalue)
   (unless (token-eq? (pop-token) '\()
@@ -427,7 +427,7 @@
 
   (define value-tkn (pop-token))
   (unless (token-eq? value-tkn 'INTEGER)
-    (parse-error "memvalue: expected integer"))
+    (parse-error "memvalue: expected integer" (srcloc-token-srcloc value-tkn)))
   
   (unless (token-eq? (pop-token) '\))
     (parse-error "memvalue: missing '('"))
@@ -463,7 +463,7 @@
            #`(numeric "u" #,(token-val tkn))
            #`(numeric #,(token-val tkn)))]
       [else
-       (parse-error "numeric: syntax error")]))
+       (parse-error "numeric: syntax error" (srcloc-token-srcloc tkn))]))
   (define nummask? (op-token? (peek-token)))
   (if nummask?
       #`(#,@stx #,(nummask))
@@ -474,7 +474,7 @@
   (if (and operator
            (next-token-eq? 'INTEGER))
       #`(nummask #,operator #,(token-val (pop-token)))
-      (parse-error "nummask: syntax error")))
+      (parse-error "nummask: expected integer" (srcloc-token-srcloc (peek-token)))))
 
 (define (strtype)
   (cond
@@ -489,7 +489,7 @@
     [(next-token-eq? 'pstring)
      (pstring)]
     [else
-      (parse-error "strtype: syntax error")]))
+      (parse-error "strtype: syntax error" (srcloc-token-srcloc (peek-token)))]))
 
 (define (string8)
   (define tkn (pop-token))
@@ -501,7 +501,7 @@
     [(token-eq? tkn 'string)
      #'(string8 "string")]
     [else
-      (parse-error "string8: syntax error")]))
+      (parse-error "string: syntax error" (srcloc-token-srcloc tkn))]))
 
 (define (strflags)
   (if (strflag-token? (peek-token))
