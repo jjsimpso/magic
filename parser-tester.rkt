@@ -17,7 +17,7 @@
 (require brag/support)
 
 (require "reader.rkt")
-(require "parser.rkt")
+(require "parser-fast.rkt")
 
 (require magic/output)
 (set-magic-verbosity! 'debug)
@@ -29,7 +29,7 @@
   ;"0	beshort	0x0206	ALAN game data\n>2	short	<10	version 2.6%d\n\n0	ubyte    >0	\n")
   ;"0           string  MZ\n>0x18       leshort <0x40   MZ executable (MS-DOS)\n>0x18       leshort >0x3f\n>>(0x3c.l)  string  PE\\0\\0  PE executable (MS-Windows)\n0	beshort	0x0206	ALAN game data\n")
   ;"(4.s)    leshort 0x014c  COFF executable (MS-DOS, DJGPP)\n")
-  "(4.s*512) leshort !0x014c MZ executable (MS-DOS)\n")
+  ;"(4.s*512) leshort !0x014c MZ executable (MS-DOS)\n")
   ;"&(0x3c.l)       leshort 0x14c   for Intel 80386\n")
   ;"3    regex/12/csl    =[0-9]{1,50}\\ [0-9]{1,50}	Netpbm image data\n")
   ;"0	regex/100l	\\^CFLAGS	makefile script text\n")
@@ -59,7 +59,7 @@
   ;"12  beshort >1\n")
   ;"2	pstring/HJ	x		\b, comment: \"%s\"\n")
   ;"(2.S+2)	use	jpeg_segment\n")
-  ;"(&0x10,l+(-4)) 	string		PK\3\4 \b, ZIP self-extracting archive (Info-Zip)\n")
+  "(&0x10,l+(-4)) 	string		PK\3\4 \b, ZIP self-extracting archive (Info-Zip)\n")
   ;"4	uleshort&0x4842			>0			support\n")
   ;"0       name   	msdos-driver	DOS executable\n")
   ;"&-4	    indirect/r	x	\\b with\n")
@@ -72,8 +72,10 @@
   ;"(16.l)	use		zipcd\n")
   ;"&0			use 		help-ver-date\n")
 )
+
 #;
-(parse-to-datum
+(parse
+ #f
  (make-tokenizer
   (open-input-string "\n\n2	short	<10	version 2.6%d\n")))
 
