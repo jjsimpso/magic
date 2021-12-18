@@ -642,11 +642,31 @@
       (parse-error "indirect: syntax error" (srcloc-token-srcloc tkn))]))
 
 (define (test)
-  #`(test #,(or (try-rule numtest)
-                (try-rule strtest)
-                (try-rule truetest)
-                (try-rule use-name)
-                (parse-error "test: syntax error"))))
+  (define (dispatch-test)
+    (define tkn (peek-token))
+    ;(eprintf "dispatching on token ~a~n" tkn)
+    (cond
+      [(token-eq? tkn 'INTEGER)
+       (numtest)]
+      [(token-eq? tkn 'STRING)
+       (strtest)]
+      [(compare-token? tkn)
+       (define tkn2 (token-ref 1))
+       (cond
+         [(token-eq? tkn2 'INTEGER)
+          (numtest)]
+         [(token-eq? tkn2 'STRING)
+          (strtest)]
+         [else
+          (parse-error "test: expected integer or string" (srcloc-token-srcloc tkn2))])]
+      [(token-eq? tkn 'x)
+       (truetest)]
+      [(token-eq? tkn 'MAGIC-NAME)
+       (use-name)]
+      [else
+       (parse-error "test: syntax error" (srcloc-token-srcloc tkn))]))
+  
+  #`(test #,(dispatch-test)))
 
 (define (numtest)
   (define tkn (pop-token))
