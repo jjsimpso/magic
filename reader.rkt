@@ -171,7 +171,8 @@
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [any-char (lexer-error)]))
 
 (define lexer-indirect-offset
   (lexer-srcloc
@@ -186,7 +187,8 @@
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [any-char (lexer-error)]))
 
 (define lexer-indirect-offset-op
   (lexer-srcloc
@@ -200,7 +202,8 @@
       (token lexeme lexeme))]
    [op (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [any-char (lexer-error)]))
 
 (define lexer-nested-indirect-offset
   (lexer-srcloc
@@ -210,7 +213,8 @@
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]))
+   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [any-char (lexer-error)]))
 
 (define lexer-type
   (lexer-srcloc
@@ -299,7 +303,8 @@
    [hws
     (begin
       (set! current-lexer lexer-name)
-      (token 'HWS #:skip? #f))]))
+      (token 'HWS #:skip? #f))]
+   [any-char (lexer-error)]))
 
 (define lexer-name
   (lexer-srcloc

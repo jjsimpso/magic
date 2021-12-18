@@ -280,13 +280,13 @@
 (define (name-line)
   (define o (offset))
   (unless (token-eq? (pop-token) 'HWS)
-    (parse-error "name-line: expected HWS after offset"))
+    (parse-error "name line: expected HWS after offset"))
   (define typ (name-type))
   (unless (token-eq? (pop-token) 'HWS)
-    (parse-error "name-line: expected HWS after type"))
+    (parse-error "name line: expected HWS after \"name\""))
   (define name-tkn (pop-token))
   (unless (token-eq? name-tkn 'MAGIC-NAME)
-    (parse-error "name-line: expected MAGIC NAME"))
+    (parse-error "name line: expected MAGIC NAME" (srcloc-token-srcloc name-tkn)))
   (cond
     [(next-token-eq? 'HWS)
      (pop-token)
@@ -299,54 +299,54 @@
                (begin
                  (pop-token)
                  #`(name-line #,o #,typ #,(token-val name-tkn) #,msg))
-               (parse-error "name-line: expected end-of-line"))))]
+               (parse-error "name line: expected end-of-line" (srcloc-token-srcloc (peek-token))))))]
     [(next-token-eq? 'EOL)
      (pop-token)
      #`(name-line #,o #,typ #,(token-val name-tkn))]
     [else
-     (parse-error "name-line: syntax error")]))
+     (parse-error "name line: syntax error" (srcloc-token-srcloc (peek-token)))]))
 
 (define (name-type)
   (define tkn (pop-token))
   (if (token-eq? tkn 'name)
       #'(name-type "name")
-      (parse-error "name-type: syntax error")))
+      (parse-error "name type: syntax error" (srcloc-token-srcloc tkn))))
 
 (define (offset)
   (define tkn (pop-token))
   (cond
     [(token-eq? tkn 'INTEGER)
      #`(offset #,(token-val tkn))]
-    [(token-eq? tkn '&)
-     (push-token tkn)
-     #`(offset #,(or (try-rule reloffset)
-                     (try-rule relindoff)
-                     (parse-error "offset: syntax error after '&'")))]
-
     [(token-eq? tkn '\()
      (push-token tkn)
      #`(offset #,(indoff))]
+    [(and (token-eq? tkn '&) (next-token-eq? '\())
+     (push-token tkn)
+     #`(offset #,(relindoff))]
+    [(token-eq? tkn '&)
+     (push-token tkn)
+     #`(offset #,(reloffset))]
     [else
-     (parse-error "offset: syntax error")]))
+     (parse-error "offset: syntax error" (srcloc-token-srcloc tkn))]))
 
 (define (reloffset)
   (unless (token-eq? (pop-token) '&)
-    (parse-error "reloffset: missing '&'"))
+    (parse-error "relative offset: missing '&'"))
   (define tkn (pop-token))
   (cond
     [(eq? (token-type tkn) 'INTEGER)
      #`(reloffset #,(token-val tkn))]
     [else
-     (parse-error "reloffset: syntax error")]))
+     (parse-error "relative offset: expected integer" (srcloc-token-srcloc tkn))]))
 
 (define (relindoff)
   (unless (token-eq? (pop-token) '&)
-    (parse-error "reloffset: missing '&'"))
+    (parse-error "relative indirect offset: missing '&'"))
   #`(relindoff #,(indoff)))
 
 (define (indoff)
   (unless (token-eq? (pop-token) '\()
-    (parse-error "indoff: missing '('"))
+    (parse-error "indirect offset: missing '('"))
   (define tkn (pop-token))
   (define offset1
     (cond
@@ -356,7 +356,7 @@
        (push-token tkn)
        #`#,(reloffset)]
       [else
-       (parse-error "offset1: syntax error")]))
+       (parse-error "indirect offset: expected integer or '&'" (srcloc-token-srcloc tkn))]))
 
   (define sz
     (if (size-token? (peek-token))
@@ -375,7 +375,7 @@
   
   ;; consume closing ')'
   (unless (token-eq? (pop-token) '\))
-    (parse-error "indoff: missing ')'"))
+    (parse-error "indirect offset: missing ')'"))
   
   (cond
     [displacement
