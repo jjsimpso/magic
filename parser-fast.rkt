@@ -346,7 +346,7 @@
 
 (define (indoff)
   (unless (token-eq? (pop-token) '\()
-    (parse-error "indirect offset: missing '('"))
+    (parse-error "indirect offset: missing '('" (srcloc-token-srcloc (peek-token)))) ; rough estimate of position
   (define tkn (pop-token))
   (define offset1
     (cond
@@ -375,7 +375,7 @@
   
   ;; consume closing ')'
   (unless (token-eq? (pop-token) '\))
-    (parse-error "indirect offset: missing ')'"))
+    (parse-error "indirect offset: missing ')'" (srcloc-token-srcloc (peek-token)))) ; rough estimate of position
   
   (cond
     [displacement
@@ -510,7 +510,10 @@
         (cond
           [(or (token-eq? tkn 'HWS)
                ; add check for / token for now, but only needed by search type and may lead to poor error messages
-               (token-eq? tkn '/))
+               (token-eq? tkn '/)
+               ; also add check for integer. i'm not sure how well defined this is, but search at least can
+               ; have an integer immediately after the flags(without a '/' between the flags and integer)
+               (token-eq? tkn 'INTEGER))
            (push-token tkn)
            flags]
           [(strflag-token? tkn)
@@ -535,12 +538,16 @@
              [(strflag-token? tkn)
               (push-token tkn)
               (define flags (strflags))
-              (if (and (next-token-eq? '/)
-                       (pop-token))
+              (cond
+                [(next-token-eq? '/)
+                 (pop-token)
                   (if (next-token-eq? 'INTEGER)
                       #`(search (srchcnt #,(token-val (pop-token))) #,@flags)
-                      (parse-error "search: expected integer" (srcloc-token-srcloc (peek-token))))
-                  #`(search #,@flags))]
+                      (parse-error "search: expected integer" (srcloc-token-srcloc (peek-token))))]
+                [(next-token-eq? 'INTEGER)
+                 #`(search (srchcnt #,(token-val (pop-token))) #,@flags)]
+                [else
+                 #`(search #,@flags)])]
              [else
               (parse-error "search: expected flag or count" (srcloc-token-srcloc tkn))]))
          #'(search))
