@@ -246,12 +246,17 @@
                  (next-token-eq? 'HWS)
                  (pop-token))
             (let ([tst (test)])
+              ;; optional message after test
+              (when (next-token-eq? 'HWS)
+                (pop-token)
+                (when (next-token-eq? 'STRING)
+                  (pop-token)))
               (unless (token-eq? (pop-token) 'EOL)
-                (parse-error "clear-line: expected end-of-line"))
+                (parse-error "clear-line: expected end-of-line" (srcloc-token-srcloc (peek-token))))
               #`(clear-line #,o "clear" #,tst))
             (begin
               (unless (token-eq? (pop-token) 'EOL)
-                (parse-error "clear-line: expected end-of-line"))
+                (parse-error "clear-line: expected end-of-line" (srcloc-token-srcloc (peek-token))))
               #`(clear-line #,o "clear"))))
       ;; standard line
       (let ([typ (type)])
