@@ -364,6 +364,10 @@
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
    [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq digits "." digits (:? (:seq (:or "e" "E")
+                                      (:? (:or "+" "-"))
+                                      digits)))
+    (token 'FLOAT (string->number lexeme))]
    [eol
     (begin
       (print-debug "lexer-test newline found~n")

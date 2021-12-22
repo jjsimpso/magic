@@ -280,7 +280,7 @@
              (pop-token)
              #`(line #,o #,typ #,tst)]
             [else
-             (parse-error "line: syntax error")])))))
+             (parse-error "line: syntax error" (srcloc-token-srcloc (peek-token)))])))))
 
 (define (name-line)
   (define o (offset))
@@ -658,14 +658,16 @@
     (define tkn (peek-token))
     ;(eprintf "dispatching on token ~a~n" tkn)
     (cond
-      [(token-eq? tkn 'INTEGER)
+      [(or (token-eq? tkn 'INTEGER)
+           (token-eq? tkn 'FLOAT))
        (numtest)]
       [(token-eq? tkn 'STRING)
        (strtest)]
       [(compare-token? tkn)
        (define tkn2 (token-ref 1))
        (cond
-         [(token-eq? tkn2 'INTEGER)
+         [(or (token-eq? tkn2 'INTEGER)
+              (token-eq? tkn2 'FLOAT))
           (numtest)]
          [(token-eq? tkn2 'STRING)
           (strtest)]
@@ -683,13 +685,15 @@
 (define (numtest)
   (define tkn (pop-token))
   (cond
-    [(token-eq? tkn 'INTEGER)
+    [(or (token-eq? tkn 'INTEGER)
+         (token-eq? tkn 'FLOAT))
      #`(numtest #,(token-val tkn))]
     [(and (compare-token? tkn)
-          (next-token-eq? 'INTEGER))
+          (or (next-token-eq? 'INTEGER)
+              (next-token-eq? 'FLOAT)))
      #`(numtest #,(token-val tkn) #,(token-val (pop-token)))]
     [else
-     (parse-error "numtest: syntax error")]))
+     (parse-error "numtest: syntax error" (srcloc-token-srcloc tkn))]))
 
 (define (strtest)
   (define tkn (pop-token))
@@ -700,26 +704,26 @@
           (next-token-eq? 'STRING))
      #`(strtest #,(token-val tkn) #,(token-val (pop-token)))]
     [else
-     (parse-error "strtest: syntax error")]))
+     (parse-error "strtest: syntax error" (srcloc-token-srcloc tkn))]))
 
 ;; currently unused. rolled into numtest and strtest
 (define (compare)
   (define tkn (pop-token))
   (if (compare-token? tkn)
       #`#,(token-val tkn)
-      (parse-error "compare: syntax error")))
+      (parse-error "compare: syntax error" (srcloc-token-srcloc tkn))))
 
 (define (truetest)
   (define tkn (pop-token))
   (if (token-eq? tkn 'x)
       #'(truetest "x")
-      (parse-error "truetest: expected 'x'")))
+      (parse-error "truetest: expected 'x'" (srcloc-token-srcloc tkn))))
 
 (define (use-name)
   (define tkn (pop-token))
   (if (token-eq? tkn 'MAGIC-NAME)
       #`(use-name #,(token-val tkn))
-      (parse-error "use-name: expected MAGIC-NAME token")))
+      (parse-error "use-name: expected MAGIC-NAME token" (srcloc-token-srcloc tkn))))
 
 (define (message)
   (define tkn (pop-token))
@@ -727,7 +731,7 @@
     [(token-eq? tkn 'STRING)
      #`(message #,(token-val tkn))]
     [else
-     (parse-error "message: syntax error")]))
+     (parse-error "message: syntax error" (srcloc-token-srcloc tkn))]))
 
 ;; test helpers
 ;; ------------

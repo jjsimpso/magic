@@ -72,10 +72,11 @@
   ;"(16.l)	use		zipcd\n")
   ;"&0			use 		help-ver-date\n")
   ;"&1	search/b5	\x64\n")
-  ;&(&-0x4)	lelong	  >0			SAMtools BCF (Binary Call Format)\n")
-  "0	ustring		\xFD7zXZ\x00		XZ compressed data\n")
+  ;"&(&-0x4)	lelong	  >0			SAMtools BCF (Binary Call Format)\n")
+  ;"0	ustring		\xFD7zXZ\x00		XZ compressed data\n")
   ;"(0x0118-0x0FF60)    ulelong&0x80000007  !0x80000007\n")
   ;"0	regex	\\^[[:space:]]*class[[:space:]]+[[:digit:][:alpha:]:_]+[[:space:]]*\\\\{(.*[\\n]*)*\\\\}(;)?$		C++ source text\n")
+  "10	bedouble	8.642135e+130	big-endian\n")
 )
 
 #;
