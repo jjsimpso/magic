@@ -446,7 +446,7 @@
       [(u byte short beshort leshort long lelong belong melong quad lequad bequad float befloat lefloat double bedouble ledouble
           date bedate ledate medate ldate beldate leldate meldate qdate leqdate beqdate qldate leqldate beqldate qwdate leqwdate beqwdate)
        (numeric)]
-      [(regex search string lestring16 bestring16 pstring)
+      [(regex search string lestring16 bestring16 pstring ustring)
        (strtype)]
       [(default) (default)]
       [(use) (use)]
@@ -493,17 +493,22 @@
      (string16)]
     [(next-token-eq? 'pstring)
      (pstring)]
+    ;; treat ustring identically to string8
+    [(next-token-eq? 'ustring)
+     (string8)]
     [else
       (parse-error "strtype: syntax error" (srcloc-token-srcloc (peek-token)))]))
 
 (define (string8)
   (define tkn (pop-token))
   (cond
-    [(and (token-eq? tkn 'string)
+    [(and (or (token-eq? tkn 'string)
+              (token-eq? tkn 'ustring))
           (next-token-eq? '/))
      (pop-token)
      #`(string8 "string" #,@(strflags))]
-    [(token-eq? tkn 'string)
+    [(or (token-eq? tkn 'string)
+         (token-eq? tkn 'ustring))
      #'(string8 "string")]
     [else
       (parse-error "string: syntax error" (srcloc-token-srcloc tkn))]))
