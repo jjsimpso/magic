@@ -194,6 +194,11 @@
  (magic-result-output-text (with-input-from-file "Makefile" regex-query)) 
  "makefile script text ")
 
+(with-input-from-file "foo.cpp" regex-query)
+(check-equal? 
+ (magic-result-output-text (with-input-from-file "foo.cpp" regex-query)) 
+ "C++ source text ")
+
 (with-input-from-file "wizwar.lnk" date-query)
 (check-equal? 
  (magic-result-output-text (with-input-from-file "wizwar.lnk" date-query))
@@ -220,7 +225,7 @@
  "JPEG image data \b, JFIF standard \b 1. \b01 \b, aspect ratio \b, density 1x \b1 \b, segment length 16 \b, comment: \"CREATOR: XV Version 3.10-PCD-Magic2  Rev: 2/Dec/96  Quality = 95, Smoothing = 0\n\" \b, baseline, precision 8 \b, 1152x \b900 \b, frames 3 ")
 
 ;; remove from tests since PAK0.PAK is 18MB in size
-;(with-input-from-file "PAK0.PAK" quake-query)
+(with-input-from-file "PAK0.PAK" quake-query)
 
 (with-input-from-file "ansi.zip" debugtest-query)
 (check-equal? 

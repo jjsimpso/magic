@@ -26,3 +26,5 @@
 >>>0	string		x	\b, rawbits, pixmap
 
 0	regex/100l	\^CFLAGS	makefile script text
+
+0	regex	\^[[:space:]]*class[[:space:]]+[[:digit:][:alpha:]:_]+[[:space:]]*\\{(.*[\n]+|.+)*\\}(;)?$		C++ source text

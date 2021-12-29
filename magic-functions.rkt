@@ -618,15 +618,13 @@
 
 (define (build-regex-compare-func compare-regex ci-flag? start-flag? line-flag?)
   (define re-str
+    ;; wrap mode setting(s) around regex
+    ;; all regex's will be run in multi-line mode
     (cond
-      [(and line-flag? ci-flag?)
-       (string-append "(?m:" "(?i:" compare-regex ")" ")")]
-      [line-flag?
-       (string-append "(?m:" compare-regex ")")]
       [ci-flag?
-       (string-append "(?i:" compare-regex ")")]
+        (string-append "(?m:" "(?i:" compare-regex ")" ")")]
       [else
-       compare-regex]))
+       (string-append "(?m:" compare-regex ")")]))
   
   (define re (pregexp re-str (lambda (emsg) #f)))
 
