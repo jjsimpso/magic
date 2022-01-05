@@ -55,6 +55,7 @@
 (define-lex-abbrev eol (:+ "\n"))
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 (define-lex-abbrev hex-digits (:+ (char-set "0123456789abcdefABCDEF")))
+(define-lex-abbrev hex-prefix (:or "0x" "0X"))
 (define-lex-abbrev op (:= 1 (char-set "<>=&^!+-*/%|")))
 (define-lex-abbrev num-compare-op (:= 1 (char-set "<>=&^!")))
 (define-lex-abbrev paren (:= 1 (char-set "()")))
@@ -171,8 +172,8 @@
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   [(:seq "-0x" hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
 
 (define lexer-indirect-offset
@@ -188,8 +189,8 @@
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   [(:seq "-0x" hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
 
 (define lexer-indirect-offset-op
@@ -205,8 +206,8 @@
    [op (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
    ;[(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   ;[(:seq "-0x" hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   ;[(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
 
 (define lexer-nested-indirect-offset
@@ -217,8 +218,8 @@
       (token lexeme lexeme))]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   [(:seq "-0x" hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
 
 (define lexer-type
@@ -293,7 +294,7 @@
   (lexer-srcloc
    ["/" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [search-flag (token lexeme lexeme)]
    [hws
     (let ([next-char (peek-char input-port)])
@@ -344,7 +345,7 @@
   (lexer-srcloc
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [hws
     (begin
       (set! current-lexer lexer-test)
@@ -363,7 +364,8 @@
    ["x" (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq "0x" hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [(:seq digits "." digits (:? (:seq (:or "e" "E")
                                       (:? (:or "+" "-"))
                                       digits)))
