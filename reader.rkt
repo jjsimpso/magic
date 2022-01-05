@@ -362,10 +362,18 @@
     (token (substring lexeme 0 1) (substring lexeme 0 1))]
    [num-compare-op (token lexeme lexeme)]
    ["x" (token lexeme lexeme)]
-   [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
-   [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
-   [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
+   [digits
+    (token 'INTEGER (string->number lexeme))]
+   [(:seq "-" digits)
+    (token 'INTEGER (string->number lexeme))]
+   [(:seq hex-prefix hex-digits)
+    (token 'INTEGER (string->number (substring lexeme 2) 16))]
+   [(:seq hex-prefix hex-digits (:or "l" "L"))
+    (token 'INTEGER (string->number (substring lexeme 2 (sub1 (string-length lexeme))) 16))]
+   [(:seq "-" hex-prefix hex-digits)
+    (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
+   [(:seq "-" hex-prefix hex-digits (:or "l" "L"))
+    (token 'INTEGER (- (string->number (substring lexeme 3 (sub1 (string-length lexeme))) 16)))]
    [(:seq digits "." digits (:? (:seq (:or "e" "E")
                                       (:? (:or "+" "-"))
                                       digits)))
