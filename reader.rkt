@@ -170,8 +170,7 @@
     (begin
       (set! current-lexer lexer-indirect-offset)
       (token lexeme lexeme))]
-   [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq (:? "-") digits) (token 'INTEGER (string->number lexeme))]
    [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
@@ -187,8 +186,7 @@
     (begin
       (set! current-lexer lexer-indirect-offset-op)
       (token lexeme lexeme))]
-   [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq (:? "-") digits) (token 'INTEGER (string->number lexeme))]
    [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
@@ -216,8 +214,7 @@
     (begin
       (set! current-lexer lexer-indirect-offset)
       (token lexeme lexeme))]
-   [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq (:? "-") digits) (token 'INTEGER (string->number lexeme))]
    [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [(:seq "-" hex-prefix hex-digits) (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
    [any-char (lexer-error)]))
@@ -343,8 +340,7 @@
 
 (define lexer-op-argument
   (lexer-srcloc
-   [digits (token 'INTEGER (string->number lexeme))]
-   [(:seq "-" digits) (token 'INTEGER (string->number lexeme))]
+   [(:seq (:? "-") digits) (token 'INTEGER (string->number lexeme))]
    [(:seq hex-prefix hex-digits) (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [hws
     (begin
@@ -362,21 +358,19 @@
     (token (substring lexeme 0 1) (substring lexeme 0 1))]
    [num-compare-op (token lexeme lexeme)]
    ["x" (token lexeme lexeme)]
-   [digits
-    (token 'INTEGER (string->number lexeme))]
-   [(:seq "-" digits)
+   [(:seq (:? "-") digits)
     (token 'INTEGER (string->number lexeme))]
    [(:seq hex-prefix hex-digits)
     (token 'INTEGER (string->number (substring lexeme 2) 16))]
    [(:seq hex-prefix hex-digits (:or "l" "L"))
     (token 'INTEGER (string->number (substring lexeme 2 (sub1 (string-length lexeme))) 16))]
-   [(:seq "-" hex-prefix hex-digits)
+   #;[(:seq "-" hex-prefix hex-digits)
     (token 'INTEGER (- (string->number (substring lexeme 3) 16)))]
-   [(:seq "-" hex-prefix hex-digits (:or "l" "L"))
+   #;[(:seq "-" hex-prefix hex-digits (:or "l" "L"))
     (token 'INTEGER (- (string->number (substring lexeme 3 (sub1 (string-length lexeme))) 16)))]
-   [(:seq digits "." digits (:? (:seq (:or "e" "E")
-                                      (:? (:or "+" "-"))
-                                      digits)))
+   [(:seq (:? "-") digits "." digits (:? (:seq (:or "e" "E")
+                                               (:? (:or "+" "-"))
+                                               digits)))
     (token 'FLOAT (string->number lexeme))]
    [eol
     (begin
