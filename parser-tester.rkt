@@ -76,8 +76,9 @@
   ;"0	ustring		\xFD7zXZ\x00		XZ compressed data\n")
   ;"(0x0118-0x0FF60)    ulelong&0x80000007  !0x80000007\n")
   ;"0	regex	\\^[[:space:]]*class[[:space:]]+[[:digit:][:alpha:]:_]+[[:space:]]*\\\\{(.*[\\n]*)*\\\\}(;)?$		C++ source text\n")
-  "10	bedouble	8.642135e+130	big-endian\n")
+  ;"10	bedouble	8.642135e+130	big-endian\n")
   ;"0	lelong		0x1b031336L	Netboot image,\n")
+  "&0  ubeqdate x                    \b, last modified %s\n")
 )
 
 #;
