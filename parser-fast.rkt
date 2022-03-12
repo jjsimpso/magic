@@ -68,6 +68,12 @@
   (and (peek-token)
        (eq? (token-type (peek-token)) sym)))
 
+(define (error-unless-token-eq? tkn sym msg)
+  (unless (token-eq? tkn sym)
+    (if tkn
+        (parse-error msg (srcloc-token-srcloc tkn))
+        (parse-error msg))))
+
 (define (size-token? tkn)
   (case (token-type tkn)
     [(.B .b .C .c .s .h .S .H .l .L .m) #t]
@@ -232,12 +238,11 @@
   (define tkn (pop-token))
   (if (eq? (token-type tkn) '>)
       #'(level)
-      (parse-error "expected '>'")))
+      (parse-error "expected '>'" (srcloc-token-srcloc tkn))))
 
 (define (line)
   (define o (offset))
-  (unless (token-eq? (pop-token) 'HWS)
-    (parse-error "line: expected HWS after offset"))
+  (error-unless-token-eq? (pop-token) 'HWS "line: expected HWS after offset")
 
   (if (next-token-eq? 'clear)
       ;; clear line
@@ -251,17 +256,14 @@
                 (pop-token)
                 (when (next-token-eq? 'STRING)
                   (pop-token)))
-              (unless (token-eq? (pop-token) 'EOL)
-                (parse-error "clear-line: expected end-of-line" (srcloc-token-srcloc (peek-token))))
+              (error-unless-token-eq? (pop-token) 'EOL "clear-line: expected end-of-line")
               #`(clear-line #,o "clear" #,tst))
             (begin
-              (unless (token-eq? (pop-token) 'EOL)
-                (parse-error "clear-line: expected end-of-line" (srcloc-token-srcloc (peek-token))))
+              (error-unless-token-eq? (pop-token) 'EOL "clear-line: expected end-of-line")
               #`(clear-line #,o "clear"))))
       ;; standard line
       (let ([typ (type)])
-        (unless (token-eq? (pop-token) 'HWS)
-          (parse-error "line: expected HWS after type"))
+        (error-unless-token-eq? (pop-token) 'HWS "line: expected HWS after type")
         (let ([tst (test)])
           (cond
             [(next-token-eq? 'HWS)
@@ -284,14 +286,11 @@
 
 (define (name-line)
   (define o (offset))
-  (unless (token-eq? (pop-token) 'HWS)
-    (parse-error "name line: expected HWS after offset"))
+  (error-unless-token-eq? (pop-token) 'HWS "name line: expected HWS after offset")
   (define typ (name-type))
-  (unless (token-eq? (pop-token) 'HWS)
-    (parse-error "name line: expected HWS after \"name\""))
+  (error-unless-token-eq? (pop-token) 'HWS "name line: expected HWS after \"name\"")
   (define name-tkn (pop-token))
-  (unless (token-eq? name-tkn 'MAGIC-NAME)
-    (parse-error "name line: expected MAGIC NAME" (srcloc-token-srcloc name-tkn)))
+  (error-unless-token-eq? name-tkn 'MAGIC-NAME "name line: expected MAGIC NAME")
   (cond
     [(next-token-eq? 'HWS)
      (pop-token)
@@ -335,8 +334,7 @@
      (parse-error "offset: syntax error" (srcloc-token-srcloc tkn))]))
 
 (define (reloffset)
-  (unless (token-eq? (pop-token) '&)
-    (parse-error "relative offset: missing '&'"))
+  (error-unless-token-eq? (pop-token) '& "relative offset: missing '&'")
   (define tkn (pop-token))
   (cond
     [(eq? (token-type tkn) 'INTEGER)
@@ -345,13 +343,11 @@
      (parse-error "relative offset: expected integer" (srcloc-token-srcloc tkn))]))
 
 (define (relindoff)
-  (unless (token-eq? (pop-token) '&)
-    (parse-error "relative indirect offset: missing '&'"))
+  (error-unless-token-eq? (pop-token) '& "relative indirect offset: missing '&'")
   #`(relindoff #,(indoff)))
 
 (define (indoff)
-  (unless (token-eq? (pop-token) '\()
-    (parse-error "indirect offset: missing '('" (srcloc-token-srcloc (peek-token)))) ; rough estimate of position
+  (error-unless-token-eq? (pop-token) '\( "indirect offset: missing '('" )
   (define tkn (pop-token))
   (define offset1
     (cond
@@ -379,8 +375,7 @@
         #f))
   
   ;; consume closing ')'
-  (unless (token-eq? (pop-token) '\))
-    (parse-error "indirect offset: missing ')'" (srcloc-token-srcloc (peek-token)))) ; rough estimate of position
+  (error-unless-token-eq? (pop-token) '\) "indirect offset: missing ')'")
   
   (cond
     [displacement
@@ -427,15 +422,12 @@
             (parse-error "disp: expected integer" (srcloc-token-srcloc tkn))))))
 
 (define (memvalue)
-  (unless (token-eq? (pop-token) '\()
-    (parse-error "memvalue: missing '('"))
+  (error-unless-token-eq? (pop-token) '\( "memvalue: missing '('")
 
   (define value-tkn (pop-token))
-  (unless (token-eq? value-tkn 'INTEGER)
-    (parse-error "memvalue: expected integer" (srcloc-token-srcloc value-tkn)))
+  (error-unless-token-eq? value-tkn 'INTEGER "memvalue: expected integer")
   
-  (unless (token-eq? (pop-token) '\))
-    (parse-error "memvalue: missing '('"))
+  (error-unless-token-eq? (pop-token) '\) "memvalue: missing '('")
 
   #`(memvalue #,(token-val value-tkn)))
 
