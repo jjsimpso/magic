@@ -406,12 +406,12 @@
 (define (op)
   (define invert? (next-token-eq? '~))
   (when invert? (pop-token))
-  (if (op-token? (peek-token))
-      (let ([op-tkn (pop-token)])
-        (if invert?
-            #`(op (invert "~") #,(token-val op-tkn))
-            #`(op #,(token-val op-tkn))))
-      (parse-error "op: invalid operator" (srcloc-token-srcloc (peek-token)))))
+  (define op-tkn (pop-token))
+  (if (op-token? op-tkn)
+      (if invert?
+          #`(op (invert "~") #,(token-val op-tkn))
+          #`(op #,(token-val op-tkn)))
+      (parse-error "op: invalid operator" (srcloc-token-srcloc op-tkn))))
 
 (define (disp)
   (if (token-eq? (peek-token) '\()
@@ -526,7 +526,8 @@
       (parse-error "string: missing or invalid flag" (srcloc-token-srcloc (peek-token)))))
 
 (define (search)
-  (if (token-eq? (pop-token) 'search)
+  (define search-tkn (pop-token))
+  (if (token-eq? search-tkn 'search)
       (if(and (next-token-eq? '/)
               (pop-token))
          (let ([tkn (pop-token)])
@@ -553,10 +554,11 @@
              [else
               (parse-error "search: expected flag or count" (srcloc-token-srcloc tkn))]))
          #'(search))
-      (parse-error "search: expected 'search'")))
+      (parse-error "search: expected 'search'" (srcloc-token-srcloc search-tkn))))
 
 (define (regex)
-  (if (token-eq? (pop-token) 'regex)
+  (define regex-tkn (pop-token))
+  (if (token-eq? regex-tkn 'regex)
       (let ([tkn (pop-token)])
         (cond
           [(and (token-eq? tkn '/)
@@ -577,7 +579,7 @@
            #`(regex)]
           [else
            (parse-error "regex: syntax error" (srcloc-token-srcloc tkn))]))
-      (parse-error "regex: expected 'regex'")))
+      (parse-error "regex: expected 'regex'" (srcloc-token-srcloc regex-tkn))))
 
 (define (regflags)
   (if (regflag-token? (peek-token))
@@ -603,7 +605,8 @@
       (parse-error "string16: expected 'bestring16' or 'lestring16'" (srcloc-token-srcloc tkn))))
 
 (define (pstring)
-  (if (token-eq? (pop-token) 'pstring)
+  (define pstring-tkn (pop-token))
+  (if (token-eq? pstring-tkn 'pstring)
       (if (and (next-token-eq? '/)
                (pop-token))
          (let ([tkn (pop-token)])
@@ -622,7 +625,7 @@
              [else
               (parse-error "pstring: expected flag" (srcloc-token-srcloc tkn))]))
          #'(pstring "pstring"))
-      (parse-error "pstring: expected 'pstring'")))
+      (parse-error "pstring: expected 'pstring'" (srcloc-token-srcloc pstring-tkn))))
 
 (define (default)
   (define tkn (pop-token))
