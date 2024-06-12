@@ -125,7 +125,7 @@
 
 (define (parse-error str [err-srcloc (srcloc #f #f #f #f #f)])
   ;(eprintf str)
-  ;(eprintf "~n")
+  ;(eprintf "error srcloc = ~a~n" err-srcloc)
   (raise (make-parse-error str err-srcloc)))
 
 ;; read all the tokens from the function token-source and return a list of tokens
