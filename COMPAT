@@ -1,6 +1,10 @@
 Differences from Ian Darwin's File command
 (http://www.darwinsys.com/file/) :
 
-- it is not required to backslash escape space characters
+- It is not required to backslash escape space characters
+
+- No attempt is made to define queries as binary or text, so queries
+  will be applied in the order they appear. file attempts binary queries
+  before trying text queries. This may be worth changing at some point.
 
 Currently unsupported magic test types: indirect, der, all id3 types, all middle endian types.
